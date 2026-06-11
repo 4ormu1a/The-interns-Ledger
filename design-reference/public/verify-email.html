@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verify your email — The Interns Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/main.css">
+<style>
+  .center{min-height:calc(100vh - 66px);display:grid;place-items:center;padding:40px 24px;position:relative;z-index:1}
+  .box{width:100%;max-width:480px}
+  .card{padding:36px 34px;text-align:center}
+  .big-ic{width:80px;height:80px;border-radius:22px;background:rgba(8,203,0,.1);color:var(--green-900);
+    display:grid;place-items:center;margin:0 auto 20px}
+  .card h1{font-size:clamp(1.4rem,3vw,1.7rem);margin-bottom:8px}
+  .card .sub{color:var(--muted);font-size:.95rem;line-height:1.65;margin-bottom:8px}
+  .card .sub b{color:var(--green-900)}
+  .steps-hint{font-size:.84rem;color:var(--muted-2);margin-bottom:24px}
+  .acts{display:flex;flex-direction:column;gap:10px}
+  .acts .btn{width:100%;justify-content:center}
+  .resend{font-size:.88rem;color:var(--muted);margin-top:18px}
+  .resend button{background:none;border:0;font-family:inherit;font-size:inherit;font-weight:700;
+    color:var(--green-700);cursor:pointer;padding:0}
+  .resend button:hover:not(:disabled){color:var(--green-bright)}
+  .resend button:disabled{color:var(--muted-2);cursor:not-allowed;font-weight:600}
+  .meta-links{display:flex;justify-content:center;gap:18px;margin-top:22px;font-size:.86rem;flex-wrap:wrap}
+  .meta-links a{font-weight:600;color:var(--green-700)}
+  .meta-links a:hover{color:var(--green-bright)}
+  .status{display:none;gap:9px;align-items:center;border-radius:11px;padding:11px 14px;
+    font-size:.88rem;font-weight:500;margin-bottom:18px;text-align:left}
+  .status.show{display:flex}
+  .status.ok{background:rgba(8,203,0,.1);border:1px solid rgba(8,203,0,.3);color:var(--green-700)}
+  .status svg{flex:none}
+  .note{display:flex;gap:9px;align-items:flex-start;margin-top:22px;padding:12px 15px;text-align:left;
+    border-radius:12px;background:rgba(231,225,177,.45);border:1px solid var(--line);
+    font-size:.8rem;color:var(--muted)}
+  .note svg{flex:none;margin-top:1px;color:var(--green-700)}
+  .v-state{display:none}
+  .v-state.show{display:block;animation:rise .4s cubic-bezier(.2,.7,.2,1)}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .big-ic.ok{background:rgba(8,203,0,.14);color:var(--green-700)}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <div class="tb-inner">
+    <a class="brand" href="index.html" aria-label="The Interns Ledger — home">
+      <svg class="mark" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+        <path d="M24 12c-4-3-9-3.5-13-2.5v25c4-1 9-.5 13 2.5 4-3 9-3.5 13-2.5v-25C33 8.5 28 9 24 12Z" stroke="#0D530E" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M24 12v25" stroke="#0D530E" stroke-width="2"/>
+        <path d="M14 17h6M14 21h6M28 17h6M28 21h6M14 25h6M28 25h6" stroke="#306D29" stroke-width="1.3" stroke-linecap="round"/>
+      </svg>
+      <span class="name"><b>THE INTERNS</b><span>LEDGER</span></span>
+    </a>
+    <div class="tb-right">
+      <a class="btn btn-3 btn-sm" href="login.html">Log in</a>
+    </div>
+  </div>
+</header>
+
+<main id="main" class="center">
+  <div class="box">
+
+    <!-- ════════ STATE 1: CHECK INBOX ════════ -->
+    <div class="v-state show" id="state-wait">
+      <div class="card">
+        <div class="big-ic" aria-hidden="true">
+          <svg width="38" height="38" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 7l8.5 6 8.5-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h1 id="page-title" tabindex="-1">Check your inbox</h1>
+        <p class="sub">We've sent a one-time verification link to<br><b id="email-line">your school email address</b>.</p>
+        <p class="steps-hint">Click the link in the email to activate your account. It expires in 24 hours.</p>
+        <div class="acts">
+          <button class="btn btn-1" id="simulate">I've clicked the link — continue</button>
+          <a class="btn btn-3" href="register.html">Use a different email address</a>
+        </div>
+        <p class="resend">Didn't get it? Check spam, or <button id="resend">resend the email</button><span id="cooldown"></span></p>
+        <div class="status ok" id="resent-msg" role="status" aria-live="polite">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Verification email resent.
+        </div>
+      </div>
+      <div class="note">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 11v5M12 8h.01" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+        <span><b style="color:var(--green-900)">Prototype notice:</b> no email is actually sent — the button above simulates clicking the verification link.</span>
+      </div>
+    </div>
+
+    <!-- ════════ STATE 2: VERIFIED ════════ -->
+    <div class="v-state" id="state-done">
+      <div class="card">
+        <div class="big-ic ok" aria-hidden="true">
+          <svg width="38" height="38" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h1>Email verified 🎉</h1>
+        <p class="sub">Your account is active. Log in to set up your internship and start your logbook.</p>
+        <div class="acts" style="margin-top:18px">
+          <a class="btn btn-1" href="login.html?role=student">Continue to login</a>
+          <a class="btn btn-3" href="index.html">Back to home</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="meta-links">
+      <a href="login.html">Log in</a>
+      <a href="reset.html">Forgot password</a>
+      <a href="verify.html">Verify a report</a>
+    </div>
+  </div>
+</main>
+
+<script>
+  // show the registered email if passed from register.html
+  const email=new URLSearchParams(location.search).get('email');
+  if(email)document.getElementById('email-line').textContent=email;
+
+  // simulate clicking the emailed link
+  document.getElementById('simulate').addEventListener('click',()=>{
+    document.getElementById('state-wait').classList.remove('show');
+    document.getElementById('state-done').classList.add('show');
+  });
+
+  // resend with cooldown
+  const resend=document.getElementById('resend'),cd=document.getElementById('cooldown'),msg=document.getElementById('resent-msg');
+  resend.addEventListener('click',()=>{
+    msg.classList.add('show');
+    let t=30;resend.disabled=true;
+    const iv=setInterval(()=>{
+      cd.textContent=' (wait '+t+'s)';
+      if(--t<0){clearInterval(iv);cd.textContent='';resend.disabled=false;msg.classList.remove('show')}
+    },1000);
+  });
+</script>
+</body>
+</html>

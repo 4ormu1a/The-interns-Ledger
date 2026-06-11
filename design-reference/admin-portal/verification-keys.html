@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verification &amp; Keys — The Interns Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/main.css">
+<style>
+  .pagehead{margin-bottom:22px}
+  .pagehead h1{font-size:clamp(1.7rem,3.4vw,2.1rem);margin-bottom:4px}
+  .pagehead p{color:var(--muted);font-size:.96rem;max-width:64ch}
+  .sec-head{display:flex;align-items:baseline;gap:10px;margin:26px 0 14px}
+  .sec-head h2{font-size:1.1rem}
+  .sec-head a{font-size:.84rem;font-weight:700;color:var(--green-700);margin-left:auto}
+
+  .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:6px}
+  .stat{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow-sm)}
+  .stat .sk{font-size:.72rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted-2)}
+  .stat .sv{font-size:1.3rem;font-weight:800;color:var(--green-900);margin-top:2px;letter-spacing:-.03em;line-height:1}
+  .stat .sv small{font-size:.78rem;font-weight:500;color:var(--muted);letter-spacing:0}
+  .stat .sd{font-size:.78rem;color:var(--muted);margin-top:4px}
+  .stat .sd.good{color:var(--green-700);font-weight:600}
+  .stat .sd.warn{color:var(--amber);font-weight:600}
+  .stat .sd.bad{color:var(--danger);font-weight:600}
+
+  .status{display:none;gap:9px;align-items:center;border-radius:11px;padding:11px 14px;
+    font-size:.9rem;font-weight:500;margin-bottom:16px}
+  .status.show{display:flex}
+  .status.ok{background:rgba(8,203,0,.1);border:1px solid rgba(8,203,0,.3);color:var(--green-700)}
+  .status svg{flex:none}
+
+  /* key cards */
+  .key-row{display:flex;gap:14px;padding:18px 22px;border-bottom:1px solid var(--line);align-items:center;flex-wrap:wrap}
+  .key-row:last-child{border-bottom:0}
+  .key-ic{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;flex:none}
+  .ki-active{background:rgba(8,203,0,.14);color:var(--green-700)}
+  .ki-next{background:var(--amber-bg);color:var(--amber)}
+  .ki-retired{background:rgba(13,83,14,.08);color:var(--muted-2)}
+  .key-body{min-width:0;flex:1}
+  .key-name{font-size:.95rem;font-weight:800;color:var(--green-900);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .kpill{font-size:.66rem;font-weight:700;padding:2px 9px;border-radius:999px}
+  .kp-active{background:rgba(8,203,0,.14);color:var(--green-700)}
+  .kp-next{background:var(--amber-bg);color:var(--amber)}
+  .kp-retired{background:rgba(13,83,14,.08);color:var(--muted-2)}
+  .key-meta{font-size:.78rem;color:var(--muted-2);margin-top:3px;display:flex;gap:10px;flex-wrap:wrap}
+  .key-meta b{color:var(--green-900);font-weight:600}
+  code.fp{font-family:ui-monospace,Menlo,monospace;font-size:.72rem;color:var(--green-900);
+    background:rgba(13,83,14,.07);padding:1px 6px;border-radius:6px}
+  .key-act{flex:none}
+
+  /* token search + rows */
+  .tok-bar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+  .tok-bar input{flex:1;min-width:220px;font-family:ui-monospace,Menlo,monospace;text-transform:uppercase;letter-spacing:.04em}
+  .t-row{display:flex;gap:12px;padding:14px 22px;border-bottom:1px solid var(--line);align-items:center;flex-wrap:wrap}
+  .t-row:last-child{border-bottom:0}
+  .t-tok{flex:none;font-family:ui-monospace,Menlo,monospace;font-size:.8rem;font-weight:700;color:var(--green-900);width:172px}
+  .t-body{min-width:0;flex:1;font-size:.82rem;color:var(--muted)}
+  .t-body b{color:var(--green-900)}
+  .t-meta{font-size:.72rem;color:var(--muted-2);margin-top:2px}
+  .tpill{flex:none;font-size:.68rem;font-weight:700;padding:3px 10px;border-radius:999px;width:88px;text-align:center}
+  .tp-active{background:rgba(8,203,0,.13);color:var(--green-700)}
+  .tp-revoked{background:var(--danger-bg);color:var(--danger)}
+  .t-act{flex:none}
+  .btn-danger-sm{font-size:.8rem;padding:.5rem .95rem}
+  .t-row.revoked .t-tok{text-decoration:line-through;color:var(--muted-2)}
+
+  .note{display:flex;gap:10px;align-items:flex-start;margin-top:16px;padding:14px 18px;border-radius:13px;
+    background:rgba(231,225,177,.45);border:1px solid var(--line);font-size:.84rem;color:var(--muted)}
+  .note svg{flex:none;margin-top:2px;color:var(--green-700)}
+  .note b{color:var(--green-900)}
+
+  /* modal */
+  .overlay{position:fixed;inset:0;background:rgba(3,3,2,.45);z-index:60;display:none;
+    align-items:center;justify-content:center;padding:20px}
+  .overlay.open{display:flex}
+  .modal{background:var(--white);border-radius:18px;max-width:460px;width:100%;padding:26px;box-shadow:var(--shadow-md)}
+  .modal h3{font-size:1.1rem;margin-bottom:8px}
+  .modal p{font-size:.88rem;color:var(--muted);margin-bottom:18px}
+  .modal .m-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+  .btn-danger{background:var(--white);color:var(--danger);border-color:var(--danger-line)}
+  .btn-danger:hover{background:var(--danger);color:#fff}
+
+  @media(max-width:860px){.stats-row{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:600px){
+    .t-tok{width:auto}
+    .tpill{width:auto}
+    .key-act,.t-act{width:100%}
+    .key-act .btn,.t-act .btn{width:100%;justify-content:center}
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<!-- ─── TOP BAR ─── -->
+<header class="topbar">
+  <div class="tb-inner">
+    <a class="brand" href="dashboard.html" aria-label="The Interns Ledger — admin dashboard">
+      <svg class="mark" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+        <path d="M24 12c-4-3-9-3.5-13-2.5v25c4-1 9-.5 13 2.5 4-3 9-3.5 13-2.5v-25C33 8.5 28 9 24 12Z" stroke="#0D530E" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M24 12v25" stroke="#0D530E" stroke-width="2"/>
+        <path d="M14 17h6M14 21h6M28 17h6M28 21h6M14 25h6M28 25h6" stroke="#306D29" stroke-width="1.3" stroke-linecap="round"/>
+      </svg>
+      <span class="name"><b>THE INTERNS</b><span>LEDGER</span></span>
+    </a>
+    <div class="tb-right">
+      <a class="iconbtn" href="notifications.html" aria-label="Notifications — 5 unread">
+        <span class="dot"></span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 9a6 6 0 1112 0c0 5 2 6 2 6H4s2-1 2-6Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M10 20a2 2 0 004 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </a>
+      <div class="user">
+        <div class="avatar" aria-hidden="true">SA</div>
+        <div class="u-meta"><b>Selorm Adjei</b><span class="role">Administrator</span></div>
+      </div>
+      <a class="iconbtn" href="../public/login.html" aria-label="Log out" title="Log out">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M15 12H5M9 8l-4 4 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 4h7a1 1 0 011 1v14a1 1 0 01-1 1h-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+  </div>
+</header>
+
+<!-- ─── MAIN ─── -->
+<main id="main" class="wrap">
+  <nav class="crumbs" aria-label="Breadcrumb">
+    <a href="dashboard.html">Dashboard</a>
+    <span class="sep">/</span><span>Verification &amp; keys</span>
+  </nav>
+
+  <div class="pagehead">
+    <h1 id="page-title" tabindex="-1">Verification &amp; keys</h1>
+    <p>The signing keys that make reports verifiable, and the tokens the public uses to verify them. Rotations and revocations are privileged actions — every one is audit-logged.</p>
+  </div>
+
+  <div class="status ok" id="msg" role="status" aria-live="polite"></div>
+
+  <!-- stats -->
+  <div class="stats-row">
+    <div class="stat"><div class="sk">Verifications (7d)</div><div class="sv">96</div><div class="sd good">↑ 12 vs last week</div></div>
+    <div class="stat"><div class="sk">Failed checks (7d)</div><div class="sv">4</div><div class="sd">all revoked tokens — expected</div></div>
+    <div class="stat"><div class="sk">Active tokens</div><div class="sv">412</div><div class="sd">across 318 internships</div></div>
+    <div class="stat"><div class="sk">Active key</div><div class="sv" style="font-size:1rem;letter-spacing:0">TIL-K3</div><div class="sd warn">rotation due 01 Jul</div></div>
+  </div>
+
+  <!-- ════════ SIGNING KEYS ════════ -->
+  <div class="sec-head"><h2>Signing keys</h2></div>
+  <div class="card" style="overflow:hidden">
+
+    <div class="key-row">
+      <div class="key-ic ki-active" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="8.5" cy="13.5" r="4.5" stroke="currentColor" stroke-width="1.8"/><path d="M12 12l8-8M17 7l2.5 2.5M14.5 9.5L17 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </div>
+      <div class="key-body">
+        <div class="key-name">TIL-K3 <span class="kpill kp-active">ACTIVE</span></div>
+        <div class="key-meta">
+          <span>Ed25519 · <code class="fp">fp: 9c4e…a1b7</code></span>
+          <span>created <b>03 Jan 2026</b></span>
+          <span>signs all new seals &amp; reports</span>
+          <span style="color:var(--amber);font-weight:600">rotation due 01 Jul 2026 (180-day policy)</span>
+        </div>
+      </div>
+      <div class="key-act"><button class="btn btn-1 btn-sm" id="rotate-btn">Schedule rotation</button></div>
+    </div>
+
+    <div class="key-row" id="k4-row" style="display:none">
+      <div class="key-ic ki-next" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 8v5l3 2" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+      </div>
+      <div class="key-body">
+        <div class="key-name">TIL-K4 <span class="kpill kp-next">ACTIVATES 01 JUL</span></div>
+        <div class="key-meta">
+          <span>Ed25519 · <code class="fp">fp: 4f81…d92c</code></span>
+          <span>generated today</span>
+          <span>takes over signing at rotation; TIL-K3 then retires</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="key-row">
+      <div class="key-ic ki-retired" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="8.5" cy="13.5" r="4.5" stroke="currentColor" stroke-width="1.8"/><path d="M12 12l8-8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </div>
+      <div class="key-body">
+        <div class="key-name">TIL-K2 <span class="kpill kp-retired">RETIRED</span></div>
+        <div class="key-meta">
+          <span>Ed25519 · <code class="fp">fp: 77b2…3e0f</code></span>
+          <span>active Jul – Dec 2025</span>
+          <span><b>still verifies</b> 4,212 reports sealed in its period</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="key-row">
+      <div class="key-ic ki-retired" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="8.5" cy="13.5" r="4.5" stroke="currentColor" stroke-width="1.8"/><path d="M12 12l8-8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </div>
+      <div class="key-body">
+        <div class="key-name">TIL-K1 <span class="kpill kp-retired">RETIRED</span></div>
+        <div class="key-meta">
+          <span>Ed25519 · <code class="fp">fp: 1a9d…58c4</code></span>
+          <span>active Jan – Jun 2025</span>
+          <span><b>still verifies</b> 2,887 reports sealed in its period</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <div class="note">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6l7-3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span><b>Rotation never breaks old reports.</b> Retired keys remain published for verification — only signing stops. A report sealed under TIL-K1 in 2025 verifies forever against TIL-K1's public key.</span>
+  </div>
+
+  <!-- ════════ TOKEN REVOCATION ════════ -->
+  <div class="sec-head"><h2>Verification tokens</h2><a href="../public/verify.html">Public verifier →</a></div>
+  <div class="tok-bar">
+    <label for="tok-q" style="position:absolute;left:-9999px">Search tokens</label>
+    <input id="tok-q" placeholder="Search token, e.g. TIL-9F3A-72KQ-X1" autocomplete="off">
+  </div>
+  <div class="card" style="overflow:hidden">
+
+    <div class="t-row" data-q="til-9f3a-72kq-x1 ama mensah">
+      <span class="t-tok">TIL-9F3A-72KQ-X1</span>
+      <div class="t-body">
+        <b>Ama Mensah</b> · interim report (full disclosure)
+        <div class="t-meta">issued 09 Jun 2026 · verified 6 times · last check today, 09:14</div>
+      </div>
+      <span class="tpill tp-active">Active</span>
+      <div class="t-act"><button class="btn btn-danger btn-sm btn-danger-sm" data-revoke="TIL-9F3A-72KQ-X1">Revoke</button></div>
+    </div>
+
+    <div class="t-row" data-q="til-2c8d-11pm-a4 abena owusu">
+      <span class="t-tok">TIL-2C8D-11PM-A4</span>
+      <div class="t-body">
+        <b>Abena Owusu</b> · sealed final report, VoltaBank (minimal disclosure)
+        <div class="t-meta">issued 28 May 2026 · verified 11 times · last check Mon, 08 Jun</div>
+      </div>
+      <span class="tpill tp-active">Active</span>
+      <div class="t-act"><button class="btn btn-danger btn-sm btn-danger-sm" data-revoke="TIL-2C8D-11PM-A4">Revoke</button></div>
+    </div>
+
+    <div class="t-row" data-q="til-5kk1-90tr-b8 kofi darko">
+      <span class="t-tok">TIL-5KK1-90TR-B8</span>
+      <div class="t-body">
+        <b>Kofi Darko</b> · interim report (minimal disclosure)
+        <div class="t-meta">issued 02 Jun 2026 · verified 3 times · last check Fri, 05 Jun</div>
+      </div>
+      <span class="tpill tp-active">Active</span>
+      <div class="t-act"><button class="btn btn-danger btn-sm btn-danger-sm" data-revoke="TIL-5KK1-90TR-B8">Revoke</button></div>
+    </div>
+
+    <div class="t-row revoked" data-q="til-77ab-19qx-d3 kojo antwi revoked">
+      <span class="t-tok">TIL-77AB-19QX-D3</span>
+      <div class="t-body">
+        <b>Kojo Antwi</b> · superseded interim report
+        <div class="t-meta">revoked by you, 09 Jun 2026 · reason: student re-shared an updated report</div>
+      </div>
+      <span class="tpill tp-revoked">Revoked</span>
+      <div class="t-act"></div>
+    </div>
+
+  </div>
+  <div class="note">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 11v5M12 8h.01" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+    <span><b>Revocation is visible, not silent.</b> A revoked token immediately fails on the public verifier with a "no valid record" result. The underlying sealed record is untouched — students can issue a fresh token at any time.</span>
+  </div>
+
+</main>
+
+<!-- ─── MODALS ─── -->
+<div class="overlay" id="rot-overlay" role="dialog" aria-modal="true" aria-labelledby="rot-title">
+  <div class="modal">
+    <h3 id="rot-title">Schedule key rotation?</h3>
+    <p>A new key <strong>TIL-K4</strong> will be generated now and take over signing on <strong>01 Jul 2026</strong>. TIL-K3 retires at that moment but keeps verifying everything it signed. This action is audit-logged.</p>
+    <div class="m-actions">
+      <button class="btn btn-3 btn-sm" id="rot-cancel">Cancel</button>
+      <button class="btn btn-1 btn-sm" id="rot-confirm">Generate TIL-K4 &amp; schedule</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="rev-overlay" role="dialog" aria-modal="true" aria-labelledby="rev-title">
+  <div class="modal">
+    <h3 id="rev-title">Revoke this token?</h3>
+    <p>Token <strong id="rev-token">TIL-…</strong> will immediately fail public verification. The sealed record itself is not affected, and the student can issue a new token. This action is audit-logged.</p>
+    <div class="m-actions">
+      <button class="btn btn-3 btn-sm" id="rev-cancel">Cancel</button>
+      <button class="btn btn-danger btn-sm" id="rev-confirm">Revoke token</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const msg=document.getElementById('msg');
+  function flash(text){
+    msg.innerHTML='<svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> '+text;
+    msg.classList.add('show');setTimeout(()=>msg.classList.remove('show'),4000);
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+  function wire(ov,cancel){
+    const o=document.getElementById(ov);
+    document.getElementById(cancel).addEventListener('click',()=>o.classList.remove('open'));
+    o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open')});
+  }
+  wire('rot-overlay','rot-cancel');wire('rev-overlay','rev-cancel');
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open'))});
+
+  /* rotation */
+  const rotO=document.getElementById('rot-overlay');
+  document.getElementById('rotate-btn').addEventListener('click',()=>rotO.classList.add('open'));
+  document.getElementById('rot-confirm').addEventListener('click',()=>{
+    rotO.classList.remove('open');
+    document.getElementById('k4-row').style.display='';
+    const btn=document.getElementById('rotate-btn');
+    btn.textContent='Rotation scheduled ✓';btn.disabled=true;btn.classList.remove('btn-1');btn.classList.add('btn-3');
+    flash('TIL-K4 generated and rotation scheduled for 01 Jul 2026 — recorded in the audit trail.');
+  });
+
+  /* revocation */
+  const revO=document.getElementById('rev-overlay');
+  let revRow=null;
+  document.querySelectorAll('[data-revoke]').forEach(b=>b.addEventListener('click',()=>{
+    revRow=b.closest('.t-row');
+    document.getElementById('rev-token').textContent=b.dataset.revoke;
+    revO.classList.add('open');
+  }));
+  document.getElementById('rev-confirm').addEventListener('click',()=>{
+    revO.classList.remove('open');
+    if(revRow){
+      revRow.classList.add('revoked');
+      revRow.querySelector('.tpill').textContent='Revoked';
+      revRow.querySelector('.tpill').className='tpill tp-revoked';
+      revRow.querySelector('.t-act').innerHTML='';
+      revRow.querySelector('.t-meta').textContent='revoked by you, just now — recorded in the audit trail';
+    }
+    flash('Token revoked — it now fails public verification. Recorded in the audit trail.');
+  });
+
+  /* token search */
+  const q=document.getElementById('tok-q');
+  const rows=[...document.querySelectorAll('.t-row')];
+  q.addEventListener('input',()=>{
+    const term=q.value.trim().toLowerCase();
+    rows.forEach(r=>r.style.display=(!term||r.dataset.q.includes(term))?'':'none');
+  });
+</script>
+</body>
+</html>

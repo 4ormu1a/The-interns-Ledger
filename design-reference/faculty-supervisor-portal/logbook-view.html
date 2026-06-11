@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ama Mensah — Sealed Logbook — The Interns Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/main.css">
+<style>
+  .pagehead{display:flex;align-items:center;gap:14px;margin-bottom:16px;flex-wrap:wrap}
+  .pagehead h1{font-size:clamp(1.5rem,3vw,1.9rem)}
+  .pagehead .who{font-size:.88rem;color:var(--muted)}
+  .pagehead .who b{color:var(--green-900)}
+  .p-actions{margin-left:auto;display:flex;gap:10px;flex-wrap:wrap}
+
+  /* integrity banner */
+  .chainok{display:flex;gap:12px;align-items:center;padding:14px 18px;border-radius:14px;margin-bottom:20px;
+    background:rgba(8,203,0,.08);border:1px solid rgba(8,203,0,.3)}
+  .chainok .ic{width:38px;height:38px;border-radius:11px;background:rgba(8,203,0,.16);color:var(--green-700);
+    display:grid;place-items:center;flex:none}
+  .chainok b{display:block;font-size:.92rem;color:var(--green-900)}
+  .chainok span{font-size:.8rem;color:var(--muted)}
+  .chainok code{font-family:ui-monospace,Menlo,monospace;font-size:.72rem;color:var(--green-900);
+    background:rgba(13,83,14,.07);padding:1px 6px;border-radius:6px}
+  .chainok .ro-pill{margin-left:auto;flex:none;font-size:.7rem;font-weight:700;padding:4px 11px;
+    border-radius:999px;background:var(--violet-bg);color:var(--violet)}
+
+  /* toolbar */
+  .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+  .tabs{display:flex;gap:6px;background:rgba(231,225,177,.5);border:1px solid var(--line);
+    padding:4px;border-radius:999px}
+  .tab{font-family:inherit;font-size:.85rem;font-weight:600;color:var(--muted);background:transparent;
+    border:0;padding:.5rem 1rem;border-radius:999px;cursor:pointer;transition:background .18s,color .18s}
+  .tab[aria-selected="true"]{background:var(--green-900);color:#fff}
+  .tab:hover:not([aria-selected="true"]){color:var(--green-900)}
+  .tab .n{font-size:.72rem;font-weight:800;opacity:.75;margin-left:4px}
+  .toolbar .ct{margin-left:auto;font-size:.84rem;color:var(--muted-2)}
+  .toolbar .ct b{color:var(--green-900)}
+
+  /* month group */
+  .g-head{padding:12px 22px;background:rgba(231,225,177,.35);border-bottom:1px solid var(--line);
+    font-size:.74rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2)}
+  .g-head:not(:first-child){border-top:1px solid var(--line)}
+
+  /* entries (accordion, read-only) */
+  .e-row{border-bottom:1px solid var(--line)}
+  .e-row:last-child{border-bottom:0}
+  .e-sum{display:flex;gap:14px;align-items:center;width:100%;padding:15px 22px;background:none;
+    border:0;font-family:inherit;text-align:left;cursor:pointer;transition:background .15s}
+  .e-sum:hover{background:rgba(8,203,0,.035)}
+  .er-date{flex:none;width:56px;text-align:center;border-right:1px solid var(--line);padding-right:12px}
+  .er-date .d{font-size:1.2rem;font-weight:800;color:var(--green-900);line-height:1}
+  .er-date .m{font-size:.68rem;font-weight:600;color:var(--muted-2);text-transform:uppercase;margin-top:2px}
+  .e-body{min-width:0;flex:1}
+  .e-snip{font-size:.9rem;color:var(--ink);font-weight:500;
+    overflow:hidden;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical}
+  .e-meta{font-size:.78rem;color:var(--muted-2);margin-top:3px;display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+  .e-meta b{color:var(--green-900);font-weight:600}
+  .chip{font-size:.7rem;color:var(--green-700);background:rgba(8,203,0,.1);padding:2px 8px;border-radius:999px}
+  .chev{flex:none;color:var(--muted-2);transition:transform .2s}
+  .e-row.open .chev{transform:rotate(180deg)}
+
+  .e-detail{display:none;padding:0 22px 18px 92px}
+  .e-row.open .e-detail{display:block;animation:rise .3s cubic-bezier(.2,.7,.2,1)}
+  @keyframes rise{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+  .e-detail p{font-size:.88rem;color:var(--muted);line-height:1.6;margin-bottom:12px}
+  .seal-line{display:flex;gap:8px;align-items:center;font-size:.76rem;color:var(--muted-2);flex-wrap:wrap}
+  .seal-line svg{flex:none;color:var(--green-700)}
+  .seal-line code{font-family:ui-monospace,Menlo,monospace;font-size:.7rem;color:var(--green-900);
+    background:rgba(13,83,14,.07);padding:1px 6px;border-radius:6px}
+  .ret-line{display:flex;gap:8px;align-items:flex-start;font-size:.8rem;color:var(--muted);
+    background:rgba(231,225,177,.4);border:1px solid var(--line);border-left:3px solid var(--danger-line);
+    border-radius:0 10px 10px 0;padding:9px 13px;margin-bottom:10px;font-style:italic}
+
+  @media(max-width:680px){
+    .p-actions{margin-left:0;width:100%}
+    .p-actions .btn{flex:1;justify-content:center}
+    .chainok{flex-wrap:wrap}
+    .chainok .ro-pill{margin-left:0}
+    .toolbar .ct{margin-left:0;width:100%}
+    .er-date{display:none}
+    .e-detail{padding-left:22px}
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<!-- ─── TOP BAR ─── -->
+<header class="topbar">
+  <div class="tb-inner">
+    <a class="brand" href="dashboard.html" aria-label="The Interns Ledger — dashboard">
+      <svg class="mark" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+        <path d="M24 12c-4-3-9-3.5-13-2.5v25c4-1 9-.5 13 2.5 4-3 9-3.5 13-2.5v-25C33 8.5 28 9 24 12Z" stroke="#0D530E" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M24 12v25" stroke="#0D530E" stroke-width="2"/>
+        <path d="M14 17h6M14 21h6M28 17h6M28 21h6M14 25h6M28 25h6" stroke="#306D29" stroke-width="1.3" stroke-linecap="round"/>
+      </svg>
+      <span class="name"><b>THE INTERNS</b><span>LEDGER</span></span>
+    </a>
+    <div class="tb-right">
+      <a class="iconbtn" href="notifications.html" aria-label="Notifications — 3 unread">
+        <span class="dot"></span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 9a6 6 0 1112 0c0 5 2 6 2 6H4s2-1 2-6Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M10 20a2 2 0 004 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </a>
+      <div class="user">
+        <div class="avatar" aria-hidden="true">ED</div>
+        <div class="u-meta"><b>Dr. Esi Dankwa</b><span class="role">Faculty supervisor</span></div>
+      </div>
+      <a class="iconbtn" href="../public/login.html" aria-label="Log out" title="Log out">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M15 12H5M9 8l-4 4 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 4h7a1 1 0 011 1v14a1 1 0 01-1 1h-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+  </div>
+</header>
+
+<!-- ─── MAIN ─── -->
+<main id="main" class="wrap">
+  <nav class="crumbs" aria-label="Breadcrumb">
+    <a href="dashboard.html">Dashboard</a>
+    <span class="sep">/</span>
+    <a href="students.html">Assigned students</a>
+    <span class="sep">/</span><span>Ama Mensah — logbook</span>
+  </nav>
+
+  <div class="pagehead">
+    <div>
+      <h1 id="page-title" tabindex="-1">Sealed logbook</h1>
+      <p class="who"><b>Ama Mensah</b> · Nimbus Software Ltd. · 03 Mar – 07 Jul 2026 · <b>372.5 verified hrs</b> across 47 sealed entries</p>
+    </div>
+    <div class="p-actions">
+      <a class="btn btn-3 btn-sm" href="student-progress.html">Progress view</a>
+      <a class="btn btn-1 btn-sm" href="assessment.html">Assess (due 15 Jun)</a>
+    </div>
+  </div>
+
+  <!-- integrity banner -->
+  <div class="chainok">
+    <div class="ic" aria-hidden="true">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6l7-3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div>
+      <b>Hash chain verified just now — record intact</b>
+      <span>47 sealed entries · chain head <code>sha256: 7f3a…c91e</code> · no tampering detected since first seal on 04 Mar 2026</span>
+    </div>
+    <span class="ro-pill">READ-ONLY</span>
+  </div>
+
+  <!-- toolbar -->
+  <div class="toolbar">
+    <div class="tabs" role="tablist" aria-label="Filter entries">
+      <button class="tab" role="tab" aria-selected="true" data-f="all">All <span class="n">8</span></button>
+      <button class="tab" role="tab" aria-selected="false" data-f="sealed">Sealed <span class="n">5</span></button>
+      <button class="tab" role="tab" aria-selected="false" data-f="pending">Awaiting review <span class="n">2</span></button>
+      <button class="tab" role="tab" aria-selected="false" data-f="returned">Returned <span class="n">1</span></button>
+    </div>
+    <span class="ct">Showing most recent · click an entry to expand</span>
+  </div>
+
+  <!-- logbook -->
+  <div class="card" style="overflow:hidden">
+    <div class="g-head">June 2026</div>
+
+    <div class="e-row" data-s="pending">
+      <button class="e-sum" aria-expanded="false">
+        <span class="er-date" aria-hidden="true"><span class="d">05</span><br><span class="m">Jun</span></span>
+        <span class="e-body">
+          <span class="e-snip">Implemented the CSV export endpoint and added keyset pagination to the audit log query.</span>
+          <span class="e-meta"><b>8 hrs</b><span class="chip">Node.js</span><span class="chip">SQL</span><span class="st st-submitted">Awaiting industry review</span></span>
+        </span>
+        <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="e-detail">
+        <p>Implemented the CSV export endpoint for the audit log module, streaming results in batches of 1,000 rows. Added keyset pagination, dropping p95 query time from 2.1 s to 180 ms. Wrote integration tests for permission filters and cursor edge cases.</p>
+        <div class="seal-line">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 8v5l3 2" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+          Submitted 05 Jun, 18:21 · not yet sealed — hours excluded from verified total
+        </div>
+      </div>
+    </div>
+
+    <div class="e-row" data-s="sealed">
+      <button class="e-sum" aria-expanded="false">
+        <span class="er-date" aria-hidden="true"><span class="d">04</span><br><span class="m">Jun</span></span>
+        <span class="e-body">
+          <span class="e-snip">Paired with the senior engineer on the rate limiter middleware and shipped it behind a feature flag.</span>
+          <span class="e-meta"><b>8 hrs</b><span class="chip">Node.js</span><span class="chip">Redis</span><span class="st st-approved">Sealed</span></span>
+        </span>
+        <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="e-detail">
+        <p>Pair-programmed the sliding-window rate limiter middleware with the senior engineer; implemented Redis-backed counters and shipped behind a feature flag for the pilot tenants. Documented rollout and rollback steps.</p>
+        <div class="seal-line">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="5" y="10" width="14" height="10" rx="2.5" stroke="currentColor" stroke-width="1.8"/><path d="M8 10V8a4 4 0 018 0v2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          Sealed 05 Jun, 09:14 by <b style="color:var(--green-900)">Kwabena Osei</b> · <code>sha256: 91c4…07be</code>
+        </div>
+      </div>
+    </div>
+
+    <div class="e-row" data-s="returned">
+      <button class="e-sum" aria-expanded="false">
+        <span class="er-date" aria-hidden="true"><span class="d">03</span><br><span class="m">Jun</span></span>
+        <span class="e-body">
+          <span class="e-snip">Worked on some misc tasks around the project.</span>
+          <span class="e-meta"><b>6 hrs</b><span class="chip">General</span><span class="st st-rejected">Returned · superseded</span></span>
+        </span>
+        <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="e-detail">
+        <div class="ret-line">"Please be specific about what you built and which skills you used." — Kwabena Osei, 04 Jun</div>
+        <p>Original wording retained for audit purposes. The student edited and resubmitted this entry on 10 Jun (now awaiting review).</p>
+        <div class="seal-line">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 8v5l3 2" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+          Returned entries never count toward verified hours
+        </div>
+      </div>
+    </div>
+
+    <div class="e-row" data-s="sealed">
+      <button class="e-sum" aria-expanded="false">
+        <span class="er-date" aria-hidden="true"><span class="d">02</span><br><span class="m">Jun</span></span>
+        <span class="e-body">
+          <span class="e-snip">Wrote the migration plan for moving audit logs to partitioned tables and reviewed it with the DBA.</span>
+          <span class="e-meta"><b>7.5 hrs</b><span class="chip">SQL</span><span class="chip">Documentation</span><span class="st st-approved">Sealed</span></span>
+        </span>
+        <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="e-detail">
+        <p>Drafted the migration plan for partitioning the audit log tables by month, including backfill strategy and downtime estimates. Walked the DBA through the plan and incorporated feedback on index choices.</p>
+        <div class="seal-line">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="5" y="10" width="14" height="10" rx="2.5" stroke="currentColor" stroke-width="1.8"/><path d="M8 10V8a4 4 0 018 0v2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          Sealed 03 Jun, 15:02 by <b style="color:var(--green-900)">Kwabena Osei</b> · <code>sha256: 4a77…b3c9</code>
+        </div>
+      </div>
+    </div>
+
+    <div class="e-row" data-s="sealed">
+      <button class="e-sum" aria-expanded="false">
+        <span class="er-date" aria-hidden="true"><span class="d">01</span><br><span class="m">Jun</span></span>
+        <span class="e-body">
+          <span class="e-snip">Set up monitoring dashboards for the export service and added alerting on queue depth.</span>
+          <span class="e-meta"><b>8 hrs</b><span class="chip">Grafana</span><span class="chip">Monitoring</span><span class="st st-approved">Sealed</span></span>
+        </span>
+        <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="e-detail">
+        <p>Built Grafana dashboards for the export service covering throughput, error rate, and queue depth; configured alert thresholds with the on-call engineer and documented runbook links on each panel.</p>
+        <div class="seal-line">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="5" y="10" width="14" height="10" rx="2.5" stroke="currentColor" stroke-width="1.8"/><path d="M8 10V8a4 4 0 018 0v2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          Sealed 02 Jun, 10:12 by <b style="color:var(--green-900)">Kwabena Osei</b> · <code>sha256: e93b…51d7</code>
+        </div>
+      </div>
+    </div>
+
+    <div class="g-head">May 2026</div>
+
+    <div class="e-row" data-s="pending">
+      <button class="e-sum" aria-expanded="false">
+        <span class="er-date" aria-hidden="true"><span class="d">29</span><br><span class="m">May</span></span>
+        <span class="e-body">
+          <span class="e-snip">Resubmitted: fixed the date-range validation bug in the export form and wrote regression tests in Jest.</span>
+          <span class="e-meta"><b>6 hrs</b><span class="chip">JavaScript</span><span class="chip">Testing</span><span class="st st-submitted">Awaiting industry review</span></span>
+        </span>
+        <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="e-detail">
+        <p>Resubmission of the returned 03 Jun entry with specific detail: fixed the date-range validation bug in the export form (off-by-one on timezone boundaries) and added Jest regression tests covering DST transitions.</p>
+        <div class="seal-line">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 8v5l3 2" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+          Resubmitted 10 Jun, 08:12 · pending with industry supervisor
+        </div>
+      </div>
+    </div>
+
+    <div class="e-row" data-s="sealed">
+      <button class="e-sum" aria-expanded="false">
+        <span class="er-date" aria-hidden="true"><span class="d">28</span><br><span class="m">May</span></span>
+        <span class="e-body">
+          <span class="e-snip">Load-tested the export endpoint with k6 and tuned the connection pool sizing.</span>
+          <span class="e-meta"><b>7.5 hrs</b><span class="chip">k6</span><span class="chip">Performance</span><span class="st st-approved">Sealed</span></span>
+        </span>
+        <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="e-detail">
+        <p>Wrote k6 load scenarios for the export endpoint (steady, spike, and soak), identified pool exhaustion at 240 concurrent exports, and tuned pool sizing plus queue back-pressure to hold p95 under 400 ms.</p>
+        <div class="seal-line">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="5" y="10" width="14" height="10" rx="2.5" stroke="currentColor" stroke-width="1.8"/><path d="M8 10V8a4 4 0 018 0v2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          Sealed 29 May, 11:47 by <b style="color:var(--green-900)">Kwabena Osei</b> · <code>sha256: 2c11…8d40</code>
+        </div>
+      </div>
+    </div>
+
+    <div class="e-row" data-s="sealed">
+      <button class="e-sum" aria-expanded="false">
+        <span class="er-date" aria-hidden="true"><span class="d">27</span><br><span class="m">May</span></span>
+        <span class="e-body">
+          <span class="e-snip">Sprint demo prep: recorded the export feature walkthrough and updated the changelog.</span>
+          <span class="e-meta"><b>6.5 hrs</b><span class="chip">Docs</span><span class="chip">Communication</span><span class="st st-approved">Sealed</span></span>
+        </span>
+        <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="e-detail">
+        <p>Prepared the sprint demo: recorded a five-minute walkthrough of the export feature, updated the public changelog, and answered stakeholder questions during the review session.</p>
+        <div class="seal-line">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="5" y="10" width="14" height="10" rx="2.5" stroke="currentColor" stroke-width="1.8"/><path d="M8 10V8a4 4 0 018 0v2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          Sealed 28 May, 09:30 by <b style="color:var(--green-900)">Kwabena Osei</b> · <code>sha256: ab09…f217</code>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p style="font-size:.78rem;color:var(--muted-2);margin-top:10px">Showing 8 most recent of 53 entries · verified hours count only <b style="color:var(--green-900)">sealed</b> entries.</p>
+
+</main>
+
+<script>
+  // accordion
+  document.querySelectorAll('.e-sum').forEach(b=>b.addEventListener('click',()=>{
+    const row=b.parentElement;
+    const open=row.classList.toggle('open');
+    b.setAttribute('aria-expanded',open);
+  }));
+  // filter tabs
+  const tabs=[...document.querySelectorAll('.tab')];
+  const rows=[...document.querySelectorAll('.e-row')];
+  const heads=[...document.querySelectorAll('.g-head')];
+  tabs.forEach(t=>t.addEventListener('click',()=>{
+    tabs.forEach(x=>x.setAttribute('aria-selected','false'));
+    t.setAttribute('aria-selected','true');
+    const f=t.dataset.f;
+    rows.forEach(r=>r.style.display=(f==='all'||r.dataset.s===f)?'':'none');
+    heads.forEach(h=>{
+      let any=false,el=h.nextElementSibling;
+      while(el && !el.classList.contains('g-head')){
+        if(el.classList.contains('e-row') && el.style.display!=='none')any=true;
+        el=el.nextElementSibling;
+      }
+      h.style.display=any?'':'none';
+    });
+  }));
+</script>
+</body>
+</html>

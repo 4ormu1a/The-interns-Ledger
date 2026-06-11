@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Supervisor Links — The Interns Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/main.css">
+<style>
+  .pagehead{margin-bottom:22px}
+  .pagehead h1{font-size:clamp(1.7rem,3.4vw,2.1rem);margin-bottom:4px}
+  .pagehead p{color:var(--muted);font-size:.96rem;max-width:64ch}
+  .sec-head{display:flex;align-items:baseline;gap:10px;margin:26px 0 14px}
+  .sec-head h2{font-size:1.1rem}
+  .sec-head .pill{font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:999px}
+  .p-warn{background:var(--danger-bg);color:var(--danger)}
+  .p-ok{background:rgba(8,203,0,.14);color:var(--green-700)}
+
+  .status{display:none;gap:9px;align-items:center;border-radius:11px;padding:11px 14px;
+    font-size:.9rem;font-weight:500;margin-bottom:16px}
+  .status.show{display:flex}
+  .status.ok{background:rgba(8,203,0,.1);border:1px solid rgba(8,203,0,.3);color:var(--green-700)}
+  .status svg{flex:none}
+
+  /* unlinked queue */
+  .un-row{display:flex;gap:14px;padding:16px 22px;border-bottom:1px solid var(--line);align-items:center;flex-wrap:wrap}
+  .un-row:last-child{border-bottom:0}
+  .un-row.linked{background:rgba(8,203,0,.05)}
+  .q-avatar{width:40px;height:40px;border-radius:50%;background:rgba(13,83,14,.1);
+    color:var(--green-900);display:grid;place-items:center;font-weight:700;font-size:.78rem;flex:none}
+  .un-body{min-width:0;flex:1.3}
+  .un-name{font-size:.92rem;font-weight:700;color:var(--green-900)}
+  .un-name span{font-weight:400;color:var(--muted-2);font-size:.78rem}
+  .un-sub{font-size:.78rem;color:var(--muted-2)}
+  .un-sub b{color:var(--danger);font-weight:700}
+  .assign{display:flex;gap:8px;align-items:center;flex:1.2;min-width:260px}
+  .selectwrap{position:relative;flex:1}
+  select{appearance:none;font-family:inherit;font-size:.85rem;font-weight:600;color:var(--green-900);
+    background:var(--white);border:1px solid var(--line);border-radius:11px;
+    padding:.62rem 2.2rem .62rem .9rem;cursor:pointer;width:100%}
+  select:hover{border-color:rgba(8,203,0,.4)}
+  .selectwrap::after{content:"";position:absolute;right:12px;top:50%;width:8px;height:8px;
+    border-right:1.8px solid var(--green-700);border-bottom:1.8px solid var(--green-700);
+    transform:translateY(-70%) rotate(45deg);pointer-events:none}
+  .linked-tag{display:none;align-items:center;gap:6px;font-size:.78rem;font-weight:700;color:var(--green-700)}
+  .un-row.linked .assign{display:none}
+  .un-row.linked .linked-tag{display:inline-flex}
+
+  /* links table */
+  .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+  .search{position:relative;flex:1;min-width:220px;max-width:340px}
+  .search input{padding-left:38px}
+  .search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted-2)}
+  .l-row{display:flex;gap:12px;padding:14px 22px;border-bottom:1px solid var(--line);align-items:center}
+  .l-row:last-child{border-bottom:0}
+  .l-stu{flex:1.1;min-width:0;display:flex;gap:10px;align-items:center}
+  .l-stu .nm{font-size:.88rem;font-weight:700;color:var(--green-900);line-height:1.2}
+  .l-stu .un{font-size:.72rem;color:var(--muted-2)}
+  .arrow{flex:none;color:var(--muted-2)}
+  .l-sup{flex:1;min-width:0;font-size:.82rem}
+  .l-sup b{color:var(--green-900);display:block;line-height:1.25}
+  .l-sup span{font-size:.72rem;color:var(--muted-2)}
+  .tag{font-size:.64rem;font-weight:700;padding:2px 7px;border-radius:999px;margin-left:5px;vertical-align:1px}
+  .tg-ind{background:rgba(13,83,14,.1);color:var(--green-900)}
+  .tg-fac{background:var(--violet-bg);color:var(--violet)}
+  .cap{font-size:.7rem;color:var(--muted-2)}
+  .cap b{color:var(--green-700)}
+  .l-act{flex:none}
+  .mini{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--white);
+    display:grid;place-items:center;cursor:pointer;color:var(--green-900);transition:background .15s,border-color .15s}
+  .mini:hover{background:rgba(8,203,0,.08);border-color:rgba(8,203,0,.4)}
+  .empty{display:none;padding:44px 24px;text-align:center;color:var(--muted);font-size:.9rem}
+
+  .note{display:flex;gap:10px;align-items:flex-start;margin-top:16px;padding:14px 18px;border-radius:13px;
+    background:rgba(231,225,177,.45);border:1px solid var(--line);font-size:.84rem;color:var(--muted)}
+  .note svg{flex:none;margin-top:2px;color:var(--green-700)}
+  .note b{color:var(--green-900)}
+
+  @media(max-width:760px){
+    .l-sup:nth-of-type(4){display:none}
+    .assign{width:100%;flex:1 1 100%}
+  }
+  @media(max-width:560px){
+    .arrow{display:none}
+    .l-row{flex-wrap:wrap}
+    .l-stu{flex:1 1 100%}
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<!-- ─── TOP BAR ─── -->
+<header class="topbar">
+  <div class="tb-inner">
+    <a class="brand" href="dashboard.html" aria-label="The Interns Ledger — admin dashboard">
+      <svg class="mark" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+        <path d="M24 12c-4-3-9-3.5-13-2.5v25c4-1 9-.5 13 2.5 4-3 9-3.5 13-2.5v-25C33 8.5 28 9 24 12Z" stroke="#0D530E" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M24 12v25" stroke="#0D530E" stroke-width="2"/>
+        <path d="M14 17h6M14 21h6M28 17h6M28 21h6M14 25h6M28 25h6" stroke="#306D29" stroke-width="1.3" stroke-linecap="round"/>
+      </svg>
+      <span class="name"><b>THE INTERNS</b><span>LEDGER</span></span>
+    </a>
+    <div class="tb-right">
+      <a class="iconbtn" href="notifications.html" aria-label="Notifications — 5 unread">
+        <span class="dot"></span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 9a6 6 0 1112 0c0 5 2 6 2 6H4s2-1 2-6Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M10 20a2 2 0 004 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </a>
+      <div class="user">
+        <div class="avatar" aria-hidden="true">SA</div>
+        <div class="u-meta"><b>Selorm Adjei</b><span class="role">Administrator</span></div>
+      </div>
+      <a class="iconbtn" href="../public/login.html" aria-label="Log out" title="Log out">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M15 12H5M9 8l-4 4 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 4h7a1 1 0 011 1v14a1 1 0 01-1 1h-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+  </div>
+</header>
+
+<!-- ─── MAIN ─── -->
+<main id="main" class="wrap">
+  <nav class="crumbs" aria-label="Breadcrumb">
+    <a href="dashboard.html">Dashboard</a>
+    <span class="sep">/</span><span>Supervisor links</span>
+  </nav>
+
+  <div class="pagehead">
+    <h1 id="page-title" tabindex="-1">Student–supervisor links</h1>
+    <p>Every student needs one industry supervisor (reviews &amp; seals entries) and one faculty supervisor (assesses &amp; grades). Students can't submit entries until both links exist.</p>
+  </div>
+
+  <div class="status ok" id="msg" role="status" aria-live="polite"></div>
+
+  <!-- ════════ UNLINKED QUEUE ════════ -->
+  <div class="sec-head">
+    <h2>Needs linking</h2>
+    <span class="pill p-warn" id="needs-pill">3 students blocked</span>
+  </div>
+  <div class="card" style="overflow:hidden">
+
+    <div class="un-row" data-stu="Adwoa Larbi">
+      <div class="q-avatar" aria-hidden="true">AL</div>
+      <div class="un-body">
+        <div class="un-name">Adwoa Larbi <span>· Harbour Logistics, Tema</span></div>
+        <div class="un-sub">Missing: <b>industry supervisor</b> · 4 draft entries waiting · placement started 01 Jun</div>
+      </div>
+      <div class="assign">
+        <div class="selectwrap">
+          <label style="position:absolute;left:-9999px" for="s1">Select industry supervisor for Adwoa Larbi</label>
+          <select id="s1">
+            <option selected>Gloria Quartey — Harbour Logistics (invited · 0 interns)</option>
+            <option>Martin Sowah — Harbour Logistics (2 interns)</option>
+          </select>
+        </div>
+        <button class="btn btn-1 btn-sm" data-link>Link</button>
+      </div>
+      <span class="linked-tag"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Linked</span>
+    </div>
+
+    <div class="un-row" data-stu="Kwesi Appiah">
+      <div class="q-avatar" aria-hidden="true">KW</div>
+      <div class="un-body">
+        <div class="un-name">Kwesi Appiah <span>· Harbour Logistics, Tema</span></div>
+        <div class="un-sub">Missing: <b>industry supervisor</b> · placement started 01 Jun</div>
+      </div>
+      <div class="assign">
+        <div class="selectwrap">
+          <label style="position:absolute;left:-9999px" for="s2">Select industry supervisor for Kwesi Appiah</label>
+          <select id="s2">
+            <option selected>Martin Sowah — Harbour Logistics (2 interns)</option>
+            <option>Gloria Quartey — Harbour Logistics (invited · 0 interns)</option>
+          </select>
+        </div>
+        <button class="btn btn-1 btn-sm" data-link>Link</button>
+      </div>
+      <span class="linked-tag"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Linked</span>
+    </div>
+
+    <div class="un-row" data-stu="Ruth Naa Dodoo">
+      <div class="q-avatar" aria-hidden="true">RD</div>
+      <div class="un-body">
+        <div class="un-name">Ruth Naa Dodoo <span>· MediServe Labs, Accra</span></div>
+        <div class="un-sub">Missing: <b>faculty supervisor</b> · industry link in place (Dr. A. Quaynor)</div>
+      </div>
+      <div class="assign">
+        <div class="selectwrap">
+          <label style="position:absolute;left:-9999px" for="s3">Select faculty supervisor for Ruth Naa Dodoo</label>
+          <select id="s3">
+            <option selected>Dr. Esi Dankwa — Computer Science (4 students)</option>
+            <option>Dr. Nana Owusu — Computer Engineering (6 students)</option>
+            <option>Mr. Joseph Annan — Highlands Tech (5 students)</option>
+          </select>
+        </div>
+        <button class="btn btn-1 btn-sm" data-link>Link</button>
+      </div>
+      <span class="linked-tag"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Linked</span>
+    </div>
+
+  </div>
+
+  <!-- ════════ EXISTING LINKS ════════ -->
+  <div class="sec-head">
+    <h2>Active links</h2>
+    <span class="pill p-ok">315 complete</span>
+  </div>
+  <div class="toolbar">
+    <div class="search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <label for="q" style="position:absolute;left:-9999px">Search links</label>
+      <input id="q" placeholder="Search student or supervisor…" autocomplete="off">
+    </div>
+  </div>
+  <div class="card" style="overflow:hidden">
+    <div id="links">
+
+      <div class="l-row" data-q="ama mensah kwabena osei esi dankwa nimbus">
+        <div class="l-stu">
+          <div class="q-avatar">AM</div>
+          <div><div class="nm">Ama Mensah</div><div class="un">Nimbus Software Ltd.</div></div>
+        </div>
+        <svg class="arrow" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div class="l-sup"><b>Kwabena Osei<span class="tag tg-ind">IND</span></b><span class="cap">Nimbus · <b>4 interns</b></span></div>
+        <div class="l-sup"><b>Dr. Esi Dankwa<span class="tag tg-fac">FAC</span></b><span class="cap">Coastline · <b>4 students</b></span></div>
+        <div class="l-act"><button class="mini" aria-label="Change links for Ama Mensah" data-change="Ama Mensah"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 20h4L19 9l-4-4L4 16v4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></button></div>
+      </div>
+
+      <div class="l-row" data-q="yaw boateng kwabena osei esi dankwa nimbus">
+        <div class="l-stu">
+          <div class="q-avatar">YB</div>
+          <div><div class="nm">Yaw Boateng</div><div class="un">Nimbus Software Ltd.</div></div>
+        </div>
+        <svg class="arrow" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div class="l-sup"><b>Kwabena Osei<span class="tag tg-ind">IND</span></b><span class="cap">Nimbus · <b>4 interns</b></span></div>
+        <div class="l-sup"><b>Dr. Esi Dankwa<span class="tag tg-fac">FAC</span></b><span class="cap">Coastline · <b>4 students</b></span></div>
+        <div class="l-act"><button class="mini" aria-label="Change links for Yaw Boateng" data-change="Yaw Boateng"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 20h4L19 9l-4-4L4 16v4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></button></div>
+      </div>
+
+      <div class="l-row" data-q="kofi darko kwabena osei nana owusu nimbus">
+        <div class="l-stu">
+          <div class="q-avatar">KD</div>
+          <div><div class="nm">Kofi Darko</div><div class="un">Nimbus Software Ltd.</div></div>
+        </div>
+        <svg class="arrow" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div class="l-sup"><b>Kwabena Osei<span class="tag tg-ind">IND</span></b><span class="cap">Nimbus · <b>4 interns</b></span></div>
+        <div class="l-sup"><b>Dr. Nana Owusu<span class="tag tg-fac">FAC</span></b><span class="cap">Coastline · <b>6 students</b></span></div>
+        <div class="l-act"><button class="mini" aria-label="Change links for Kofi Darko" data-change="Kofi Darko"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 20h4L19 9l-4-4L4 16v4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></button></div>
+      </div>
+
+      <div class="l-row" data-q="efua asante akosua frimpong joseph annan studiomint">
+        <div class="l-stu">
+          <div class="q-avatar">EA</div>
+          <div><div class="nm">Efua Asante</div><div class="un">StudioMint Creative</div></div>
+        </div>
+        <svg class="arrow" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div class="l-sup"><b>Akosua Frimpong<span class="tag tg-ind">IND</span></b><span class="cap">StudioMint · <b>3 interns</b></span></div>
+        <div class="l-sup"><b>Mr. Joseph Annan<span class="tag tg-fac">FAC</span></b><span class="cap">Highlands · <b>5 students</b></span></div>
+        <div class="l-act"><button class="mini" aria-label="Change links for Efua Asante" data-change="Efua Asante"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 20h4L19 9l-4-4L4 16v4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></button></div>
+      </div>
+
+      <div class="l-row" data-q="kojo antwi daniel tetteh esi dankwa bluewave">
+        <div class="l-stu">
+          <div class="q-avatar">KA</div>
+          <div><div class="nm">Kojo Antwi</div><div class="un">BlueWave Analytics</div></div>
+        </div>
+        <svg class="arrow" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div class="l-sup"><b>Daniel Tetteh<span class="tag tg-ind">IND</span></b><span class="cap">BlueWave · <b>2 interns</b></span></div>
+        <div class="l-sup"><b>Dr. Esi Dankwa<span class="tag tg-fac">FAC</span></b><span class="cap">Coastline · <b>4 students</b></span></div>
+        <div class="l-act"><button class="mini" aria-label="Change links for Kojo Antwi" data-change="Kojo Antwi"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 20h4L19 9l-4-4L4 16v4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></button></div>
+      </div>
+
+    </div>
+    <div class="empty" id="empty">No links match your search.</div>
+  </div>
+
+  <div class="note">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="5" y="10" width="14" height="10" rx="2.5" stroke="currentColor" stroke-width="1.8"/><path d="M8 10V8a4 4 0 018 0v2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    <span><b>Link changes never affect sealed history.</b> If a supervisor changes mid-placement, entries they already sealed keep their original signature; only future reviews go to the new supervisor. Every link change is recorded in the <a href="audit-trail.html" style="color:var(--green-700);font-weight:700">audit trail</a>.</span>
+  </div>
+
+</main>
+
+<script>
+  const msg=document.getElementById('msg');
+  function flash(text){
+    msg.innerHTML='<svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> '+text;
+    msg.classList.add('show');setTimeout(()=>msg.classList.remove('show'),4000);
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  /* link action */
+  let blocked=3;
+  const pill=document.getElementById('needs-pill');
+  document.querySelectorAll('[data-link]').forEach(b=>b.addEventListener('click',()=>{
+    const row=b.closest('.un-row');
+    const sel=row.querySelector('select');
+    row.classList.add('linked');
+    blocked--;
+    pill.textContent=blocked?blocked+' student'+(blocked>1?'s':'')+' blocked':'All students linked 🎉';
+    if(!blocked){pill.classList.remove('p-warn');pill.classList.add('p-ok')}
+    flash(row.dataset.stu+' linked to '+sel.value.split(' — ')[0]+' — recorded in the audit trail. The student can now submit entries.');
+  }));
+
+  /* search */
+  const q=document.getElementById('q');
+  const rows=[...document.querySelectorAll('.l-row')];
+  const empty=document.getElementById('empty');
+  q.addEventListener('input',()=>{
+    const term=q.value.trim().toLowerCase();let n=0;
+    rows.forEach(r=>{const ok=!term||r.dataset.q.includes(term);r.style.display=ok?'':'none';if(ok)n++});
+    empty.style.display=n?'none':'block';
+  });
+
+  /* change demo */
+  document.querySelectorAll('[data-change]').forEach(b=>b.addEventListener('click',()=>{
+    flash('Link editor for '+b.dataset.change+' would open here. Changes are audit-logged. (Demo)');
+  }));
+</script>
+</body>
+</html>

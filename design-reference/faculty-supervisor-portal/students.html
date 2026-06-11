@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assigned Students — The Interns Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/main.css">
+<style>
+  .pagehead{margin-bottom:22px}
+  .pagehead h1{font-size:clamp(1.7rem,3.4vw,2.1rem);margin-bottom:4px}
+  .pagehead p{color:var(--muted);font-size:.98rem;max-width:62ch}
+  .pagehead .count{color:var(--green-bright)}
+
+  .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+  .stat{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:14px 16px;
+    box-shadow:var(--shadow-sm)}
+  .stat .sk{font-size:.72rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted-2)}
+  .stat .sv{font-size:1.3rem;font-weight:800;color:var(--green-900);margin-top:2px;letter-spacing:-.03em;line-height:1}
+  .stat .sv small{font-size:.78rem;font-weight:500;color:var(--muted);letter-spacing:0}
+  .stat .sd{font-size:.78rem;color:var(--muted);margin-top:4px}
+  .stat .sd.good{color:var(--green-700);font-weight:600}
+  .stat .sd.warn{color:var(--amber);font-weight:600}
+  .stat .sd.bad{color:var(--danger);font-weight:600}
+
+  .stu-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .stu-card{display:flex;flex-direction:column;padding:22px;transition:box-shadow .2s,transform .2s,border-color .2s}
+  .stu-card:hover{box-shadow:var(--shadow-md);transform:translateY(-3px);border-color:rgba(8,203,0,.4)}
+  .sc-top{display:flex;gap:13px;align-items:center;margin-bottom:14px}
+  .q-avatar{width:48px;height:48px;border-radius:50%;background:rgba(13,83,14,.1);
+    color:var(--green-900);display:grid;place-items:center;font-weight:700;font-size:.92rem;flex:none}
+  .sc-top .nm{font-size:1.05rem;font-weight:700;color:var(--green-900);line-height:1.2}
+  .sc-top .un{font-size:.8rem;color:var(--muted-2)}
+  .badge{margin-left:auto;font-size:.7rem;font-weight:700;padding:4px 10px;border-radius:999px;flex:none}
+  .b-ok{background:rgba(8,203,0,.14);color:var(--green-700)}
+  .b-warn{background:var(--amber-bg);color:var(--amber)}
+  .b-violet{background:var(--violet-bg);color:var(--violet)}
+
+  .sc-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;font-size:.8rem;color:var(--muted);
+    margin-bottom:16px}
+  .sc-meta div b{display:block;color:var(--green-900);font-weight:600;font-size:.84rem}
+  .sc-meta div span{font-size:.72rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted-2)}
+
+  .pb-labels{display:flex;justify-content:space-between;font-size:.78rem;color:var(--muted-2);
+    margin-bottom:6px;font-weight:500}
+  .pb-labels b{color:var(--green-900);font-weight:700}
+  .pb-track{height:10px;border-radius:999px;background:rgba(13,83,14,.1);overflow:hidden;display:flex;margin-bottom:14px}
+  .pb-approved{background:var(--green-bright);border-radius:999px 0 0 999px}
+  .pb-pending{background:#caa53a}
+
+  .as-line{display:flex;align-items:center;gap:8px;font-size:.8rem;color:var(--muted);
+    padding:10px 13px;border:1px solid var(--line);border-radius:11px;margin-bottom:16px;
+    background:rgba(231,225,177,.3)}
+  .as-line svg{flex:none;color:var(--violet)}
+  .as-line b{color:var(--green-900)}
+  .as-line .due{color:var(--amber);font-weight:700}
+  .as-line .ok{color:var(--green-700);font-weight:700}
+
+  .sc-foot{display:flex;gap:10px;align-items:center;margin-top:auto;flex-wrap:wrap}
+  .sc-foot .spacer{flex:1}
+
+  @media(max-width:860px){
+    .stats-row{grid-template-columns:repeat(2,1fr)}
+    .stu-grid{grid-template-columns:1fr}
+  }
+  @media(max-width:560px){
+    .stats-row{grid-template-columns:1fr 1fr}
+    .sc-foot .btn{flex:1 1 calc(50% - 10px);justify-content:center}
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<!-- ─── TOP BAR ─── -->
+<header class="topbar">
+  <div class="tb-inner">
+    <a class="brand" href="dashboard.html" aria-label="The Interns Ledger — dashboard">
+      <svg class="mark" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+        <path d="M24 12c-4-3-9-3.5-13-2.5v25c4-1 9-.5 13 2.5 4-3 9-3.5 13-2.5v-25C33 8.5 28 9 24 12Z" stroke="#0D530E" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M24 12v25" stroke="#0D530E" stroke-width="2"/>
+        <path d="M14 17h6M14 21h6M28 17h6M28 21h6M14 25h6M28 25h6" stroke="#306D29" stroke-width="1.3" stroke-linecap="round"/>
+      </svg>
+      <span class="name"><b>THE INTERNS</b><span>LEDGER</span></span>
+    </a>
+    <div class="tb-right">
+      <a class="iconbtn" href="notifications.html" aria-label="Notifications — 3 unread">
+        <span class="dot"></span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 9a6 6 0 1112 0c0 5 2 6 2 6H4s2-1 2-6Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M10 20a2 2 0 004 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </a>
+      <div class="user">
+        <div class="avatar" aria-hidden="true">ED</div>
+        <div class="u-meta"><b>Dr. Esi Dankwa</b><span class="role">Faculty supervisor</span></div>
+      </div>
+      <a class="iconbtn" href="../public/login.html" aria-label="Log out" title="Log out">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M15 12H5M9 8l-4 4 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 4h7a1 1 0 011 1v14a1 1 0 01-1 1h-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+  </div>
+</header>
+
+<!-- ─── MAIN ─── -->
+<main id="main" class="wrap">
+  <nav class="crumbs" aria-label="Breadcrumb">
+    <a href="dashboard.html">Dashboard</a>
+    <span class="sep">/</span><span>Assigned students</span>
+  </nav>
+
+  <div class="pagehead">
+    <h1 id="page-title" tabindex="-1">Assigned students <span class="count">· 4</span></h1>
+    <p>Students under your academic supervision this term. Their logbooks are read-only for you — entries are approved by their industry supervisors, and you grade against the verified record.</p>
+  </div>
+
+  <!-- summary stats -->
+  <div class="stats-row">
+    <div class="stat">
+      <div class="sk">Active students</div>
+      <div class="sv">4</div>
+      <div class="sd">3 host companies</div>
+    </div>
+    <div class="stat">
+      <div class="sk">Avg. completion</div>
+      <div class="sv">71<small>%</small></div>
+      <div class="sd good">↑ 4% this week</div>
+    </div>
+    <div class="stat">
+      <div class="sk">Assessments done</div>
+      <div class="sv">5 <small>of 8</small></div>
+      <div class="sd warn">1 due 15 Jun</div>
+    </div>
+    <div class="stat">
+      <div class="sk">Behind pace</div>
+      <div class="sv">1 <small>student</small></div>
+      <div class="sd bad">Yaw Boateng</div>
+    </div>
+  </div>
+
+  <!-- student cards -->
+  <div class="stu-grid">
+
+    <!-- Ama -->
+    <div class="card stu-card">
+      <div class="sc-top">
+        <div class="q-avatar" aria-hidden="true">AM</div>
+        <div><div class="nm">Ama Mensah</div><div class="un">BSc Computer Science · CU-2023-0481</div></div>
+        <span class="badge b-ok">On track</span>
+      </div>
+      <div class="sc-meta">
+        <div><span>Placement</span><b>Nimbus Software Ltd. · Accra</b></div>
+        <div><span>Industry supervisor</span><b>Kwabena Osei</b></div>
+        <div><span>Period</span><b>03 Mar – 07 Jul 2026 · wk 14/18</b></div>
+        <div><span>Last sealed entry</span><b>Thu, 04 Jun 2026</b></div>
+      </div>
+      <div class="pb-labels"><span><b>372.5</b> / 480 hrs verified</span><b>78%</b></div>
+      <div class="pb-track" role="progressbar" aria-valuenow="78" aria-valuemin="0" aria-valuemax="100" aria-label="Ama Mensah — 78 percent of hours verified">
+        <div class="pb-approved" style="width:78%"></div><div class="pb-pending" style="width:2.9%"></div>
+      </div>
+      <div class="as-line">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 4h11l3 3v13H5V4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 12l2.5 2.5L16 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span><b>Mid-term assessment</b> · <span class="due">due 15 Jun 2026</span></span>
+      </div>
+      <div class="sc-foot">
+        <a class="btn btn-3 btn-sm" href="student-progress.html">Progress</a>
+        <a class="btn btn-3 btn-sm" href="logbook-view.html">Logbook</a>
+        <span class="spacer"></span>
+        <a class="btn btn-1 btn-sm" href="assessment.html">Assess now</a>
+      </div>
+    </div>
+
+    <!-- Yaw -->
+    <div class="card stu-card">
+      <div class="sc-top">
+        <div class="q-avatar" aria-hidden="true">YB</div>
+        <div><div class="nm">Yaw Boateng</div><div class="un">BSc Information Technology · CU-2023-1107</div></div>
+        <span class="badge b-warn">Behind pace</span>
+      </div>
+      <div class="sc-meta">
+        <div><span>Placement</span><b>Nimbus Software Ltd. · Accra</b></div>
+        <div><span>Industry supervisor</span><b>Kwabena Osei</b></div>
+        <div><span>Period</span><b>03 Mar – 07 Jul 2026 · wk 14/18</b></div>
+        <div><span>Last sealed entry</span><b>Thu, 28 May 2026</b></div>
+      </div>
+      <div class="pb-labels"><span><b>307</b> / 480 hrs verified</span><b>64%</b></div>
+      <div class="pb-track" role="progressbar" aria-valuenow="64" aria-valuemin="0" aria-valuemax="100" aria-label="Yaw Boateng — 64 percent of hours verified">
+        <div class="pb-approved" style="width:64%"></div><div class="pb-pending" style="width:1.7%"></div>
+      </div>
+      <div class="as-line">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 4h11l3 3v13H5V4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 12l2.5 2.5L16 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span><b>Mid-term assessment</b> · <span class="ok">graded B+ on 30 May</span> · final due 20 Jul</span>
+      </div>
+      <div class="sc-foot">
+        <a class="btn btn-3 btn-sm" href="student-progress.html">Progress</a>
+        <a class="btn btn-3 btn-sm" href="logbook-view.html">Logbook</a>
+        <span class="spacer"></span>
+        <a class="btn btn-3 btn-sm" href="assessment-history.html">View grade</a>
+      </div>
+    </div>
+
+    <!-- Abena -->
+    <div class="card stu-card">
+      <div class="sc-top">
+        <div class="q-avatar" aria-hidden="true">AO</div>
+        <div><div class="nm">Abena Owusu</div><div class="un">BSc Actuarial Science · CU-2023-0292</div></div>
+        <span class="badge b-ok">On track</span>
+      </div>
+      <div class="sc-meta">
+        <div><span>Placement</span><b>Sentinel Insurance · Kumasi</b></div>
+        <div><span>Industry supervisor</span><b>Akosua Frimpong</b></div>
+        <div><span>Period</span><b>23 Mar – 17 Jul 2026 · wk 12/17</b></div>
+        <div><span>Last sealed entry</span><b>Tue, 09 Jun 2026</b></div>
+      </div>
+      <div class="pb-labels"><span><b>276</b> / 400 hrs verified</span><b>69%</b></div>
+      <div class="pb-track" role="progressbar" aria-valuenow="69" aria-valuemin="0" aria-valuemax="100" aria-label="Abena Owusu — 69 percent of hours verified">
+        <div class="pb-approved" style="width:69%"></div><div class="pb-pending" style="width:2.5%"></div>
+      </div>
+      <div class="as-line">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 4h11l3 3v13H5V4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 12l2.5 2.5L16 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span><b>Mid-term assessment</b> · <span class="ok">graded A− on 02 Jun</span> · final due 24 Jul</span>
+      </div>
+      <div class="sc-foot">
+        <a class="btn btn-3 btn-sm" href="student-progress.html">Progress</a>
+        <a class="btn btn-3 btn-sm" href="logbook-view.html">Logbook</a>
+        <span class="spacer"></span>
+        <a class="btn btn-3 btn-sm" href="assessment-history.html">View grade</a>
+      </div>
+    </div>
+
+    <!-- Kojo -->
+    <div class="card stu-card">
+      <div class="sc-top">
+        <div class="q-avatar" aria-hidden="true">KA</div>
+        <div><div class="nm">Kojo Antwi</div><div class="un">BSc Computer Science · CU-2023-0856</div></div>
+        <span class="badge b-violet">Report received</span>
+      </div>
+      <div class="sc-meta">
+        <div><span>Placement</span><b>BlueWave Analytics · Accra</b></div>
+        <div><span>Industry supervisor</span><b>Daniel Tetteh</b></div>
+        <div><span>Period</span><b>09 Mar – 31 Jul 2026 · wk 13/18</b></div>
+        <div><span>Last sealed entry</span><b>Mon, 08 Jun 2026</b></div>
+      </div>
+      <div class="pb-labels"><span><b>350</b> / 480 hrs verified</span><b>73%</b></div>
+      <div class="pb-track" role="progressbar" aria-valuenow="73" aria-valuemin="0" aria-valuemax="100" aria-label="Kojo Antwi — 73 percent of hours verified">
+        <div class="pb-approved" style="width:73%"></div><div class="pb-pending" style="width:2%"></div>
+      </div>
+      <div class="as-line">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 4h11l3 3v13H5V4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 12l2.5 2.5L16 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span><b>Sealed interim report</b> received 09 Jun · <b>final assessment</b> due 20 Jul</span>
+      </div>
+      <div class="sc-foot">
+        <a class="btn btn-3 btn-sm" href="student-progress.html">Progress</a>
+        <a class="btn btn-3 btn-sm" href="logbook-view.html">Logbook</a>
+        <span class="spacer"></span>
+        <a class="btn btn-3 btn-sm" href="assessment-history.html">History</a>
+      </div>
+    </div>
+
+  </div>
+</main>
+</body>
+</html>

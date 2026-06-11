@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reset your password — The Interns Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/main.css">
+<style>
+  .center{min-height:calc(100vh - 66px);display:grid;place-items:center;padding:40px 24px;position:relative;z-index:1}
+  .box{width:100%;max-width:480px}
+  .card{padding:36px 34px}
+  .big-ic{width:74px;height:74px;border-radius:20px;background:rgba(8,203,0,.1);color:var(--green-900);
+    display:grid;place-items:center;margin:0 auto 18px}
+  .big-ic.ok{background:rgba(8,203,0,.14);color:var(--green-700)}
+  .card h1{font-size:clamp(1.4rem,3vw,1.7rem);margin-bottom:8px;text-align:center}
+  .card .sub{color:var(--muted);font-size:.95rem;line-height:1.65;margin-bottom:22px;text-align:center}
+  .card .sub b{color:var(--green-900)}
+  .field{margin-bottom:16px;display:flex;flex-direction:column}
+  .field label{margin-bottom:7px}
+  .input-wrap{position:relative}
+  .toggle-eye{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;
+    border:0;cursor:pointer;color:var(--muted-2);padding:4px;display:grid;place-items:center}
+  .toggle-eye:hover{color:var(--green-700)}
+  .meter{height:6px;border-radius:999px;background:rgba(13,83,14,.1);margin-top:8px;overflow:hidden}
+  .meter span{display:block;height:100%;width:0;border-radius:999px;background:var(--danger);transition:width .3s,background .3s}
+  .acts{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+  .acts .btn{width:100%;justify-content:center}
+  .resend{font-size:.88rem;color:var(--muted);margin-top:18px;text-align:center}
+  .resend button{background:none;border:0;font-family:inherit;font-size:inherit;font-weight:700;
+    color:var(--green-700);cursor:pointer;padding:0}
+  .resend button:hover{color:var(--green-bright)}
+  .meta-links{display:flex;justify-content:center;gap:18px;margin-top:22px;font-size:.86rem;flex-wrap:wrap}
+  .meta-links a{font-weight:600;color:var(--green-700)}
+  .meta-links a:hover{color:var(--green-bright)}
+  .note{display:flex;gap:9px;align-items:flex-start;margin-top:22px;padding:12px 15px;
+    border-radius:12px;background:rgba(231,225,177,.45);border:1px solid var(--line);
+    font-size:.8rem;color:var(--muted)}
+  .note svg{flex:none;margin-top:1px;color:var(--green-700)}
+  .v-state{display:none}
+  .v-state.show{display:block;animation:rise .4s cubic-bezier(.2,.7,.2,1)}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .center-txt{text-align:center}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <div class="tb-inner">
+    <a class="brand" href="index.html" aria-label="The Interns Ledger — home">
+      <svg class="mark" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+        <path d="M24 12c-4-3-9-3.5-13-2.5v25c4-1 9-.5 13 2.5 4-3 9-3.5 13-2.5v-25C33 8.5 28 9 24 12Z" stroke="#0D530E" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M24 12v25" stroke="#0D530E" stroke-width="2"/>
+        <path d="M14 17h6M14 21h6M28 17h6M28 21h6M14 25h6M28 25h6" stroke="#306D29" stroke-width="1.3" stroke-linecap="round"/>
+      </svg>
+      <span class="name"><b>THE INTERNS</b><span>LEDGER</span></span>
+    </a>
+    <div class="tb-right">
+      <a class="btn btn-3 btn-sm" href="login.html">Log in</a>
+    </div>
+  </div>
+</header>
+
+<main id="main" class="center">
+  <div class="box">
+
+    <!-- ════════ STATE 1: REQUEST LINK ════════ -->
+    <div class="v-state show" id="s-request">
+      <div class="card">
+        <div class="big-ic" aria-hidden="true">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none"><circle cx="8.5" cy="13.5" r="4.5" stroke="currentColor" stroke-width="1.8"/><path d="M12 12l8-8M17 7l2.5 2.5M14.5 9.5L17 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <h1 id="page-title" tabindex="-1">Forgot your password?</h1>
+        <p class="sub">No problem. Enter the email you registered with and we'll send a secure reset link.</p>
+        <form id="req-form" novalidate>
+          <div class="field">
+            <label for="email">Email address</label>
+            <input id="email" type="email" placeholder="you@example.com" autocomplete="email" required>
+          </div>
+          <div class="acts">
+            <button class="btn btn-1" type="submit">Send reset link</button>
+            <a class="btn btn-3" href="login.html">Back to login</a>
+          </div>
+        </form>
+      </div>
+      <div class="note">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 11v5M12 8h.01" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+        <span><b style="color:var(--green-900)">Prototype notice:</b> no email is actually sent — the flow continues in the UI so you can preview every screen.</span>
+      </div>
+    </div>
+
+    <!-- ════════ STATE 2: LINK SENT ════════ -->
+    <div class="v-state" id="s-sent">
+      <div class="card center-txt">
+        <div class="big-ic" aria-hidden="true">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 7l8.5 6 8.5-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h1>Reset link sent</h1>
+        <p class="sub">If an account exists for <b id="sent-email">that address</b>, a reset link is on its way. It expires in 30 minutes.</p>
+        <div class="acts">
+          <button class="btn btn-1" id="simulate">I've clicked the link — set new password</button>
+          <a class="btn btn-3" href="login.html">Back to login</a>
+        </div>
+        <p class="resend">Nothing arrived? Check spam, or <button id="again">try a different email</button></p>
+      </div>
+    </div>
+
+    <!-- ════════ STATE 3: NEW PASSWORD ════════ -->
+    <div class="v-state" id="s-new">
+      <div class="card">
+        <div class="big-ic" aria-hidden="true">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none"><rect x="5" y="10" width="14" height="10" rx="2.5" stroke="currentColor" stroke-width="1.8"/><path d="M8 10V8a4 4 0 018 0v2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <h1>Choose a new password</h1>
+        <p class="sub">For <b id="who">your account</b>. You'll be signed out everywhere else once it's changed.</p>
+        <form id="new-form" novalidate>
+          <div class="field">
+            <label for="pw">New password</label>
+            <div class="input-wrap">
+              <input id="pw" type="password" placeholder="At least 10 characters" autocomplete="new-password" required>
+              <button type="button" class="toggle-eye" id="eye" aria-label="Show password">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="2.6" stroke="currentColor" stroke-width="1.7"/></svg>
+              </button>
+            </div>
+            <div class="meter" aria-hidden="true"><span id="meter-fill"></span></div>
+            <p class="hint">Use 10+ characters with a mix of cases, a number, and a symbol.</p>
+          </div>
+          <div class="field">
+            <label for="conf">Confirm new password</label>
+            <input id="conf" type="password" autocomplete="new-password" required>
+            <p class="hint" id="conf-hint"></p>
+          </div>
+          <div class="acts">
+            <button class="btn btn-1" type="submit">Update password</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ════════ STATE 4: DONE ════════ -->
+    <div class="v-state" id="s-done">
+      <div class="card center-txt">
+        <div class="big-ic ok" aria-hidden="true">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h1>Password updated</h1>
+        <p class="sub">Your password has been changed and other sessions were signed out. You can log in now.</p>
+        <div class="acts">
+          <a class="btn btn-1" href="login.html">Continue to login</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="meta-links">
+      <a href="login.html">Log in</a>
+      <a href="register.html">Create an account</a>
+      <a href="verify.html">Verify a report</a>
+    </div>
+  </div>
+</main>
+
+<script>
+  const states=['s-request','s-sent','s-new','s-done'];
+  function go(id){
+    states.forEach(s=>document.getElementById(s).classList.toggle('show',s===id));
+    window.scrollTo({top:0});
+  }
+  let email='';
+  document.getElementById('req-form').addEventListener('submit',e=>{
+    e.preventDefault();
+    email=document.getElementById('email').value.trim()||'that address';
+    document.getElementById('sent-email').textContent=email;
+    document.getElementById('who').textContent=email;
+    go('s-sent');
+  });
+  document.getElementById('simulate').addEventListener('click',()=>go('s-new'));
+  document.getElementById('again').addEventListener('click',()=>go('s-request'));
+
+  // show/hide + strength + match
+  const pw=document.getElementById('pw'),conf=document.getElementById('conf'),
+        fill=document.getElementById('meter-fill'),confHint=document.getElementById('conf-hint'),
+        eye=document.getElementById('eye');
+  eye.addEventListener('click',()=>{
+    pw.type=pw.type==='password'?'text':'password';
+    eye.setAttribute('aria-label',pw.type==='password'?'Show password':'Hide password');
+  });
+  function strength(){
+    const v=pw.value;let s=0;
+    if(v.length>=10)s++;if(/\d/.test(v))s++;
+    if(/[a-z]/.test(v)&&/[A-Z]/.test(v))s++;if(/[^A-Za-z0-9]/.test(v))s++;
+    fill.style.width=(s*25)+'%';
+    fill.style.background=s<2?'var(--danger)':s<4?'#caa53a':'var(--green-bright)';
+    return s;
+  }
+  function match(){
+    if(!conf.value){confHint.textContent='';return false}
+    const ok=conf.value===pw.value;
+    confHint.textContent=ok?'Passwords match.':'Passwords don’t match yet.';
+    confHint.style.color=ok?'var(--green-700)':'var(--muted-2)';
+    return ok;
+  }
+  pw.addEventListener('input',()=>{strength();match()});
+  conf.addEventListener('input',match);
+  document.getElementById('new-form').addEventListener('submit',e=>{
+    e.preventDefault();
+    if(strength()<2){pw.focus();return}
+    if(!match()){conf.focus();return}
+    go('s-done');
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verify a report — The Interns Ledger</title>
+<meta name="description" content="Check the authenticity of any Interns Ledger report. Enter the verification token from the QR code — no account needed.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/main.css">
+<style>
+  .vwrap{max-width:760px;margin:0 auto;padding:48px 24px 80px;position:relative;z-index:1}
+  .vhead{text-align:center;margin-bottom:28px}
+  .vhead .qr{width:74px;height:74px;border-radius:20px;background:rgba(8,203,0,.1);color:var(--green-900);
+    display:grid;place-items:center;margin:0 auto 18px}
+  .vhead h1{font-size:clamp(1.6rem,3.4vw,2.1rem);margin-bottom:8px}
+  .vhead p{color:var(--muted);font-size:.98rem;max-width:54ch;margin:0 auto}
+
+  .v-card{padding:26px;margin-bottom:20px}
+  .v-form{display:flex;gap:10px}
+  .v-form input{flex:1;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.04em;
+    text-transform:uppercase}
+  .demo{margin-top:14px;font-size:.8rem;color:var(--muted-2);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .demo button{font-family:ui-monospace,Menlo,monospace;font-size:.74rem;font-weight:600;
+    color:var(--green-700);background:rgba(8,203,0,.08);border:1px solid rgba(8,203,0,.25);
+    border-radius:999px;padding:4px 11px;cursor:pointer;transition:background .18s}
+  .demo button:hover{background:rgba(8,203,0,.16)}
+
+  /* result shells */
+  .res{display:none;animation:rise .45s cubic-bezier(.2,.7,.2,1)}
+  .res.show{display:block}
+  @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+  .res-band{display:flex;gap:14px;align-items:center;padding:18px 22px;border-radius:16px 16px 0 0}
+  .res-band .ic{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;flex:none}
+  .res-band h2{font-size:1.15rem;margin-bottom:1px}
+  .res-band p{font-size:.84rem}
+  .band-ok{background:rgba(8,203,0,.1);border:1px solid rgba(8,203,0,.3);border-bottom:0}
+  .band-ok .ic{background:rgba(8,203,0,.18);color:var(--green-700)}
+  .band-ok p{color:var(--green-700)}
+  .band-bad{background:var(--danger-bg);border:1px solid var(--danger-line);border-bottom:0}
+  .band-bad .ic{background:rgba(179,38,30,.14);color:var(--danger)}
+  .band-bad h2{color:var(--danger)}
+  .band-bad p{color:var(--danger)}
+  .res-body{background:var(--white);border:1px solid var(--line);border-top:0;
+    border-radius:0 0 16px 16px;box-shadow:var(--shadow-sm);padding:24px}
+
+  .kv{display:grid;grid-template-columns:1fr 1fr;gap:14px 22px;margin-bottom:20px}
+  .kv div .k{font-size:.7rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted-2)}
+  .kv div .v{font-size:.94rem;font-weight:600;color:var(--green-900);margin-top:2px}
+  .kv div .v span{font-weight:400;color:var(--muted);font-size:.84rem}
+  .kv .full{grid-column:1/-1}
+  code.hash{font-family:ui-monospace,Menlo,monospace;font-size:.76rem;color:var(--green-900);
+    background:rgba(13,83,14,.07);padding:2px 7px;border-radius:6px;word-break:break-all}
+
+  .checks{display:flex;flex-direction:column;gap:9px;margin-bottom:4px}
+  .check{display:flex;gap:10px;align-items:center;font-size:.86rem;color:var(--muted);font-weight:500}
+  .check svg{flex:none;color:var(--green-700)}
+  .check b{color:var(--green-900)}
+
+  .privacy{display:flex;gap:9px;align-items:flex-start;margin-top:18px;padding:12px 15px;
+    border-radius:12px;background:rgba(231,225,177,.45);border:1px solid var(--line);
+    font-size:.8rem;color:var(--muted)}
+  .privacy svg{flex:none;margin-top:1px;color:var(--green-700)}
+  .privacy b{color:var(--green-900)}
+
+  .hrs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+  .hr-stat{background:rgba(231,225,177,.35);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  .hr-stat .k{font-size:.68rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted-2)}
+  .hr-stat .v{font-size:1.2rem;font-weight:800;color:var(--green-900);letter-spacing:-.02em}
+  .hr-stat .v small{font-size:.74rem;font-weight:500;color:var(--muted)}
+
+  .bad-list{margin:0 0 18px;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+  .bad-list li{display:flex;gap:9px;align-items:flex-start;font-size:.88rem;color:var(--muted)}
+  .bad-list svg{flex:none;margin-top:2px;color:var(--danger)}
+
+  .res-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+
+  .meta-links{display:flex;justify-content:center;gap:18px;margin-top:26px;font-size:.86rem;flex-wrap:wrap}
+  .meta-links a{font-weight:600;color:var(--green-700)}
+  .meta-links a:hover{color:var(--green-bright)}
+
+  @media(max-width:560px){
+    .v-form{flex-direction:column}
+    .kv{grid-template-columns:1fr}
+    .hrs{grid-template-columns:1fr}
+    .res-actions .btn{width:100%;justify-content:center}
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <div class="tb-inner">
+    <a class="brand" href="index.html" aria-label="The Interns Ledger — home">
+      <svg class="mark" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+        <path d="M24 12c-4-3-9-3.5-13-2.5v25c4-1 9-.5 13 2.5 4-3 9-3.5 13-2.5v-25C33 8.5 28 9 24 12Z" stroke="#0D530E" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M24 12v25" stroke="#0D530E" stroke-width="2"/>
+        <path d="M14 17h6M14 21h6M28 17h6M28 21h6M14 25h6M28 25h6" stroke="#306D29" stroke-width="1.3" stroke-linecap="round"/>
+      </svg>
+      <span class="name"><b>THE INTERNS</b><span>LEDGER</span></span>
+    </a>
+    <div class="tb-right">
+      <a class="btn btn-3 btn-sm" href="login.html">Log in</a>
+      <a class="btn btn-1 btn-sm" href="register.html">Get started</a>
+    </div>
+  </div>
+</header>
+
+<main id="main" class="vwrap">
+  <div class="vhead">
+    <div class="qr" aria-hidden="true">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13" y="4" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="4" y="13" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><path d="M13 13h3v3h-3zM17 17h3v3h-3z" stroke="currentColor" stroke-width="1.8"/></svg>
+    </div>
+    <h1 id="page-title" tabindex="-1">Verify a report</h1>
+    <p>Scan the QR code on an Interns Ledger report, or type the token printed beneath it. No account needed — verification is free and instant.</p>
+  </div>
+
+  <!-- ════════ TOKEN FORM ════════ -->
+  <div class="card v-card">
+    <form class="v-form" id="v-form" novalidate>
+      <label for="token" style="position:absolute;left:-9999px">Verification token</label>
+      <input id="token" placeholder="TIL-XXXX-XXXX-XX" autocomplete="off" spellcheck="false">
+      <button class="btn btn-1" type="submit">Verify</button>
+    </form>
+    <div class="demo">
+      <span>Demo tokens:</span>
+      <button type="button" data-t="TIL-9F3A-72KQ-X1">TIL-9F3A-72KQ-X1 (full)</button>
+      <button type="button" data-t="TIL-2C8D-11PM-A4">TIL-2C8D-11PM-A4 (minimal)</button>
+      <button type="button" data-t="TIL-0000-0000-00">TIL-0000-0000-00 (not found)</button>
+    </div>
+  </div>
+
+  <!-- ════════ RESULT: FULL (opt-in) ════════ -->
+  <section class="res" id="res-full" aria-live="polite">
+    <div class="res-band band-ok">
+      <div class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6l7-3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div>
+        <h2>Authentic report — record intact</h2>
+        <p>Token <b id="full-token">TIL-9F3A-72KQ-X1</b> · verified just now · full details shared by the student</p>
+      </div>
+    </div>
+    <div class="res-body">
+      <div class="kv">
+        <div><div class="k">Student</div><div class="v">Ama Mensah <span>· BSc Computer Science</span></div></div>
+        <div><div class="k">Institution</div><div class="v">Coastline University</div></div>
+        <div><div class="k">Internship</div><div class="v">Nimbus Software Ltd. <span>· Platform Engineering</span></div></div>
+        <div><div class="k">Period</div><div class="v">03 Mar – 07 Jul 2026 <span>· 18 weeks</span></div></div>
+        <div><div class="k">Industry supervisor</div><div class="v">Kwabena Osei <span>· Engineering Manager</span></div></div>
+        <div><div class="k">Report sealed</div><div class="v">09 Jun 2026, 14:31 GMT</div></div>
+      </div>
+      <div class="hrs">
+        <div class="hr-stat"><div class="k">Approved hours</div><div class="v">372.5 <small>/ 480</small></div></div>
+        <div class="hr-stat"><div class="k">Approved entries</div><div class="v">47</div></div>
+        <div class="hr-stat"><div class="k">Record status</div><div class="v" style="font-size:.95rem">In progress</div></div>
+      </div>
+      <div class="checks">
+        <div class="check"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>Signature valid</b> — report was issued by The Interns Ledger</span></div>
+        <div class="check"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>Hash chain intact</b> — no entry has been altered since approval</span></div>
+        <div class="check"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>Not revoked</b> — token is active and unexpired</span></div>
+      </div>
+      <div class="kv" style="margin:18px 0 0"><div class="full"><div class="k">Record fingerprint</div><div class="v"><code class="hash">sha256: 7f3a91c4e2b8d5a6f0c3…b44a1c91e</code></div></div></div>
+      <div class="privacy">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 11v5M12 8h.01" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+        <span><b>Why am I seeing full details?</b> This student opted in to sharing their record summary with anyone holding the token. Students control this in their report settings.</span>
+      </div>
+      <div class="res-actions">
+        <button class="btn btn-3 btn-sm" onclick="window.print()">Print verification</button>
+        <button class="btn btn-3 btn-sm" data-reset>Verify another report</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ RESULT: MINIMAL ════════ -->
+  <section class="res" id="res-min" aria-live="polite">
+    <div class="res-band band-ok">
+      <div class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6l7-3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div>
+        <h2>Authentic report — record intact</h2>
+        <p>Token <b id="min-token">TIL-2C8D-11PM-A4</b> · verified just now · minimal disclosure</p>
+      </div>
+    </div>
+    <div class="res-body">
+      <div class="kv">
+        <div><div class="k">Report type</div><div class="v">Sealed internship record</div></div>
+        <div><div class="k">Report sealed</div><div class="v">28 May 2026, 09:12 GMT</div></div>
+        <div><div class="k">Issuing institution</div><div class="v">Highlands Tech Institute</div></div>
+        <div><div class="k">Record status</div><div class="v">Complete &amp; sealed</div></div>
+      </div>
+      <div class="checks">
+        <div class="check"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>Signature valid</b> — report was issued by The Interns Ledger</span></div>
+        <div class="check"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>Hash chain intact</b> — the document matching this token is unmodified</span></div>
+        <div class="check"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>Not revoked</b> — token is active and unexpired</span></div>
+      </div>
+      <div class="privacy">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="5" y="10" width="14" height="10" rx="2.5" stroke="currentColor" stroke-width="1.8"/><path d="M8 10V8a4 4 0 018 0v2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <span><b>Why so little detail?</b> This student chose minimal disclosure: the token confirms the report you're holding is authentic and unaltered, without exposing personal data. Compare the printed report against the seal date above.</span>
+      </div>
+      <div class="res-actions">
+        <button class="btn btn-3 btn-sm" onclick="window.print()">Print verification</button>
+        <button class="btn btn-3 btn-sm" data-reset>Verify another report</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ RESULT: NOT FOUND / REVOKED ════════ -->
+  <section class="res" id="res-bad" aria-live="polite">
+    <div class="res-band band-bad">
+      <div class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M15 9l-6 6M9 9l6 6" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg></div>
+      <div>
+        <h2>No valid record found</h2>
+        <p>Token <b id="bad-token">TIL-0000-0000-00</b> doesn't match any active report</p>
+      </div>
+    </div>
+    <div class="res-body">
+      <p style="font-size:.92rem;color:var(--muted);margin-bottom:14px">This can happen for a few reasons:</p>
+      <ul class="bad-list">
+        <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 7v6M12 16h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/></svg><span><b style="color:var(--green-900)">Typo in the token</b> — check it against the report; tokens look like TIL-XXXX-XXXX-XX.</span></li>
+        <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 7v6M12 16h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/></svg><span><b style="color:var(--green-900)">The token was revoked</b> — students or institutions can withdraw a shared report at any time.</span></li>
+        <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 7v6M12 16h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/></svg><span><b style="color:var(--green-900)">The report isn't genuine</b> — a document carrying a token that doesn't verify should not be trusted.</span></li>
+      </ul>
+      <div class="privacy">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 11v5M12 8h.01" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+        <span>If you believe this is an error, ask the report holder to re-share their verification token, or contact their institution directly.</span>
+      </div>
+      <div class="res-actions">
+        <button class="btn btn-1 btn-sm" data-reset>Try another token</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="meta-links">
+    <a href="index.html">Home</a>
+    <a href="index.html#security">How verification works</a>
+    <a href="login.html">Log in</a>
+    <a href="register.html">Create an account</a>
+  </div>
+</main>
+
+<script>
+  const input=document.getElementById('token');
+  const results={full:'res-full',min:'res-min',bad:'res-bad'};
+
+  function classify(t){
+    t=t.trim().toUpperCase();
+    if(!t)return null;
+    if(t==='TIL-9F3A-72KQ-X1')return 'full';
+    if(t==='TIL-2C8D-11PM-A4')return 'min';
+    return 'bad';
+  }
+  function show(kind,token){
+    Object.values(results).forEach(id=>document.getElementById(id).classList.remove('show'));
+    if(!kind)return;
+    const id=results[kind];
+    const lbl={full:'full-token',min:'min-token',bad:'bad-token'}[kind];
+    document.getElementById(lbl).textContent=token.toUpperCase();
+    document.getElementById(id).classList.add('show');
+    document.getElementById(id).scrollIntoView({behavior:'smooth',block:'start'});
+  }
+  document.getElementById('v-form').addEventListener('submit',e=>{
+    e.preventDefault();
+    const t=input.value.trim();
+    if(!t){input.focus();return}
+    show(classify(t),t);
+  });
+  document.querySelectorAll('.demo button').forEach(b=>b.addEventListener('click',()=>{
+    input.value=b.dataset.t;
+    show(classify(b.dataset.t),b.dataset.t);
+  }));
+  document.querySelectorAll('[data-reset]').forEach(b=>b.addEventListener('click',()=>{
+    show(null);input.value='';input.focus();window.scrollTo({top:0,behavior:'smooth'});
+  }));
+
+  // accept ?token= from the landing page form
+  const q=new URLSearchParams(location.search).get('token');
+  if(q){input.value=q;show(classify(q),q)}
+</script>
+</body>
+</html>

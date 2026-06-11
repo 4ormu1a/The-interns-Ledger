@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ama Mensah — Student Progress — The Interns Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/main.css">
+<style>
+  .sec-head{display:flex;align-items:baseline;gap:10px;margin-bottom:14px}
+  .sec-head h2{font-size:1.1rem}
+  .sec-head a{font-size:.84rem;font-weight:700;color:var(--green-700);margin-left:auto}
+  .sec-head a:hover{color:var(--green-bright)}
+
+  /* profile header */
+  .profile{display:flex;gap:18px;align-items:center;padding:24px;flex-wrap:wrap}
+  .p-avatar{width:64px;height:64px;border-radius:50%;background:var(--green-900);color:#fff;
+    display:grid;place-items:center;font-weight:700;font-size:1.25rem;flex:none}
+  .p-id h1{font-size:clamp(1.4rem,2.8vw,1.7rem);margin-bottom:2px}
+  .p-id p{font-size:.86rem;color:var(--muted)}
+  .badge{font-size:.72rem;font-weight:700;padding:4px 11px;border-radius:999px;
+    background:rgba(8,203,0,.14);color:var(--green-700)}
+  .p-actions{margin-left:auto;display:flex;gap:10px;flex-wrap:wrap}
+  .p-grid{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line)}
+  .p-cell{padding:14px 24px;border-right:1px solid var(--line);font-size:.86rem}
+  .p-cell:last-child{border-right:0}
+  .p-cell .k{font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted-2)}
+  .p-cell .v{font-weight:600;color:var(--green-900);margin-top:2px}
+  .p-cell .v span{font-weight:400;color:var(--muted);font-size:.8rem}
+
+  /* read-only banner */
+  .ro{display:flex;gap:10px;align-items:center;padding:12px 18px;border-radius:13px;margin-bottom:24px;
+    background:var(--violet-bg);border:1px solid rgba(83,74,183,.3);font-size:.84rem;color:var(--muted)}
+  .ro svg{flex:none;color:var(--violet)}
+  .ro b{color:var(--violet)}
+
+  /* progress */
+  .pb-labels{display:flex;justify-content:space-between;font-size:.82rem;color:var(--muted-2);
+    margin-bottom:6px;font-weight:500}
+  .pb-labels b{color:var(--green-900);font-weight:700}
+  .pb-track{height:12px;border-radius:999px;background:rgba(13,83,14,.1);overflow:hidden;display:flex}
+  .pb-approved{background:var(--green-bright)}
+  .pb-pending{background:#caa53a}
+  .legend{display:flex;gap:16px;font-size:.76rem;color:var(--muted);margin-top:8px}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+
+  .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px}
+  .stat{background:rgba(231,225,177,.35);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .stat .sk{font-size:.72rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted-2)}
+  .stat .sv{font-size:1.3rem;font-weight:800;color:var(--green-900);margin-top:2px;letter-spacing:-.03em;line-height:1}
+  .stat .sv small{font-size:.78rem;font-weight:500;color:var(--muted);letter-spacing:0}
+  .stat .sd{font-size:.78rem;color:var(--muted);margin-top:4px}
+  .stat .sd.good{color:var(--green-700);font-weight:600}
+  .stat .sd.warn{color:var(--amber);font-weight:600}
+
+  /* chart */
+  .chart{display:flex;align-items:flex-end;gap:8px;height:120px;padding-top:6px}
+  .bar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%;position:relative;border-radius:6px 6px 0 0}
+  .bar .fill{border-radius:6px 6px 0 0;background:rgba(8,203,0,.35);transition:height .6s cubic-bezier(.4,0,.2,1)}
+  .bar.cur .fill{background:var(--green-bright)}
+  .bar:hover .fill{background:var(--green-700)}
+  .bar .lbl{position:absolute;top:100%;left:0;right:0;text-align:center;font-size:.66rem;
+    color:var(--muted-2);font-weight:600;margin-top:6px}
+  .bar .tip{position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);
+    background:var(--green-900);color:#fff;font-size:.68rem;font-weight:700;padding:2px 8px;
+    border-radius:7px;opacity:0;pointer-events:none;transition:opacity .15s;white-space:nowrap}
+  .bar:hover .tip{opacity:1}
+  .chart-wrap{padding:22px 22px 38px}
+
+  /* two-col: skills + pace */
+  .duo{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .skill-row{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--line)}
+  .skill-row:last-child{border-bottom:0}
+  .skill-row .sn{flex:none;width:140px;font-size:.84rem;font-weight:600;color:var(--green-900)}
+  .skill-row .sb{flex:1;height:8px;border-radius:999px;background:rgba(13,83,14,.1);overflow:hidden}
+  .skill-row .sb i{display:block;height:100%;border-radius:999px;background:var(--green-700)}
+  .skill-row .sv2{flex:none;font-size:.76rem;color:var(--muted-2);width:56px;text-align:right}
+
+  .pace-item{display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--line);
+    font-size:.86rem;color:var(--muted)}
+  .pace-item:last-child{border-bottom:0}
+  .pace-item svg{flex:none;margin-top:2px}
+  .pace-item b{color:var(--green-900)}
+  .pi-ok svg{color:var(--green-700)}
+  .pi-warn svg{color:var(--amber)}
+
+  @media(max-width:860px){
+    .p-grid{grid-template-columns:1fr 1fr}
+    .p-cell:nth-child(2){border-right:0}
+    .p-cell:nth-child(-n+2){border-bottom:1px solid var(--line)}
+    .stats-row{grid-template-columns:repeat(2,1fr)}
+    .duo{grid-template-columns:1fr}
+  }
+  @media(max-width:560px){
+    .p-actions{margin-left:0;width:100%}
+    .p-actions .btn{flex:1;justify-content:center}
+    .p-grid{grid-template-columns:1fr}
+    .p-cell{border-right:0;border-bottom:1px solid var(--line)}
+    .p-cell:last-child{border-bottom:0}
+    .bar:nth-child(odd) .lbl{display:none}
+    .skill-row .sn{width:110px}
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<!-- ─── TOP BAR ─── -->
+<header class="topbar">
+  <div class="tb-inner">
+    <a class="brand" href="dashboard.html" aria-label="The Interns Ledger — dashboard">
+      <svg class="mark" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+        <path d="M24 12c-4-3-9-3.5-13-2.5v25c4-1 9-.5 13 2.5 4-3 9-3.5 13-2.5v-25C33 8.5 28 9 24 12Z" stroke="#0D530E" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M24 12v25" stroke="#0D530E" stroke-width="2"/>
+        <path d="M14 17h6M14 21h6M28 17h6M28 21h6M14 25h6M28 25h6" stroke="#306D29" stroke-width="1.3" stroke-linecap="round"/>
+      </svg>
+      <span class="name"><b>THE INTERNS</b><span>LEDGER</span></span>
+    </a>
+    <div class="tb-right">
+      <a class="iconbtn" href="notifications.html" aria-label="Notifications — 3 unread">
+        <span class="dot"></span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 9a6 6 0 1112 0c0 5 2 6 2 6H4s2-1 2-6Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M10 20a2 2 0 004 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </a>
+      <div class="user">
+        <div class="avatar" aria-hidden="true">ED</div>
+        <div class="u-meta"><b>Dr. Esi Dankwa</b><span class="role">Faculty supervisor</span></div>
+      </div>
+      <a class="iconbtn" href="../public/login.html" aria-label="Log out" title="Log out">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M15 12H5M9 8l-4 4 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 4h7a1 1 0 011 1v14a1 1 0 01-1 1h-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+  </div>
+</header>
+
+<!-- ─── MAIN ─── -->
+<main id="main" class="wrap">
+  <nav class="crumbs" aria-label="Breadcrumb">
+    <a href="dashboard.html">Dashboard</a>
+    <span class="sep">/</span>
+    <a href="students.html">Assigned students</a>
+    <span class="sep">/</span><span>Ama Mensah — progress</span>
+  </nav>
+
+  <!-- ════════ PROFILE HEADER ════════ -->
+  <div class="card" style="margin-bottom:16px;overflow:hidden">
+    <div class="profile">
+      <div class="p-avatar" aria-hidden="true">AM</div>
+      <div class="p-id">
+        <h1 id="page-title" tabindex="-1">Ama Mensah <span class="badge" style="vertical-align:4px;margin-left:6px">On track</span></h1>
+        <p>BSc Computer Science · CU-2023-0481 · ama.mensah@coastline.edu.gh</p>
+      </div>
+      <div class="p-actions">
+        <a class="btn btn-3 btn-sm" href="logbook-view.html">View logbook</a>
+        <a class="btn btn-1 btn-sm" href="assessment.html">Assess (due 15 Jun)</a>
+      </div>
+    </div>
+    <div class="p-grid">
+      <div class="p-cell"><div class="k">Placement</div><div class="v">Nimbus Software Ltd. <span>· Platform Engineering, Accra</span></div></div>
+      <div class="p-cell"><div class="k">Industry supervisor</div><div class="v">Kwabena Osei <span>· kwabena.osei@nimbus.com</span></div></div>
+      <div class="p-cell"><div class="k">Period</div><div class="v">03 Mar – 07 Jul 2026 <span>· week 14 of 18</span></div></div>
+      <div class="p-cell"><div class="k">Required hours</div><div class="v">480 hrs <span>· 8 h/day target</span></div></div>
+    </div>
+  </div>
+
+  <!-- read-only notice -->
+  <div class="ro">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="2.6" stroke="currentColor" stroke-width="1.7"/></svg>
+    <span><b>Read-only view.</b> Hours below are verified — counted only from entries approved and sealed by the industry supervisor. You grade; you don't edit.</span>
+  </div>
+
+  <!-- ════════ HOURS PROGRESS ════════ -->
+  <div style="margin-bottom:24px">
+    <div class="sec-head"><h2>Verified hours</h2></div>
+    <div class="card" style="padding:22px">
+      <div class="pb-labels">
+        <span>0</span>
+        <span>Target: <b>480 hrs</b></span>
+      </div>
+      <div class="pb-track" role="progressbar" aria-valuenow="78" aria-valuemin="0" aria-valuemax="100"
+           aria-label="78 percent of required hours verified">
+        <div class="pb-approved" id="pb-a" style="width:0%;transition:width 1s cubic-bezier(.4,0,.2,1)"></div>
+        <div class="pb-pending" id="pb-p" style="width:0%;transition:width 1s cubic-bezier(.4,0,.2,1) .1s"></div>
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--green-bright)"></i>Verified 372.5 hrs (47 sealed entries)</span>
+        <span><i style="background:#caa53a"></i>Awaiting industry review 14 hrs</span>
+      </div>
+      <div class="stats-row">
+        <div class="stat">
+          <div class="sk">Verified</div>
+          <div class="sv">372.5 <small>hrs</small></div>
+          <div class="sd good">↑ 8.0 this week</div>
+        </div>
+        <div class="stat">
+          <div class="sk">Remaining</div>
+          <div class="sv">107.5 <small>hrs</small></div>
+          <div class="sd">4 weeks left</div>
+        </div>
+        <div class="stat">
+          <div class="sk">Daily pace</div>
+          <div class="sv">7.8 <small>h/day</small></div>
+          <div class="sd">Target 8 h/day</div>
+        </div>
+        <div class="stat">
+          <div class="sk">Projected finish</div>
+          <div class="sv" style="font-size:1rem;letter-spacing:-.01em">09 Jul 2026</div>
+          <div class="sd warn">2 days past end date</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ WEEKLY CHART ════════ -->
+  <div style="margin-bottom:24px">
+    <div class="sec-head">
+      <h2>Verified hours by week</h2>
+      <a href="logbook-view.html">Sealed logbook →</a>
+    </div>
+    <div class="card chart-wrap">
+      <div class="chart" role="img" aria-label="Bar chart of verified hours per week, weeks 1 to 14. Most weeks fall between 30 and 40 hours; week 8 dips to 24; week 14 has 8 so far.">
+        <div class="bar"><span class="tip">W1 · 32 h</span><div class="fill" style="height:80%"></div><span class="lbl">W1</span></div>
+        <div class="bar"><span class="tip">W2 · 38 h</span><div class="fill" style="height:95%"></div><span class="lbl">W2</span></div>
+        <div class="bar"><span class="tip">W3 · 36 h</span><div class="fill" style="height:90%"></div><span class="lbl">W3</span></div>
+        <div class="bar"><span class="tip">W4 · 40 h</span><div class="fill" style="height:100%"></div><span class="lbl">W4</span></div>
+        <div class="bar"><span class="tip">W5 · 30 h</span><div class="fill" style="height:75%"></div><span class="lbl">W5</span></div>
+        <div class="bar"><span class="tip">W6 · 34 h</span><div class="fill" style="height:85%"></div><span class="lbl">W6</span></div>
+        <div class="bar"><span class="tip">W7 · 38 h</span><div class="fill" style="height:95%"></div><span class="lbl">W7</span></div>
+        <div class="bar"><span class="tip">W8 · 24 h</span><div class="fill" style="height:60%"></div><span class="lbl">W8</span></div>
+        <div class="bar"><span class="tip">W9 · 36 h</span><div class="fill" style="height:90%"></div><span class="lbl">W9</span></div>
+        <div class="bar"><span class="tip">W10 · 40 h</span><div class="fill" style="height:100%"></div><span class="lbl">W10</span></div>
+        <div class="bar"><span class="tip">W11 · 32 h</span><div class="fill" style="height:80%"></div><span class="lbl">W11</span></div>
+        <div class="bar"><span class="tip">W12 · 36 h</span><div class="fill" style="height:90%"></div><span class="lbl">W12</span></div>
+        <div class="bar"><span class="tip">W13 · 38 h</span><div class="fill" style="height:95%"></div><span class="lbl">W13</span></div>
+        <div class="bar cur"><span class="tip">W14 · 8 h so far</span><div class="fill" style="height:20%"></div><span class="lbl">W14</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ SKILLS + PACE NOTES ════════ -->
+  <div class="duo">
+    <div>
+      <div class="sec-head"><h2>Skills evidence</h2></div>
+      <div class="card" style="padding:18px 22px">
+        <div class="skill-row"><span class="sn">Node.js</span><span class="sb"><i style="width:84%"></i></span><span class="sv2">19 entries</span></div>
+        <div class="skill-row"><span class="sn">SQL</span><span class="sb"><i style="width:66%"></i></span><span class="sv2">15 entries</span></div>
+        <div class="skill-row"><span class="sn">Testing</span><span class="sb"><i style="width:53%"></i></span><span class="sv2">12 entries</span></div>
+        <div class="skill-row"><span class="sn">Documentation</span><span class="sb"><i style="width:40%"></i></span><span class="sv2">9 entries</span></div>
+        <div class="skill-row"><span class="sn">DevOps / CI</span><span class="sb"><i style="width:31%"></i></span><span class="sv2">7 entries</span></div>
+        <p class="legend" style="margin-top:12px">Tag frequency across sealed entries — useful evidence when grading learning outcomes.</p>
+      </div>
+    </div>
+    <div>
+      <div class="sec-head"><h2>Pace notes</h2></div>
+      <div class="card" style="padding:18px 22px">
+        <div class="pace-item pi-ok">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span><b>Consistent logging</b> — entries on 92% of working days; longest gap 3 days (week 8, documented sick leave).</span>
+        </div>
+        <div class="pace-item pi-ok">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span><b>Healthy review loop</b> — 1 returned entry all term, resubmitted within a day.</span>
+        </div>
+        <div class="pace-item pi-warn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 7v6M12 16h.01" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+          <span><b>Slightly under pace</b> — 7.8 h/day vs 8.0 target; projected finish 09 Jul is 2 days past the placement end. Worth a mention in the mid-term comments.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  requestAnimationFrame(()=>{setTimeout(()=>{
+    document.getElementById('pb-a').style.width='77.6%';
+    document.getElementById('pb-p').style.width='2.9%';
+  },120)});
+</script>
+</body>
+</html>

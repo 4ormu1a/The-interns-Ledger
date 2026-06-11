@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Internship Management — The Interns Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/main.css">
+<style>
+  .pagehead{display:flex;align-items:flex-end;gap:16px;margin-bottom:22px;flex-wrap:wrap}
+  .pagehead h1{font-size:clamp(1.7rem,3.4vw,2.1rem);margin-bottom:4px}
+  .pagehead p{color:var(--muted);font-size:.96rem;max-width:60ch}
+  .pagehead .count{color:var(--green-bright)}
+  .pagehead .cta{margin-left:auto}
+
+  .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+  .stat{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow-sm)}
+  .stat .sk{font-size:.72rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted-2)}
+  .stat .sv{font-size:1.3rem;font-weight:800;color:var(--green-900);margin-top:2px;letter-spacing:-.03em;line-height:1}
+  .stat .sv small{font-size:.78rem;font-weight:500;color:var(--muted);letter-spacing:0}
+  .stat .sd{font-size:.78rem;color:var(--muted);margin-top:4px}
+  .stat .sd.good{color:var(--green-700);font-weight:600}
+  .stat .sd.warn{color:var(--amber);font-weight:600}
+  .stat .sd.bad{color:var(--danger);font-weight:600}
+
+  .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+  .search{position:relative;flex:1;min-width:220px;max-width:340px}
+  .search input{padding-left:38px}
+  .search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted-2)}
+  .tabs{display:flex;gap:6px;background:rgba(231,225,177,.5);border:1px solid var(--line);
+    padding:4px;border-radius:999px;overflow-x:auto}
+  .tab{font-family:inherit;font-size:.83rem;font-weight:600;color:var(--muted);background:transparent;
+    border:0;padding:.48rem .9rem;border-radius:999px;cursor:pointer;transition:background .18s,color .18s;white-space:nowrap}
+  .tab[aria-selected="true"]{background:var(--green-900);color:#fff}
+  .tab:hover:not([aria-selected="true"]){color:var(--green-900)}
+  .tab .n{font-size:.7rem;font-weight:800;opacity:.75;margin-left:4px}
+
+  /* internship rows */
+  .i-row{display:flex;gap:14px;padding:15px 22px;border-bottom:1px solid var(--line);align-items:center;
+    transition:background .15s}
+  .i-row:hover{background:rgba(8,203,0,.035)}
+  .i-row:last-of-type{border-bottom:0}
+  .q-avatar{width:40px;height:40px;border-radius:50%;background:rgba(13,83,14,.1);
+    color:var(--green-900);display:grid;place-items:center;font-weight:700;font-size:.78rem;flex:none}
+  .i-body{min-width:0;flex:1.5}
+  .i-name{font-size:.92rem;font-weight:700;color:var(--green-900)}
+  .i-name span{font-weight:400;color:var(--muted-2);font-size:.78rem}
+  .i-sub{font-size:.78rem;color:var(--muted-2);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+  .i-prog{flex:1;min-width:120px}
+  .mini-track{height:8px;border-radius:999px;background:rgba(13,83,14,.1);overflow:hidden;margin-bottom:4px}
+  .mini-fill{height:100%;border-radius:999px;background:var(--green-bright)}
+  .i-prog .pl{font-size:.72rem;color:var(--muted-2)}
+  .i-prog .pl b{color:var(--green-900)}
+  .stpill{flex:none;font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:999px;width:108px;text-align:center}
+  .s-active{background:rgba(8,203,0,.13);color:var(--green-700)}
+  .s-soon{background:var(--violet-bg);color:var(--violet)}
+  .s-flag{background:var(--danger-bg);color:var(--danger)}
+  .s-done{background:rgba(13,83,14,.08);color:var(--muted-2)}
+  .i-act{flex:none}
+
+  .foot{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 22px;
+    border-top:1px solid var(--line);font-size:.8rem;color:var(--muted-2);flex-wrap:wrap}
+  .empty{display:none;padding:54px 24px;text-align:center}
+  .empty h3{font-size:1.05rem;margin-bottom:4px}
+  .empty p{font-size:.88rem;color:var(--muted)}
+
+  /* detail drawer */
+  .overlay{position:fixed;inset:0;background:rgba(3,3,2,.45);z-index:60;display:none}
+  .overlay.open{display:block}
+  .drawer{position:fixed;top:0;right:-520px;bottom:0;width:min(520px,100%);background:var(--white);
+    z-index:61;box-shadow:var(--shadow-md);transition:right .3s cubic-bezier(.2,.7,.2,1);
+    display:flex;flex-direction:column}
+  .drawer.open{right:0}
+  .d-head{display:flex;align-items:center;gap:12px;padding:20px 24px;border-bottom:1px solid var(--line)}
+  .d-head h2{font-size:1.1rem;flex:1}
+  .mini{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--white);
+    display:grid;place-items:center;cursor:pointer;color:var(--green-900);transition:background .15s,border-color .15s}
+  .mini:hover{background:rgba(8,203,0,.08);border-color:rgba(8,203,0,.4)}
+  .d-body{padding:22px 24px;overflow-y:auto;flex:1}
+  .kv{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px;margin-bottom:18px}
+  .kv .k{font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted-2)}
+  .kv .v{font-size:.9rem;font-weight:600;color:var(--green-900);margin-top:2px}
+  .kv .v span{font-weight:400;color:var(--muted);font-size:.8rem}
+  .d-sec{font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--muted-2);margin:18px 0 10px}
+  .sup-row{display:flex;align-items:center;gap:10px;padding:10px 13px;border:1px solid var(--line);
+    border-radius:11px;margin-bottom:8px;font-size:.84rem}
+  .sup-row .q-avatar{width:32px;height:32px;font-size:.68rem}
+  .sup-row b{color:var(--green-900)}
+  .sup-row span{color:var(--muted-2);font-size:.76rem}
+  .sup-row .tag{margin-left:auto;font-size:.66rem;font-weight:700;padding:2px 8px;border-radius:999px;flex:none}
+  .tg-ind{background:rgba(13,83,14,.1);color:var(--green-900)}
+  .tg-fac{background:var(--violet-bg);color:var(--violet)}
+  .flagbox{display:flex;gap:9px;align-items:flex-start;padding:12px 14px;border-radius:11px;
+    background:var(--danger-bg);border:1px solid var(--danger-line);font-size:.8rem;color:var(--muted);margin-bottom:8px}
+  .flagbox svg{flex:none;margin-top:1px;color:var(--danger)}
+  .flagbox b{color:var(--danger)}
+  .d-foot{padding:16px 24px;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+
+  .status{display:none;gap:9px;align-items:center;border-radius:11px;padding:11px 14px;
+    font-size:.9rem;font-weight:500;margin-bottom:16px}
+  .status.show{display:flex}
+  .status.ok{background:rgba(8,203,0,.1);border:1px solid rgba(8,203,0,.3);color:var(--green-700)}
+  .status svg{flex:none}
+
+  @media(max-width:880px){
+    .stats-row{grid-template-columns:repeat(2,1fr)}
+    .i-prog{display:none}
+  }
+  @media(max-width:560px){
+    .stpill{width:auto}
+    .i-sub{display:none}
+    .tabs{width:100%}
+    .search{max-width:none}
+    .pagehead .cta{margin-left:0;width:100%}
+    .pagehead .cta .btn{width:100%;justify-content:center}
+    .kv{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<!-- ─── TOP BAR ─── -->
+<header class="topbar">
+  <div class="tb-inner">
+    <a class="brand" href="dashboard.html" aria-label="The Interns Ledger — admin dashboard">
+      <svg class="mark" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+        <path d="M24 12c-4-3-9-3.5-13-2.5v25c4-1 9-.5 13 2.5 4-3 9-3.5 13-2.5v-25C33 8.5 28 9 24 12Z" stroke="#0D530E" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M24 12v25" stroke="#0D530E" stroke-width="2"/>
+        <path d="M14 17h6M14 21h6M28 17h6M28 21h6M14 25h6M28 25h6" stroke="#306D29" stroke-width="1.3" stroke-linecap="round"/>
+      </svg>
+      <span class="name"><b>THE INTERNS</b><span>LEDGER</span></span>
+    </a>
+    <div class="tb-right">
+      <a class="iconbtn" href="notifications.html" aria-label="Notifications — 5 unread">
+        <span class="dot"></span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 9a6 6 0 1112 0c0 5 2 6 2 6H4s2-1 2-6Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M10 20a2 2 0 004 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </a>
+      <div class="user">
+        <div class="avatar" aria-hidden="true">SA</div>
+        <div class="u-meta"><b>Selorm Adjei</b><span class="role">Administrator</span></div>
+      </div>
+      <a class="iconbtn" href="../public/login.html" aria-label="Log out" title="Log out">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M15 12H5M9 8l-4 4 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 4h7a1 1 0 011 1v14a1 1 0 01-1 1h-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+  </div>
+</header>
+
+<!-- ─── MAIN ─── -->
+<main id="main" class="wrap">
+  <nav class="crumbs" aria-label="Breadcrumb">
+    <a href="dashboard.html">Dashboard</a>
+    <span class="sep">/</span><span>Internships</span>
+  </nav>
+
+  <div class="pagehead">
+    <div>
+      <h1 id="page-title" tabindex="-1">Internships <span class="count">· 318 active</span></h1>
+      <p>Placements across all companies and institutions. Open an internship to see its supervisors, hours, and flags.</p>
+    </div>
+    <div class="cta">
+      <button class="btn btn-1" id="new-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+        New internship
+      </button>
+    </div>
+  </div>
+
+  <div class="status ok" id="msg" role="status" aria-live="polite"></div>
+
+  <!-- stats -->
+  <div class="stats-row">
+    <div class="stat"><div class="sk">Active</div><div class="sv">318</div><div class="sd">across 96 companies</div></div>
+    <div class="stat"><div class="sk">Finishing in July</div><div class="sv">42</div><div class="sd warn">final reports due</div></div>
+    <div class="stat"><div class="sk">On track</div><div class="sv">87<small>%</small></div><div class="sd good">≥ expected pace</div></div>
+    <div class="stat"><div class="sk">Flagged</div><div class="sv">9</div><div class="sd bad">stale reviews / unlinked</div></div>
+  </div>
+
+  <!-- toolbar -->
+  <div class="toolbar">
+    <div class="search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <label for="q" style="position:absolute;left:-9999px">Search internships</label>
+      <input id="q" placeholder="Search student, company, supervisor…" autocomplete="off">
+    </div>
+    <div class="tabs" role="tablist" aria-label="Filter internships">
+      <button class="tab" role="tab" aria-selected="true" data-s="all">All <span class="n">7</span></button>
+      <button class="tab" role="tab" aria-selected="false" data-s="active">Active <span class="n">4</span></button>
+      <button class="tab" role="tab" aria-selected="false" data-s="soon">Finishing soon <span class="n">1</span></button>
+      <button class="tab" role="tab" aria-selected="false" data-s="flag">Flagged <span class="n">1</span></button>
+      <button class="tab" role="tab" aria-selected="false" data-s="done">Completed <span class="n">1</span></button>
+    </div>
+  </div>
+
+  <!-- list -->
+  <div class="card" style="overflow:hidden">
+    <div id="list">
+
+      <div class="i-row" data-s="active" data-q="ama mensah nimbus software kwabena osei coastline">
+        <div class="q-avatar" aria-hidden="true">AM</div>
+        <div class="i-body">
+          <div class="i-name">Ama Mensah <span>· Nimbus Software Ltd.</span></div>
+          <div class="i-sub">03 Mar – 07 Jul 2026 · wk 14/18 · ind: K. Osei · fac: Dr. E. Dankwa</div>
+        </div>
+        <div class="i-prog">
+          <div class="mini-track"><div class="mini-fill" style="width:78%"></div></div>
+          <div class="pl"><b>372.5</b> / 480 hrs · 78%</div>
+        </div>
+        <span class="stpill s-active">Active</span>
+        <div class="i-act"><button class="btn btn-3 btn-sm" data-open="ama">Detail</button></div>
+      </div>
+
+      <div class="i-row" data-s="active" data-q="yaw boateng nimbus software kwabena osei coastline behind">
+        <div class="q-avatar" aria-hidden="true">YB</div>
+        <div class="i-body">
+          <div class="i-name">Yaw Boateng <span>· Nimbus Software Ltd.</span></div>
+          <div class="i-sub">03 Mar – 07 Jul 2026 · wk 14/18 · ind: K. Osei · fac: Dr. E. Dankwa</div>
+        </div>
+        <div class="i-prog">
+          <div class="mini-track"><div class="mini-fill" style="width:64%"></div></div>
+          <div class="pl"><b>307</b> / 480 hrs · 64%</div>
+        </div>
+        <span class="stpill s-active">Active</span>
+        <div class="i-act"><button class="btn btn-3 btn-sm" data-open="generic" data-name="Yaw Boateng — Nimbus Software Ltd.">Detail</button></div>
+      </div>
+
+      <div class="i-row" data-s="soon" data-q="kofi darko nimbus software kwabena osei nana owusu finishing">
+        <div class="q-avatar" aria-hidden="true">KD</div>
+        <div class="i-body">
+          <div class="i-name">Kofi Darko <span>· Nimbus Software Ltd.</span></div>
+          <div class="i-sub">16 Feb – 26 Jun 2026 · wk 17/19 · ind: K. Osei · fac: Dr. N. Owusu</div>
+        </div>
+        <div class="i-prog">
+          <div class="mini-track"><div class="mini-fill" style="width:91%"></div></div>
+          <div class="pl"><b>437</b> / 480 hrs · 91%</div>
+        </div>
+        <span class="stpill s-soon">Ends 26 Jun</span>
+        <div class="i-act"><button class="btn btn-3 btn-sm" data-open="generic" data-name="Kofi Darko — Nimbus Software Ltd.">Detail</button></div>
+      </div>
+
+      <div class="i-row" data-s="flag" data-q="adwoa larbi harbour logistics unlinked flagged">
+        <div class="q-avatar" aria-hidden="true">AL</div>
+        <div class="i-body">
+          <div class="i-name">Adwoa Larbi <span>· Harbour Logistics</span></div>
+          <div class="i-sub">01 Jun – 25 Sep 2026 · wk 2/17 · ind: <b style="color:var(--danger)">unlinked</b> · fac: Mr. J. Annan</div>
+        </div>
+        <div class="i-prog">
+          <div class="mini-track"><div class="mini-fill" style="width:2%"></div></div>
+          <div class="pl"><b>0</b> / 460 hrs · entries blocked</div>
+        </div>
+        <span class="stpill s-flag">Flagged</span>
+        <div class="i-act"><button class="btn btn-3 btn-sm" data-open="flagged">Detail</button></div>
+      </div>
+
+      <div class="i-row" data-s="active" data-q="efua asante studiomint highlands joseph annan akosua">
+        <div class="q-avatar" aria-hidden="true">EA</div>
+        <div class="i-body">
+          <div class="i-name">Efua Asante <span>· StudioMint Creative</span></div>
+          <div class="i-sub">13 Apr – 21 Aug 2026 · wk 9/19 · ind: A. Frimpong · fac: Mr. J. Annan</div>
+        </div>
+        <div class="i-prog">
+          <div class="mini-track"><div class="mini-fill" style="width:52%"></div></div>
+          <div class="pl"><b>208</b> / 400 hrs · 52%</div>
+        </div>
+        <span class="stpill s-active">Active</span>
+        <div class="i-act"><button class="btn btn-3 btn-sm" data-open="generic" data-name="Efua Asante — StudioMint Creative">Detail</button></div>
+      </div>
+
+      <div class="i-row" data-s="active" data-q="kojo antwi bluewave analytics daniel tetteh esi dankwa">
+        <div class="q-avatar" aria-hidden="true">KA</div>
+        <div class="i-body">
+          <div class="i-name">Kojo Antwi <span>· BlueWave Analytics</span></div>
+          <div class="i-sub">09 Mar – 31 Jul 2026 · wk 13/18 · ind: D. Tetteh · fac: Dr. E. Dankwa</div>
+        </div>
+        <div class="i-prog">
+          <div class="mini-track"><div class="mini-fill" style="width:73%"></div></div>
+          <div class="pl"><b>350</b> / 480 hrs · 73%</div>
+        </div>
+        <span class="stpill s-active">Active</span>
+        <div class="i-act"><button class="btn btn-3 btn-sm" data-open="generic" data-name="Kojo Antwi — BlueWave Analytics">Detail</button></div>
+      </div>
+
+      <div class="i-row" data-s="done" data-q="abena owusu voltabank completed sealed">
+        <div class="q-avatar" aria-hidden="true">AO</div>
+        <div class="i-body">
+          <div class="i-name">Abena Owusu <span>· VoltaBank (previous)</span></div>
+          <div class="i-sub">Sep – Dec 2025 · completed · final grade B+ · record sealed</div>
+        </div>
+        <div class="i-prog">
+          <div class="mini-track"><div class="mini-fill" style="width:100%"></div></div>
+          <div class="pl"><b>180</b> / 180 hrs · sealed</div>
+        </div>
+        <span class="stpill s-done">Completed</span>
+        <div class="i-act"><button class="btn btn-3 btn-sm" data-open="generic" data-name="Abena Owusu — VoltaBank (completed)">Detail</button></div>
+      </div>
+
+    </div>
+
+    <div class="empty" id="empty">
+      <h3>No internships match</h3>
+      <p>Try a different search or status filter.</p>
+    </div>
+
+    <div class="foot">
+      <span>Showing <b id="shown" style="color:var(--green-900)">7</b> of 318 internships (demo subset)</span>
+      <span>
+        <button class="btn btn-3 btn-sm" disabled>← Previous</button>
+        <button class="btn btn-3 btn-sm">Next →</button>
+      </span>
+    </div>
+  </div>
+</main>
+
+<!-- ─── DETAIL DRAWER ─── -->
+<div class="overlay" id="overlay"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="d-title">
+  <div class="d-head">
+    <h2 id="d-title">Internship detail</h2>
+    <button class="mini" id="d-close" aria-label="Close panel">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+  <div class="d-body" id="d-body-ama">
+    <div class="kv">
+      <div><div class="k">Student</div><div class="v">Ama Mensah <span>· CU-2023-0481</span></div></div>
+      <div><div class="k">Company</div><div class="v">Nimbus Software Ltd. <span>· Accra</span></div></div>
+      <div><div class="k">Period</div><div class="v">03 Mar – 07 Jul 2026 <span>· week 14 of 18</span></div></div>
+      <div><div class="k">Required hours</div><div class="v">480 <span>· 372.5 verified (78%)</span></div></div>
+      <div><div class="k">Status</div><div class="v" style="color:var(--green-700)">Active · on track</div></div>
+      <div><div class="k">Sealed entries</div><div class="v">47 <span>· chain intact</span></div></div>
+    </div>
+    <div class="d-sec">Supervisors</div>
+    <div class="sup-row">
+      <div class="q-avatar">KO</div>
+      <div><b>Kwabena Osei</b><br><span>kwabena.osei@nimbus.com · avg response 1.8 days</span></div>
+      <span class="tag tg-ind">Industry</span>
+    </div>
+    <div class="sup-row">
+      <div class="q-avatar">ED</div>
+      <div><b>Dr. Esi Dankwa</b><br><span>e.dankwa@coastline.edu.gh · mid-term due 15 Jun</span></div>
+      <span class="tag tg-fac">Faculty</span>
+    </div>
+    <div class="d-sec">Admin notes</div>
+    <p style="font-size:.84rem;color:var(--muted)">No flags. Placement confirmed by Coastline registry on 24 Feb 2026. Verification tokens: 2 active, 0 revoked.</p>
+  </div>
+  <div class="d-body" id="d-body-flagged" style="display:none">
+    <div class="kv">
+      <div><div class="k">Student</div><div class="v">Adwoa Larbi <span>· HT-2024-0017</span></div></div>
+      <div><div class="k">Company</div><div class="v">Harbour Logistics <span>· Tema</span></div></div>
+      <div><div class="k">Period</div><div class="v">01 Jun – 25 Sep 2026 <span>· week 2 of 17</span></div></div>
+      <div><div class="k">Required hours</div><div class="v">460 <span>· 0 verified</span></div></div>
+    </div>
+    <div class="d-sec">Flags</div>
+    <div class="flagbox">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 7v6M12 16h.01" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+      <span><b>No industry supervisor linked.</b> The student has 4 draft entries that cannot be submitted for review. Gloria Quartey (invited today) is the proposed supervisor.</span>
+    </div>
+    <div class="d-sec">Supervisors</div>
+    <div class="sup-row">
+      <div class="q-avatar">JA</div>
+      <div><b>Mr. Joseph Annan</b><br><span>j.annan@highlands.edu.gh</span></div>
+      <span class="tag tg-fac">Faculty</span>
+    </div>
+  </div>
+  <div class="d-body" id="d-body-generic" style="display:none">
+    <p style="font-size:.88rem;color:var(--muted);line-height:1.6">Full detail view for <b id="g-name" style="color:var(--green-900)">this internship</b> — placement record, supervisor links, verified hours, sealed-entry chain status, and active verification tokens, in the same layout shown for Ama Mensah's record.</p>
+  </div>
+  <div class="d-foot">
+    <a class="btn btn-3 btn-sm" href="supervisor-links.html">Manage links</a>
+    <a class="btn btn-3 btn-sm" href="audit-trail.html">View audit events</a>
+    <button class="btn btn-1 btn-sm" id="d-edit">Edit placement</button>
+  </div>
+</aside>
+
+<script>
+  /* filter + search */
+  const rows=[...document.querySelectorAll('.i-row')];
+  const tabs=[...document.querySelectorAll('.tab')];
+  const q=document.getElementById('q');
+  const empty=document.getElementById('empty');
+  const shown=document.getElementById('shown');
+  let st='all';
+  function apply(){
+    const term=q.value.trim().toLowerCase();
+    let n=0;
+    rows.forEach(r=>{
+      const ok=(st==='all'||r.dataset.s===st)&&(!term||r.dataset.q.includes(term));
+      r.style.display=ok?'':'none';if(ok)n++;
+    });
+    empty.style.display=n?'none':'block';
+    shown.textContent=n;
+  }
+  tabs.forEach(t=>t.addEventListener('click',()=>{
+    tabs.forEach(x=>x.setAttribute('aria-selected','false'));
+    t.setAttribute('aria-selected','true');st=t.dataset.s;apply();
+  }));
+  q.addEventListener('input',apply);
+
+  /* drawer */
+  const overlay=document.getElementById('overlay'),drawer=document.getElementById('drawer');
+  const bodies={ama:'d-body-ama',flagged:'d-body-flagged',generic:'d-body-generic'};
+  const titles={ama:'Ama Mensah — Nimbus Software Ltd.',flagged:'Adwoa Larbi — Harbour Logistics (flagged)'};
+  function openDrawer(kind,name){
+    Object.values(bodies).forEach(id=>document.getElementById(id).style.display='none');
+    document.getElementById(bodies[kind]).style.display='';
+    document.getElementById('d-title').textContent=titles[kind]||name||'Internship detail';
+    if(kind==='generic'&&name)document.getElementById('g-name').textContent=name;
+    overlay.classList.add('open');drawer.classList.add('open');
+  }
+  function closeDrawer(){overlay.classList.remove('open');drawer.classList.remove('open')}
+  document.querySelectorAll('[data-open]').forEach(b=>b.addEventListener('click',()=>openDrawer(b.dataset.open,b.dataset.name)));
+  document.getElementById('d-close').addEventListener('click',closeDrawer);
+  overlay.addEventListener('click',closeDrawer);
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer()});
+
+  /* flash */
+  const msg=document.getElementById('msg');
+  function flash(text){
+    msg.innerHTML='<svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> '+text;
+    msg.classList.add('show');setTimeout(()=>msg.classList.remove('show'),3500);
+  }
+  document.getElementById('new-btn').addEventListener('click',()=>flash('New internship form would open here — placements are usually imported from the registry. (Demo)'));
+  document.getElementById('d-edit').addEventListener('click',()=>{closeDrawer();flash('Placement edit recorded in the audit trail. (Demo)')});
+</script>
+</body>
+</html>

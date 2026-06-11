@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Audit Trail — The Interns Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/main.css">
+<style>
+  .pagehead{display:flex;align-items:flex-end;gap:16px;margin-bottom:22px;flex-wrap:wrap}
+  .pagehead h1{font-size:clamp(1.7rem,3.4vw,2.1rem);margin-bottom:4px}
+  .pagehead p{color:var(--muted);font-size:.96rem;max-width:60ch}
+  .pagehead .cta{margin-left:auto}
+
+  .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+  .stat{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow-sm)}
+  .stat .sk{font-size:.72rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted-2)}
+  .stat .sv{font-size:1.3rem;font-weight:800;color:var(--green-900);margin-top:2px;letter-spacing:-.03em;line-height:1}
+  .stat .sv small{font-size:.78rem;font-weight:500;color:var(--muted);letter-spacing:0}
+  .stat .sd{font-size:.78rem;color:var(--muted);margin-top:4px}
+  .stat .sd.good{color:var(--green-700);font-weight:600}
+
+  .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+  .tabs{display:flex;gap:6px;background:rgba(231,225,177,.5);border:1px solid var(--line);
+    padding:4px;border-radius:999px;overflow-x:auto}
+  .tab{font-family:inherit;font-size:.82rem;font-weight:600;color:var(--muted);background:transparent;
+    border:0;padding:.46rem .85rem;border-radius:999px;cursor:pointer;transition:background .18s,color .18s;white-space:nowrap}
+  .tab[aria-selected="true"]{background:var(--green-900);color:#fff}
+  .tab:hover:not([aria-selected="true"]){color:var(--green-900)}
+  .selectwrap{position:relative;margin-left:auto}
+  select{appearance:none;font-family:inherit;font-size:.85rem;font-weight:600;color:var(--green-900);
+    background:var(--white);border:1px solid var(--line);border-radius:11px;
+    padding:.6rem 2.2rem .6rem .9rem;cursor:pointer}
+  select:hover{border-color:rgba(8,203,0,.4)}
+  .selectwrap::after{content:"";position:absolute;right:12px;top:50%;width:8px;height:8px;
+    border-right:1.8px solid var(--green-700);border-bottom:1.8px solid var(--green-700);
+    transform:translateY(-70%) rotate(45deg);pointer-events:none}
+
+  .g-head{padding:12px 22px;background:rgba(231,225,177,.35);border-bottom:1px solid var(--line);
+    font-size:.74rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2)}
+  .g-head:not(:first-child){border-top:1px solid var(--line)}
+
+  .e-row{display:flex;gap:13px;padding:14px 22px;border-bottom:1px solid var(--line);align-items:flex-start}
+  .e-row:last-child{border-bottom:0}
+  .e-ic{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;flex:none;margin-top:1px}
+  .ei-seal{background:rgba(8,203,0,.12);color:var(--green-700)}
+  .ei-acct{background:rgba(13,83,14,.09);color:var(--green-900)}
+  .ei-link{background:var(--violet-bg);color:var(--violet)}
+  .ei-key{background:var(--amber-bg);color:var(--amber)}
+  .ei-sys{background:rgba(13,83,14,.07);color:var(--muted-2)}
+  .ei-warn{background:var(--danger-bg);color:var(--danger)}
+  .e-body{min-width:0;flex:1}
+  .e-text{font-size:.88rem;color:var(--muted);line-height:1.5}
+  .e-text b{color:var(--green-900)}
+  .e-meta{font-size:.72rem;color:var(--muted-2);margin-top:4px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .e-meta code{font-family:ui-monospace,Menlo,monospace;font-size:.68rem;color:var(--green-900);
+    background:rgba(13,83,14,.07);padding:1px 6px;border-radius:6px}
+  .actor{font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:999px}
+  .ac-admin{background:var(--amber-bg);color:var(--amber)}
+  .ac-sys{background:rgba(13,83,14,.08);color:var(--muted-2)}
+  .ac-sup{background:rgba(13,83,14,.1);color:var(--green-900)}
+  .ac-stu{background:rgba(8,203,0,.12);color:var(--green-700)}
+  .ac-fac{background:var(--violet-bg);color:var(--violet)}
+  .e-time{flex:none;font-size:.74rem;color:var(--muted-2);text-align:right;width:84px}
+
+  .empty{display:none;padding:54px 24px;text-align:center;color:var(--muted);font-size:.9rem}
+  .more{display:flex;justify-content:center;padding:18px;border-top:1px solid var(--line)}
+
+  .note{display:flex;gap:10px;align-items:flex-start;margin-top:16px;padding:14px 18px;border-radius:13px;
+    background:rgba(231,225,177,.45);border:1px solid var(--line);font-size:.84rem;color:var(--muted)}
+  .note svg{flex:none;margin-top:2px;color:var(--green-700)}
+  .note b{color:var(--green-900)}
+
+  @media(max-width:860px){.stats-row{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:680px){
+    .selectwrap{margin-left:0;width:100%}
+    .selectwrap select{width:100%}
+    .tabs{width:100%}
+    .e-time{display:none}
+    .pagehead .cta{margin-left:0;width:100%}
+    .pagehead .cta .btn{width:100%;justify-content:center}
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<!-- ─── TOP BAR ─── -->
+<header class="topbar">
+  <div class="tb-inner">
+    <a class="brand" href="dashboard.html" aria-label="The Interns Ledger — admin dashboard">
+      <svg class="mark" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+        <path d="M24 12c-4-3-9-3.5-13-2.5v25c4-1 9-.5 13 2.5 4-3 9-3.5 13-2.5v-25C33 8.5 28 9 24 12Z" stroke="#0D530E" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M24 12v25" stroke="#0D530E" stroke-width="2"/>
+        <path d="M14 17h6M14 21h6M28 17h6M28 21h6M14 25h6M28 25h6" stroke="#306D29" stroke-width="1.3" stroke-linecap="round"/>
+      </svg>
+      <span class="name"><b>THE INTERNS</b><span>LEDGER</span></span>
+    </a>
+    <div class="tb-right">
+      <a class="iconbtn" href="notifications.html" aria-label="Notifications — 5 unread">
+        <span class="dot"></span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 9a6 6 0 1112 0c0 5 2 6 2 6H4s2-1 2-6Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M10 20a2 2 0 004 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </a>
+      <div class="user">
+        <div class="avatar" aria-hidden="true">SA</div>
+        <div class="u-meta"><b>Selorm Adjei</b><span class="role">Administrator</span></div>
+      </div>
+      <a class="iconbtn" href="../public/login.html" aria-label="Log out" title="Log out">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M15 12H5M9 8l-4 4 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 4h7a1 1 0 011 1v14a1 1 0 01-1 1h-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+  </div>
+</header>
+
+<!-- ─── MAIN ─── -->
+<main id="main" class="wrap">
+  <nav class="crumbs" aria-label="Breadcrumb">
+    <a href="dashboard.html">Dashboard</a>
+    <span class="sep">/</span><span>Audit trail</span>
+  </nav>
+
+  <div class="pagehead">
+    <div>
+      <h1 id="page-title" tabindex="-1">Audit trail</h1>
+      <p>Append-only log of every consequential action in the system. Events are hash-chained — they can be exported, but never edited or deleted.</p>
+    </div>
+    <div class="cta">
+      <a class="btn btn-3" href="reports.html">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 3v12M8 11l4 4 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 21h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        Export log
+      </a>
+    </div>
+  </div>
+
+  <!-- stats -->
+  <div class="stats-row">
+    <div class="stat"><div class="sk">Events (30d)</div><div class="sv">1,912</div><div class="sd">~64 / day</div></div>
+    <div class="stat"><div class="sk">Privileged actions (30d)</div><div class="sv">87</div><div class="sd">by 7 admins</div></div>
+    <div class="stat"><div class="sk">Chain integrity</div><div class="sv" style="font-size:1rem;letter-spacing:0">Verified</div><div class="sd good">last check today, 06:00</div></div>
+    <div class="stat"><div class="sk">Anomalies (30d)</div><div class="sv">0</div><div class="sd good">no tamper signals</div></div>
+  </div>
+
+  <!-- toolbar -->
+  <div class="toolbar">
+    <div class="tabs" role="tablist" aria-label="Filter by category">
+      <button class="tab" role="tab" aria-selected="true" data-c="all">All</button>
+      <button class="tab" role="tab" aria-selected="false" data-c="seal">Reviews &amp; seals</button>
+      <button class="tab" role="tab" aria-selected="false" data-c="acct">Accounts</button>
+      <button class="tab" role="tab" aria-selected="false" data-c="link">Links</button>
+      <button class="tab" role="tab" aria-selected="false" data-c="key">Keys &amp; tokens</button>
+      <button class="tab" role="tab" aria-selected="false" data-c="sys">System</button>
+    </div>
+    <div class="selectwrap">
+      <label for="actor-filter" style="position:absolute;left:-9999px">Filter by actor type</label>
+      <select id="actor-filter">
+        <option value="all">All actors</option>
+        <option value="admin">Admins</option>
+        <option value="sup">Industry supervisors</option>
+        <option value="fac">Faculty supervisors</option>
+        <option value="stu">Students</option>
+        <option value="sys">System</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- log -->
+  <div class="card" style="overflow:hidden">
+
+    <div class="g-head" data-day="1">Today — Wednesday, 10 Jun 2026</div>
+
+    <div class="e-row" data-c="acct" data-a="admin" data-day="1">
+      <div class="e-ic ei-acct" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M5 20a7 7 0 0114 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+      <div class="e-body">
+        <div class="e-text"><b>K. Owusu-Bempah</b> created industry-supervisor account <b>g.quartey@harbour.com.gh</b> (Harbour Logistics) and sent invite</div>
+        <div class="e-meta"><span class="actor ac-admin">ADMIN</span><code>evt_88c1…4a</code></div>
+      </div>
+      <span class="e-time">08:41</span>
+    </div>
+
+    <div class="e-row" data-c="seal" data-a="stu" data-day="1">
+      <div class="e-ic ei-seal" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><rect x="6" y="3" width="12" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M9 8h6M9 12h6M9 16h3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+      <div class="e-body">
+        <div class="e-text"><b>Ama Mensah</b> resubmitted entry for 03 Jun 2026 after return (6.0 h, new content hash recorded)</div>
+        <div class="e-meta"><span class="actor ac-stu">STUDENT</span><code>evt_88af…91</code></div>
+      </div>
+      <span class="e-time">08:12</span>
+    </div>
+
+    <div class="e-row" data-c="sys" data-a="sys" data-day="1">
+      <div class="e-ic ei-sys" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6l7-3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="e-body">
+        <div class="e-text"><b>System</b> nightly hash-chain verification completed — 12,418 sealed entries intact, 0 anomalies</div>
+        <div class="e-meta"><span class="actor ac-sys">SYSTEM</span><code>evt_8890…cc</code></div>
+      </div>
+      <span class="e-time">06:00</span>
+    </div>
+
+    <div class="g-head" data-day="2">Yesterday — Tuesday, 09 Jun 2026</div>
+
+    <div class="e-row" data-c="key" data-a="admin" data-day="2">
+      <div class="e-ic ei-key" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="8.5" cy="13.5" r="4.5" stroke="currentColor" stroke-width="1.8"/><path d="M12 12l8-8M17 7l2.5 2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+      <div class="e-body">
+        <div class="e-text"><b>S. Adjei</b> (you) revoked verification token <b>TIL-77AB-19QX-D3</b> — reason: superseded report (student request)</div>
+        <div class="e-meta"><span class="actor ac-admin">ADMIN</span><code>evt_87d2…0e</code></div>
+      </div>
+      <span class="e-time">11:05</span>
+    </div>
+
+    <div class="e-row" data-c="seal" data-a="sup" data-day="2">
+      <div class="e-ic ei-seal" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><rect x="5" y="10" width="14" height="10" rx="2.5" stroke="currentColor" stroke-width="1.8"/><path d="M8 10V8a4 4 0 018 0v2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+      <div class="e-body">
+        <div class="e-text"><b>K. Osei</b> approved &amp; sealed entry for <b>Kofi Darko</b> (08 Jun, 8.0 h) — <code style="background:none;padding:0">sha256: 2b8d…44a1</code> chained</div>
+        <div class="e-meta"><span class="actor ac-sup">IND. SUPERVISOR</span><code>evt_87b9…77</code></div>
+      </div>
+      <span class="e-time">14:22</span>
+    </div>
+
+    <div class="e-row" data-c="link" data-a="admin" data-day="2">
+      <div class="e-ic ei-link" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M10 14a4 4 0 005.66 0l3-3a4 4 0 10-5.66-5.66l-1.2 1.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M14 10a4 4 0 00-5.66 0l-3 3a4 4 0 105.66 5.66l1.2-1.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+      <div class="e-body">
+        <div class="e-text"><b>S. Adjei</b> (you) linked student <b>D. Quaye</b> to faculty supervisor <b>Dr. N. Owusu</b> (AgroChain Ltd. placement)</div>
+        <div class="e-meta"><span class="actor ac-admin">ADMIN</span><code>evt_8771…b3</code></div>
+      </div>
+      <span class="e-time">16:12</span>
+    </div>
+
+    <div class="e-row" data-c="key" data-a="sys" data-day="2">
+      <div class="e-ic ei-warn" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M15 9l-6 6M9 9l6 6" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg></div>
+      <div class="e-body">
+        <div class="e-text"><b>Public verifier</b> rejected token <b>TIL-77AB-19QX-D3</b> (revoked) — 2 verification attempts from same requester</div>
+        <div class="e-meta"><span class="actor ac-sys">SYSTEM</span><code>evt_8754…18</code></div>
+      </div>
+      <span class="e-time">18:47</span>
+    </div>
+
+    <div class="g-head" data-day="3">Monday, 08 Jun 2026</div>
+
+    <div class="e-row" data-c="acct" data-a="admin" data-day="3">
+      <div class="e-ic ei-warn" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M5.5 5.5l13 13" stroke="currentColor" stroke-width="1.8"/></svg></div>
+      <div class="e-body">
+        <div class="e-text"><b>K. Owusu-Bempah</b> suspended student account <b>kweku.addo@coastline.edu.gh</b> — reason: registry hold (unpaid fees), per university policy</div>
+        <div class="e-meta"><span class="actor ac-admin">ADMIN</span><code>evt_8688…5d</code></div>
+      </div>
+      <span class="e-time">10:30</span>
+    </div>
+
+    <div class="e-row" data-c="seal" data-a="fac" data-day="3">
+      <div class="e-ic ei-seal" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M5 4h11l3 3v13H5V4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 12l2.5 2.5L16 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="e-body">
+        <div class="e-text"><b>Dr. E. Dankwa</b> recorded mid-term assessment for <b>Abena Owusu</b> (grade A−, 4 criteria, comments attached)</div>
+        <div class="e-meta"><span class="actor ac-fac">FACULTY</span><code>evt_8631…aa</code></div>
+      </div>
+      <span class="e-time">14:05</span>
+    </div>
+
+    <div class="e-row" data-c="sys" data-a="sys" data-day="3">
+      <div class="e-ic ei-sys" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><rect x="6" y="3" width="12" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M11 18h2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+      <div class="e-body">
+        <div class="e-text"><b>System</b> flagged 14 entries unreviewed &gt;14 days across 6 supervisors — faculty supervisors auto-notified per policy</div>
+        <div class="e-meta"><span class="actor ac-sys">SYSTEM</span><code>evt_8602…f4</code></div>
+      </div>
+      <span class="e-time">07:00</span>
+    </div>
+
+    <div class="e-row" data-c="acct" data-a="stu" data-day="3">
+      <div class="e-ic ei-acct" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M5 20a7 7 0 0114 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+      <div class="e-body">
+        <div class="e-text"><b>F. Mensimah</b> (graduated student) filed a data-erasure request — queued for admin review, statutory window 30 days</div>
+        <div class="e-meta"><span class="actor ac-stu">STUDENT</span><code>evt_8590…21</code></div>
+      </div>
+      <span class="e-time">09:18</span>
+    </div>
+
+    <!-- empty -->
+    <div class="empty" id="empty">No events match this filter.</div>
+
+    <div class="more">
+      <button class="btn btn-3 btn-sm">Load older events (1,901 more)</button>
+    </div>
+  </div>
+
+  <div class="note">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="5" y="10" width="14" height="10" rx="2.5" stroke="currentColor" stroke-width="1.8"/><path d="M8 10V8a4 4 0 018 0v2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    <span><b>Append-only by design.</b> Audit events are hash-chained like logbook entries — admins (including you) can read and export the log, but no role can modify or remove an event. Disputes get settled by evidence, not memory.</span>
+  </div>
+
+</main>
+
+<script>
+  const rows=[...document.querySelectorAll('.e-row')];
+  const heads=[...document.querySelectorAll('.g-head')];
+  const tabs=[...document.querySelectorAll('.tab')];
+  const sel=document.getElementById('actor-filter');
+  const empty=document.getElementById('empty');
+  let cat='all';
+  function apply(){
+    let n=0;
+    rows.forEach(r=>{
+      const ok=(cat==='all'||r.dataset.c===cat)&&(sel.value==='all'||r.dataset.a===sel.value);
+      r.style.display=ok?'':'none';if(ok)n++;
+    });
+    heads.forEach(h=>{
+      const any=rows.some(r=>r.dataset.day===h.dataset.day&&r.style.display!=='none');
+      h.style.display=any?'':'none';
+    });
+    empty.style.display=n?'none':'block';
+  }
+  tabs.forEach(t=>t.addEventListener('click',()=>{
+    tabs.forEach(x=>x.setAttribute('aria-selected','false'));
+    t.setAttribute('aria-selected','true');cat=t.dataset.c;apply();
+  }));
+  sel.addEventListener('change',apply);
+</script>
+</body>
+</html>
