@@ -50,6 +50,14 @@
 - Outstanding: run migration+seed vs real DB (need Neon DATABASE_URL or local compose); GitHub remote (deferred to first push). Gate D #1 APPROVED & committed 2026-06-11.
 - Resume: read this entry; if Gate D approved, commit per the approved plan, sync .git to mount, then live-DB verification.
 
+### 2026-06-11 — Live DB provisioned & verified (Neon)
+- Neon project "The interns ledger" (eu-west-2 London, project square-math-57525607, db neondb). Pooled DATABASE_URL held in sandbox server/.env only — never committed.
+- Sandbox cannot reach Neon (proxy blocks); migration + seed applied via Neon SQL Editor through the user's browser:
+  - Migration 0000: 46 statements OK (11 enums, 16 tables, 18 FKs, uq_primary_approver partial index).
+  - Seed: 4 users / 1 internship / 2 assignments verified by count query. Fix applied: ::assignment_kind casts needed in INSERT…SELECT (VALUES coerces, SELECT doesn't) — keep in mind for seed.ts (drizzle handles typing, no change needed).
+  - Drizzle tracking registered: drizzle.__drizzle_migrations row (hash e01e353d…de37, when 1781218578398) so future db:migrate skips 0000.
+- Remaining for Sprint 1 close-out: full register→verify→login E2E against live DB (requires running server with Neon access: user's machine or Vercel deploy — Gate J), then Gate F sprint review.
+
 ## Session handovers
 ### 2026-06-11 — Session 1 (discovery)
 - Completed: Gates A & B. Files created: REQUIREMENTS-ANALYSIS.md, ARCHITECTURE.md, PROJECT_REPORT_LOG.md.
