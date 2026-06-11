@@ -24,7 +24,9 @@
 7. Monorepo /client /server /design-reference /docs; branches main + frontend + backend + feat/*; Conventional Commits; sprint-checkpoint integration (Gate B).
 
 ## D. Repository activity
-- No repo yet. Awaiting location + GitHub login from user. Plan: `git init`, move prototypes → /design-reference, scaffold per ARCHITECTURE.md.
+- Repo: C:\Users\sly\Desktop\final year project\app (git runs in session sandbox; .git synced to folder).
+- Branches: main (5 commits, Gate D approved 2026-06-11), frontend + backend forked from 52f519a. No remote yet.
+- main history: de52812 chore(repo) scaffold · d1a6460 feat(server) app/env/health · b1c2f37 feat(db) schema+migration+seed · fa87bb7 feat(auth) FR-AUTH-01..10 · 52f519a feat(client) tokens+auth pages.
 
 ## E. Development status
 - Next: Sprint 1 (A1 scaffold, A2 UI shell/design tokens, A3 schema+migrations+seed, B1 register, B2 verify-email, B3 login, B7 reset) — pending Gate C+E.
@@ -45,7 +47,7 @@
   - B1/B2/B3/B7 ✅ code complete both ends: register (domain gate st.umat.edu.gh, consent, argon2id), verify-email (single-use 24 h), resend w/ 30 s cooldown UI, login (JWT 15 m + rotating refresh cookie il_refresh, lockout 5×15 min), logout, forgot/reset (30 min single-use, revokes all sessions). Pages: Login (role picker, per prototype), Register, VerifyEmail (4 states), Reset (4 states), interim Landing, PortalStub guards per role.
 - Smoke tests passed: /api/health 200; register w/ gmail → 422 DOMAIN_NOT_ALLOWED; invalid body → 400 VALIDATION envelope; unknown route → 404 envelope.
 - Deviations flagged: (1) login role picker is cosmetic — routing uses the account's real role (matches FR-AUTH; prototype behaviour was UI-only); (2) full landing-page conversion deferred to Sprint 4 (hosts verify CTA); interim landing in place.
-- Outstanding: Gate D approval for first commits; run migration+seed vs real DB; Neon account/DATABASE_URL; GitHub remote (deferred to first push).
+- Outstanding: run migration+seed vs real DB (need Neon DATABASE_URL or local compose); GitHub remote (deferred to first push). Gate D #1 APPROVED & committed 2026-06-11.
 - Resume: read this entry; if Gate D approved, commit per the approved plan, sync .git to mount, then live-DB verification.
 
 ## Session handovers
