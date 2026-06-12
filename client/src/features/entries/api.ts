@@ -21,10 +21,27 @@ export const entriesApi = {
   update: (id: string, d: Partial<EntryInput>) => api<Entry>(`/entries/${id}`, { method: "PATCH", body: JSON.stringify(d) }),
   remove: (id: string) => api<{ deleted: boolean }>(`/entries/${id}`, { method: "DELETE" }),
   submit: (id: string) => post<Entry>(`/entries/${id}/submit`),
+  correct: (id: string) => post<Entry>(`/entries/${id}/correct`),
   addAttachment: (id: string, d: { filename: string; mime: string; dataBase64: string }) =>
     post<Attachment>(`/entries/${id}/attachments`, d),
   removeAttachment: (id: string, attId: string) =>
     api<{ deleted: boolean }>(`/entries/${id}/attachments/${attId}`, { method: "DELETE" }),
+};
+
+export interface Report {
+  id: string; type: "live" | "sealed"; pdfBlobUrl: string | null; createdAt: string;
+  aggregateSha256: string | null; kid: string | null; verificationToken: string | null;
+}
+
+export const reportsApi = {
+  list: () => api<Report[]>("/reports"),
+  generate: (type: "live" | "sealed") => post<Report>("/reports", { type }),
+};
+
+export interface Notification { id: string; type: string; payload: Record<string, unknown> | null; readAt: string | null; createdAt: string }
+export const notificationsApi = {
+  list: () => api<Notification[]>("/me/notifications"),
+  markRead: (id: string) => post<{ read: boolean }>(`/me/notifications/${id}/read`),
 };
 
 export const meApi = {
