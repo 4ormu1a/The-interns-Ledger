@@ -83,6 +83,11 @@
 - Design note: portal pages built from shared design-system classes (main.css); pixel-parity pass vs prototypes scheduled for Phase 4 polish, per plan.
 - Next: Gate F review → Gate E Sprint 3 (review queue D1-D2, sealing E1-E5, audit chain K1a) — needs ED25519 keypair generation + key env var; supervisor portal UI.
 
+### 2026-06-12 — Blob store live; attachments verified in production
+- User created Vercel Blob store "interns-ledger-files", connected to interns-ledger-api (Prod+Preview, read-write token env added), redeployed.
+- Verified live: draft entry e1f6c598 → uploaded evidence-test.png through the UI → stored in Blob, sha256 recorded, listed on entry. C3 fully done; Sprint 2 has no remaining carry-over except Phase-4 pixel polish.
+- Awaiting Gate E approval for Sprint 3 (D1-D2 review queue/decisions, E1-E5 sealing, K1a audit chain; needs Ed25519 keypair → ED25519_PRIVATE_KEY env + public key in signing_keys table).
+
 ## Session handovers
 ### 2026-06-11 — Session 1 (discovery)
 - Completed: Gates A & B. Files created: REQUIREMENTS-ANALYSIS.md, ARCHITECTURE.md, PROJECT_REPORT_LOG.md.
