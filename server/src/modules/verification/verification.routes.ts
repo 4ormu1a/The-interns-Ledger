@@ -1,7 +1,7 @@
 /** F1-F6 — public verification (UC-08). No login. Uniform negative responses (anti-enumeration,
  *  NFR-SEC-05): invalid and non-existent tokens return the exact same shape and status code. */
 import { Router } from "express";
-import rateLimit from "express-rate-limit";
+import { rateLimit } from "express-rate-limit";
 import { eq } from "drizzle-orm";
 import { db } from "../../db/client.js";
 import { verificationTokens, seals, logEntries, users, internships, signingKeys } from "../../db/schema/index.js";
