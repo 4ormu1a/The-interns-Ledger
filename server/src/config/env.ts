@@ -15,6 +15,7 @@ const Env = z.object({
   APP_TIMEZONE: z.string().default("Africa/Accra"),
   CLIENT_ORIGIN: z.string().url(),
   RESEND_API_KEY: z.string().optional().default(""),
+  BLOB_READ_WRITE_TOKEN: z.string().optional().default(""),
   EMAIL_FROM: z.string().default("Interns Ledger <onboarding@resend.dev>"),
 });
 
