@@ -75,6 +75,14 @@
 - TODO: user should revoke the GitHub PAT (was shared in chat for the push) and set up Vercel 2FA + a Resend API key when ready; registration verify links until then are in Vercel Runtime Logs for interns-ledger-api.
 - Next: Gate E — Sprint 2 (B4 RBAC scopes, B5, B6, B8, C1–C4).
 
+### 2026-06-12 — Sprint 2 COMPLETE (Gates E/D/I + prod verification)
+- Backend (branch backend → main): scope middleware (B4); internships create/list/progress (C1, BR-09 approved-only); entries draft CRUD + submit with BR-01/02/03 in Africa/Accra (C2/C4); attachments via @vercel/blob server put, sha256 stored, ≤4 MB, JPEG/PNG/WebP/PDF (C3) — requires BLOB_READ_WRITE_TOKEN (NOT yet configured; returns 503 ATTACHMENTS_UNCONFIGURED until user creates a Blob store in Vercel → Storage and adds token to interns-ledger-api env + local .env); /me get/patch + password change w/ session revoke (B8).
+- Frontend (branch frontend → main): StudentShell topbar/nav/logout (B6), Dashboard (live progress bar), Internship page (view/create), Logbook w/ state tabs, EntryEditor (draft/edit/attach/submit, rejected-fix), EntryDetail (evidence hashes, comments), Account (profile/password/privacy note).
+- Commits: d0c00cf scope · dc5337a internships · 6b06b58 entries · 2bfe984 attachments · 1fa989b me · b12062d student UI; merged --no-ff to main (03e9a3d) and pushed; Vercel auto-deployed.
+- PRODUCTION E2E verified via browser: login Ama → dashboard shows internship + 0/480h → new entry form → save & submit → entry 4b08ccc8 state=submitted, detail renders. AC-02 core satisfied (attachment upload pending Blob store).
+- Design note: portal pages built from shared design-system classes (main.css); pixel-parity pass vs prototypes scheduled for Phase 4 polish, per plan.
+- Next: Gate F review → Gate E Sprint 3 (review queue D1-D2, sealing E1-E5, audit chain K1a) — needs ED25519 keypair generation + key env var; supervisor portal UI.
+
 ## Session handovers
 ### 2026-06-11 — Session 1 (discovery)
 - Completed: Gates A & B. Files created: REQUIREMENTS-ANALYSIS.md, ARCHITECTURE.md, PROJECT_REPORT_LOG.md.
