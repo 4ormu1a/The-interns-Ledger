@@ -8,6 +8,7 @@ import { LoginPage } from "./pages/public/LoginPage";
 import { RegisterPage } from "./pages/public/RegisterPage";
 import { VerifyEmailPage } from "./pages/public/VerifyEmailPage";
 import { ResetPage } from "./pages/public/ResetPage";
+import { VerifyPage } from "./pages/public/VerifyPage";
 import { PortalStub } from "./pages/PortalStub";
 import { StudentShell } from "./components/layout/PortalShell";
 import { DashboardPage } from "./pages/student/DashboardPage";
@@ -38,6 +39,8 @@ createRoot(document.getElementById("root")!).render(
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/verify-email" element={<VerifyEmailPage />} />
             <Route path="/reset" element={<ResetPage />} />
+            <Route path="/verify" element={<VerifyPage />} />
+            <Route path="/verify/:token" element={<VerifyPage />} />
             <Route path="/student" element={<StudentShell />}>
               <Route index element={<DashboardPage />} />
               <Route path="logbook" element={<LogbookPage />} />
