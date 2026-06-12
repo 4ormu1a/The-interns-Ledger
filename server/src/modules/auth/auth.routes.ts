@@ -1,5 +1,5 @@
 import { Router } from "express";
-import rateLimit from "express-rate-limit";
+import { rateLimit } from "express-rate-limit";
 import { validate } from "../../middleware/validate.js";
 import { env } from "../../config/env.js";
 import * as s from "./auth.schemas.js";
