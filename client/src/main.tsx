@@ -17,6 +17,13 @@ import { EntryEditorPage } from "./pages/student/EntryEditorPage";
 import { EntryDetailPage } from "./pages/student/EntryDetailPage";
 import { InternshipPage } from "./pages/student/InternshipPage";
 import { AccountPage } from "./pages/student/AccountPage";
+import { ReportsPage } from "./pages/student/ReportsPage";
+import { NotificationsPage } from "./pages/student/NotificationsPage";
+import { FacultyShell } from "./components/layout/FacultyShell";
+import { FacultyStudentsPage } from "./pages/faculty/FacultyStudentsPage";
+import { FacultyLogbookPage } from "./pages/faculty/FacultyLogbookPage";
+import { AssessmentPage } from "./pages/faculty/AssessmentPage";
+import { AssessmentHistoryPage } from "./pages/faculty/AssessmentHistoryPage";
 import { SupervisorShell } from "./components/layout/SupervisorShell";
 import { SupervisorDashboard } from "./pages/industry/SupervisorDashboard";
 import { QueuePage } from "./pages/industry/QueuePage";
@@ -49,6 +56,8 @@ createRoot(document.getElementById("root")!).render(
               <Route path="logbook/:id/edit" element={<EntryEditorPage />} />
               <Route path="internship" element={<InternshipPage />} />
               <Route path="account" element={<AccountPage />} />
+              <Route path="reports" element={<ReportsPage />} />
+              <Route path="notifications" element={<NotificationsPage />} />
             </Route>
             <Route path="/industry" element={<SupervisorShell />}>
               <Route index element={<SupervisorDashboard />} />
@@ -57,7 +66,12 @@ createRoot(document.getElementById("root")!).render(
               <Route path="students" element={<StudentsPage />} />
               <Route path="history" element={<HistoryPage />} />
             </Route>
-            <Route path="/faculty" element={<PortalStub role="faculty_supervisor" title="Faculty supervisor portal" />} />
+            <Route path="/faculty" element={<FacultyShell />}>
+              <Route index element={<FacultyStudentsPage />} />
+              <Route path="logbook/:internshipId" element={<FacultyLogbookPage />} />
+              <Route path="assess/:internshipId" element={<AssessmentPage />} />
+              <Route path="assessments" element={<AssessmentHistoryPage />} />
+            </Route>
             <Route path="/admin" element={<PortalStub role="admin" title="Administrator portal" />} />
           </Routes>
         </AuthProvider>
