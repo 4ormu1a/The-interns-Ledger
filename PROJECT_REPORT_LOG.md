@@ -106,6 +106,15 @@
 - Landing page now full conversion (hero+mockup, stats, how-it-works, roles, security band, verify CTA, footer). QR renders on approved entry detail → /verify/<token>.
 - Next: Gate F → Gate E Sprint 5 (G1 corrections UI, H1-H4 PDF reports live+sealed, J1-J2 faculty portal, N1 notifications polish).
 
+### 2026-06-12 — Sprint 5 COMPLETE: corrections, PDF reports, faculty portal — AC-07 + AC-08 proven ✅
+- Commits (Gate D approved, merged, pushed; main=aaf6ef2): corrections endpoint · pdf reports (live watermarked / sealed w/ aggregate hash+sig+QR via pdf-lib→Blob) · report-scope verification · faculty endpoints · student UI (correction flow, reports page, notifications) · faculty portal UI.
+- PRODUCTION TESTS:
+  - AC-08 ✓ Ama generated SEALED report → aggregate 7cbe5325… key UMAT-K1, PDF in Blob, report QR; public verify of report token → authentic scope=report entries=1.
+  - AC-07 ✓ full correction cycle live: Issue correction on sealed entry 4b08ccc8 → draft v2 350ff4b3 prefilled → edited+submitted → Kwabena approved → SEALED v2. Verification: v2 token authentic version=2; ORIGINAL token still authentic version=1 superseded=true. Append-only proven.
+  - Live-report regeneration (FR-PDF-04) covered by same generation path minus sealing; not separately re-run.
+- Faculty portal live (Dr. Esi Dankwa can view sealed logbook read-only + record assessments) — not yet user-tested in prod; suggest user demo it.
+- Next: Gate F → Gate E Sprint 6 (admin portal: I1-I3 users/assignments/reassign, K1b audit viewer + verify-chain UI, L1 key mgmt + token revocation, M1 erasure/export, N2-N3, O1/O3 hardening). Final sprint of backlog.
+
 ## Session handovers
 ### 2026-06-11 — Session 1 (discovery)
 - Completed: Gates A & B. Files created: REQUIREMENTS-ANALYSIS.md, ARCHITECTURE.md, PROJECT_REPORT_LOG.md.
