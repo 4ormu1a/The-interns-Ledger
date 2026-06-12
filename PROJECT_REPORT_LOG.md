@@ -88,6 +88,15 @@
 - Verified live: draft entry e1f6c598 → uploaded evidence-test.png through the UI → stored in Blob, sha256 recorded, listed on entry. C3 fully done; Sprint 2 has no remaining carry-over except Phase-4 pixel polish.
 - Awaiting Gate E approval for Sprint 3 (D1-D2 review queue/decisions, E1-E5 sealing, K1a audit chain; needs Ed25519 keypair → ED25519_PRIVATE_KEY env + public key in signing_keys table).
 
+### 2026-06-12 — Sprint 3 COMPLETE: first production seal + independent verification ✅
+- Commits (Gate D approved, merged --no-ff, pushed): crypto primitives · audit chain · review/seal endpoints · notifications feed · supervisor portal UI. main=ae056cc+.
+- Commit hygiene note: stash-pop staged-files mishap briefly folded 3 modules into one commit; fixed via soft reset and re-split BEFORE push (history clean).
+- Key ceremony: Ed25519 keypair generated in sandbox (kid UMAT-K1). Public key → signing_keys via Neon (INSERT 1, active). Private key → user-pasted into Vercel env ED25519_PRIVATE_KEY + written to local server/.env. Private key never in repo.
+- PRODUCTION SEAL TEST: Kwabena login → queue (1 pending) → entry 4b08ccc8 → confirm → SEALED. digest a8acf99cff89ca557db20ef4b1a4136d06f4a93dff66bbc16620e882088db434, kid UMAT-K1, verification token 01KTYASSHJXW0VNAH1RCWN63XD.
+- INDEPENDENT VERIFICATION (AC-04/06 evidence): in-browser WebCrypto re-check using ONLY the published public key — recomputed canonical digest matches AND Ed25519 signature valid. Third-party verifiability proven before the public verify page even exists.
+- AC-03 also satisfied (queue scoped to assigned students; one-at-a-time decisions; reject requires reason).
+- Next: Gate F → Gate E Sprint 4 (F1-F6 public /verify/:token page + QR, E6 immutability surfacing, O2, full landing page conversion).
+
 ## Session handovers
 ### 2026-06-11 — Session 1 (discovery)
 - Completed: Gates A & B. Files created: REQUIREMENTS-ANALYSIS.md, ARCHITECTURE.md, PROJECT_REPORT_LOG.md.
