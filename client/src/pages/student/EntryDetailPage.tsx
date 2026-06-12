@@ -24,6 +24,12 @@ export function EntryDetailPage() {
     onError: (err) => setError(err instanceof ApiClientError ? err.message : "Delete failed."),
   });
 
+  const correct = useMutation({
+    mutationFn: () => entriesApi.correct(id!),
+    onSuccess: (draft) => { qc.invalidateQueries({ queryKey: ["entries"] }); navigate(`/student/logbook/${draft.id}/edit`); },
+    onError: (err) => setError(err instanceof ApiClientError ? err.message : "Could not start a correction."),
+  });
+
   if (isLoading || !e) return null;
   const editable = e.state === "draft" || e.state === "rejected";
 
@@ -88,6 +94,12 @@ export function EntryDetailPage() {
           {editable && <Link className="btn btn-1 btn-sm" to={`/student/logbook/${e.id}/edit`}>{e.state === "rejected" ? "Fix & resubmit" : "Edit draft"}</Link>}
           {editable && <Button size="sm" variant={3} onClick={() => submit.mutate()} disabled={submit.isPending}>Submit for review</Button>}
           {e.state === "draft" && <Button size="sm" variant="danger" onClick={() => { if (confirm("Delete this draft?")) remove.mutate(); }}>Delete draft</Button>}
+          {e.state === "approved" && (
+            <Button size="sm" variant={3} disabled={correct.isPending}
+              onClick={() => { if (confirm("Issue a correction? The original stays sealed and verifiable; your fix becomes a new version that goes through review again.")) correct.mutate(); }}>
+              {correct.isPending ? "Creating…" : "Issue correction"}
+            </Button>
+          )}
         </div>
       </Card>
     </>
