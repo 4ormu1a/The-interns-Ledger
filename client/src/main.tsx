@@ -16,6 +16,12 @@ import { EntryEditorPage } from "./pages/student/EntryEditorPage";
 import { EntryDetailPage } from "./pages/student/EntryDetailPage";
 import { InternshipPage } from "./pages/student/InternshipPage";
 import { AccountPage } from "./pages/student/AccountPage";
+import { SupervisorShell } from "./components/layout/SupervisorShell";
+import { SupervisorDashboard } from "./pages/industry/SupervisorDashboard";
+import { QueuePage } from "./pages/industry/QueuePage";
+import { EntryReviewPage } from "./pages/industry/EntryReviewPage";
+import { StudentsPage } from "./pages/industry/StudentsPage";
+import { HistoryPage } from "./pages/industry/HistoryPage";
 import "./styles/global.css";
 import "./styles/auth.css";
 
@@ -41,7 +47,13 @@ createRoot(document.getElementById("root")!).render(
               <Route path="internship" element={<InternshipPage />} />
               <Route path="account" element={<AccountPage />} />
             </Route>
-            <Route path="/industry" element={<PortalStub role="industry_supervisor" title="Industry supervisor portal" />} />
+            <Route path="/industry" element={<SupervisorShell />}>
+              <Route index element={<SupervisorDashboard />} />
+              <Route path="queue" element={<QueuePage />} />
+              <Route path="review/:id" element={<EntryReviewPage />} />
+              <Route path="students" element={<StudentsPage />} />
+              <Route path="history" element={<HistoryPage />} />
+            </Route>
             <Route path="/faculty" element={<PortalStub role="faculty_supervisor" title="Faculty supervisor portal" />} />
             <Route path="/admin" element={<PortalStub role="admin" title="Administrator portal" />} />
           </Routes>
