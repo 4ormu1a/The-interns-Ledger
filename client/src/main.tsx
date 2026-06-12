@@ -9,6 +9,13 @@ import { RegisterPage } from "./pages/public/RegisterPage";
 import { VerifyEmailPage } from "./pages/public/VerifyEmailPage";
 import { ResetPage } from "./pages/public/ResetPage";
 import { PortalStub } from "./pages/PortalStub";
+import { StudentShell } from "./components/layout/PortalShell";
+import { DashboardPage } from "./pages/student/DashboardPage";
+import { LogbookPage } from "./pages/student/LogbookPage";
+import { EntryEditorPage } from "./pages/student/EntryEditorPage";
+import { EntryDetailPage } from "./pages/student/EntryDetailPage";
+import { InternshipPage } from "./pages/student/InternshipPage";
+import { AccountPage } from "./pages/student/AccountPage";
 import "./styles/global.css";
 import "./styles/auth.css";
 
@@ -25,7 +32,15 @@ createRoot(document.getElementById("root")!).render(
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/verify-email" element={<VerifyEmailPage />} />
             <Route path="/reset" element={<ResetPage />} />
-            <Route path="/student" element={<PortalStub role="student" title="Student portal" />} />
+            <Route path="/student" element={<StudentShell />}>
+              <Route index element={<DashboardPage />} />
+              <Route path="logbook" element={<LogbookPage />} />
+              <Route path="logbook/new" element={<EntryEditorPage />} />
+              <Route path="logbook/:id" element={<EntryDetailPage />} />
+              <Route path="logbook/:id/edit" element={<EntryEditorPage />} />
+              <Route path="internship" element={<InternshipPage />} />
+              <Route path="account" element={<AccountPage />} />
+            </Route>
             <Route path="/industry" element={<PortalStub role="industry_supervisor" title="Industry supervisor portal" />} />
             <Route path="/faculty" element={<PortalStub role="faculty_supervisor" title="Faculty supervisor portal" />} />
             <Route path="/admin" element={<PortalStub role="admin" title="Administrator portal" />} />
