@@ -65,6 +65,16 @@
 - Implemented FRs: FR-AUTH-01..03, 05..08, 10 full; 04 partial (seed-provisioned; admin UI in Sprint 6); FR-AUTH-09 logout endpoint live (B6 UI polish in Sprint 2 scope).
 - Carry-over/notes: deploy-to-Vercel portion of Sprint 1 goal deferred to Gate J at user convenience; landing conversion in Sprint 4; role-picker deviation accepted.
 
+### 2026-06-12 — Gate J: GitHub + Vercel deployment COMPLETE ✅
+- GitHub: https://github.com/4ormu1a/The-interns-Ledger (private). Branches main/frontend/backend pushed. Git author set to 4ormu1a@users.noreply.github.com (Vercel blocked the previous arvoip.fun commit email; last commit amended → 6b08d77).
+- Vercel projects (Hobby, user 4ormu1as-projects):
+  - **interns-ledger-api** — root `server`, Express preset, env: DATABASE_URL (Neon pooled), JWT_SECRET (new prod secret), ACCESS/REFRESH TTLs, INSTITUTION_*, APP_TIMEZONE, CLIENT_ORIGIN=https://interns-ledger.vercel.app, EMAIL_FROM. RESEND_API_KEY unset → emails currently log to function console (visible in Vercel Runtime Logs). Live: https://interns-ledger-api.vercel.app/api/health → 200 ok.
+  - **interns-ledger** — root `client`, Vite. client/vercel.json proxies /api/* → api project (keeps refresh cookie first-party) + SPA fallback. Live: https://interns-ledger.vercel.app
+- Fixes during deploy (committed on main): 4437c66→6b08d77 fix(auth) named rateLimit import (Vercel TS interop); 78b1c54 feat(client) vercel.json proxy+spa. Both flagged: committed under the approved Gate J activity without a separate Gate D pause.
+- Production E2E verified in browser: login ama.mensah@st.umat.edu.gh → /student portal stub renders "Signed in as Ama Mensah". AC-01 deploy portion DONE — Sprint 1 goal fully met.
+- TODO: user should revoke the GitHub PAT (was shared in chat for the push) and set up Vercel 2FA + a Resend API key when ready; registration verify links until then are in Vercel Runtime Logs for interns-ledger-api.
+- Next: Gate E — Sprint 2 (B4 RBAC scopes, B5, B6, B8, C1–C4).
+
 ## Session handovers
 ### 2026-06-11 — Session 1 (discovery)
 - Completed: Gates A & B. Files created: REQUIREMENTS-ANALYSIS.md, ARCHITECTURE.md, PROJECT_REPORT_LOG.md.
