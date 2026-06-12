@@ -29,7 +29,8 @@
 - main history: de52812 chore(repo) scaffold · d1a6460 feat(server) app/env/health · b1c2f37 feat(db) schema+migration+seed · fa87bb7 feat(auth) FR-AUTH-01..10 · 52f519a feat(client) tokens+auth pages.
 
 ## E. Development status
-- Next: Sprint 1 (A1 scaffold, A2 UI shell/design tokens, A3 schema+migrations+seed, B1 register, B2 verify-email, B3 login, B7 reset) — pending Gate C+E.
+- Sprint 1 COMPLETE (user-verified E2E on localhost 2026-06-11): seed login → portal stubs, real registration (ce-msjubril6822@st.umat.edu.gh) → console verification link → verified → login. AC-01 satisfied (deploy portion moves with Gate J).
+- Next: Gate F review delivered; then Gate E for Sprint 2 (B4 RBAC+scope, B5 lockout polish, B6 logout, B8 account settings, C1 internship, C2 draft entries, C3 attachments, C4 submit window) — and Vercel deploy (Gate J) when user is ready.
 
 ## F. Documentation references
 - Used: VeriLog_SRS.docx v1.0; VeriLog_Sprint_Backlog_v2.xlsx; sitemap 1.svg; journey map HTML; design-system image; 38 prototypes; master prompt.
@@ -57,6 +58,12 @@
   - Seed: 4 users / 1 internship / 2 assignments verified by count query. Fix applied: ::assignment_kind casts needed in INSERT…SELECT (VALUES coerces, SELECT doesn't) — keep in mind for seed.ts (drizzle handles typing, no change needed).
   - Drizzle tracking registered: drizzle.__drizzle_migrations row (hash e01e353d…de37, when 1781218578398) so future db:migrate skips 0000.
 - Remaining for Sprint 1 close-out: full register→verify→login E2E against live DB (requires running server with Neon access: user's machine or Vercel deploy — Gate J), then Gate F sprint review.
+
+### 2026-06-11 — Sprint 1 closed (Gate F)
+- User ran both apps locally; confirmed "everything works": seed logins, real UMaT registration, email-token verify, login, portal stubs.
+- server/.env with Neon URL written to user's repo copy (gitignored).
+- Implemented FRs: FR-AUTH-01..03, 05..08, 10 full; 04 partial (seed-provisioned; admin UI in Sprint 6); FR-AUTH-09 logout endpoint live (B6 UI polish in Sprint 2 scope).
+- Carry-over/notes: deploy-to-Vercel portion of Sprint 1 goal deferred to Gate J at user convenience; landing conversion in Sprint 4; role-picker deviation accepted.
 
 ## Session handovers
 ### 2026-06-11 — Session 1 (discovery)
