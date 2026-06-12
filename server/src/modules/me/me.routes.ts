@@ -1,10 +1,10 @@
 /** B8 — account settings; B6 logout lives in auth.routes. */
 import { Router } from "express";
 import { z } from "zod";
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { hash, verify } from "@node-rs/argon2";
 import { db } from "../../db/client.js";
-import { users, refreshTokens } from "../../db/schema/index.js";
+import { users, refreshTokens, notifications } from "../../db/schema/index.js";
 import { requireAuth } from "../../middleware/auth.js";
 import { validate } from "../../middleware/validate.js";
 import { ApiError } from "../../middleware/error.js";
@@ -29,6 +29,23 @@ meRouter.patch("/", validate(z.object({ fullName: z.string().min(2).max(120) }))
     const [u] = await db.update(users).set({ fullName: req.body.fullName, updatedAt: new Date() })
       .where(eq(users.id, req.user!.sub)).returning({ id: users.id, fullName: users.fullName });
     res.json({ data: u });
+  } catch (e) { next(e); }
+});
+
+meRouter.get("/notifications", async (req, res, next) => {
+  try {
+    const rows = await db.query.notifications.findMany({
+      where: eq(notifications.recipientId, req.user!.sub),
+      orderBy: [desc(notifications.createdAt)], limit: 50,
+    });
+    res.json({ data: rows });
+  } catch (e) { next(e); }
+});
+
+meRouter.post("/notifications/:id/read", async (req, res, next) => {
+  try {
+    await db.update(notifications).set({ readAt: new Date() }).where(eq(notifications.id, req.params.id));
+    res.json({ data: { read: true } });
   } catch (e) { next(e); }
 });
 

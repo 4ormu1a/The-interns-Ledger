@@ -16,6 +16,8 @@ const Env = z.object({
   CLIENT_ORIGIN: z.string().url(),
   RESEND_API_KEY: z.string().optional().default(""),
   BLOB_READ_WRITE_TOKEN: z.string().optional().default(""),
+  ED25519_PRIVATE_KEY: z.string().optional().default(""), // PKCS8 PEM, env-injected (NFR-SEC-04)
+  ED25519_KID: z.string().default("UMAT-K1"),
   EMAIL_FROM: z.string().default("Interns Ledger <onboarding@resend.dev>"),
 });
 
