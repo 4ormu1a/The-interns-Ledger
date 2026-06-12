@@ -97,6 +97,15 @@
 - AC-03 also satisfied (queue scoped to assigned students; one-at-a-time decisions; reject requires reason).
 - Next: Gate F → Gate E Sprint 4 (F1-F6 public /verify/:token page + QR, E6 immutability surfacing, O2, full landing page conversion).
 
+### 2026-06-12 — Sprint 4 COMPLETE: public verification live, AC-05 + AC-06 proven ✅
+- Commits (Gate D approved): verification endpoint (uniform negatives, key re-check) · seal/token on entry detail · verify page UI (5 states) · QR + seal block on approved entries · full landing conversion · fix(verification) named rateLimit import (same Vercel interop as sprint 1; flagged under Gate J precedent). Merged --no-ff, pushed; main=7c64131.
+- PRODUCTION TESTS:
+  - AC-05 ✓ https://interns-ledger.vercel.app/verify/01KTYASSHJXW0VNAH1RCWN63XD → "✓ AUTHENTIC RECORD" minimal disclosure (institution, Ama, Nimbus, approver, date, digest, kid, public key, signature) — no login.
+  - AC-06 ✓ tampered seals.canonical_payload (hours→"99.0") via Neon → page reports "✗ NOT AUTHENTIC"; restored → authentic again. NOTE: during restore, Neon editor's restored-history buffer silently re-ran the tamper once — diagnosis took several rounds; final clean typed UPDATE restored 8.0; verified authentic. Lesson logged: never re-run pasted Neon buffers; type single statements.
+  - Anti-enumeration ✓ unknown-but-valid-shape ULID and malformed token return byte-identical cannot_verify shape (NFR-SEC-05).
+- Landing page now full conversion (hero+mockup, stats, how-it-works, roles, security band, verify CTA, footer). QR renders on approved entry detail → /verify/<token>.
+- Next: Gate F → Gate E Sprint 5 (G1 corrections UI, H1-H4 PDF reports live+sealed, J1-J2 faculty portal, N1 notifications polish).
+
 ## Session handovers
 ### 2026-06-11 — Session 1 (discovery)
 - Completed: Gates A & B. Files created: REQUIREMENTS-ANALYSIS.md, ARCHITECTURE.md, PROJECT_REPORT_LOG.md.
