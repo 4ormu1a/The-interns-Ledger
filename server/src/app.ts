@@ -3,6 +3,10 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import { env } from "./config/env.js";
 import { authRouter } from "./modules/auth/auth.routes.js";
+import { meRouter } from "./modules/me/me.routes.js";
+import { internshipsRouter } from "./modules/internships/internships.routes.js";
+import { entriesRouter } from "./modules/entries/entries.routes.js";
+import { attachmentsRouter } from "./modules/entries/attachments.routes.js";
 import { errorHandler, notFound } from "./middleware/error.js";
 
 export function createApp() {
@@ -21,6 +25,10 @@ export function createApp() {
 
   app.get("/api/health", (_req, res) => res.json({ data: { status: "ok", time: new Date().toISOString() } })); // NFR-MNT-03
   app.use("/api/auth", authRouter);
+  app.use("/api/me", meRouter);
+  app.use("/api/internships", internshipsRouter);
+  app.use("/api/entries/:id/attachments", attachmentsRouter);
+  app.use("/api/entries", entriesRouter);
 
   app.use(notFound);
   app.use(errorHandler);
