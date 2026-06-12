@@ -2,7 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { db } from "../../db/client.js";
-import { attachments, entryComments } from "../../db/schema/index.js";
+import { attachments, entryComments, seals, verificationTokens } from "../../db/schema/index.js";
 import { requireAuth, requireRole } from "../../middleware/auth.js";
 import { validate } from "../../middleware/validate.js";
 import { loadOwnedEntry } from "../../middleware/scope.js";
@@ -35,11 +35,15 @@ entriesRouter.get("/", async (req, res, next) => {
 entriesRouter.get("/:id", loadOwnedEntry, async (req, res, next) => {
   try {
     const entry = (req as EntryReq).entry;
-    const [files, comments] = await Promise.all([
+    const [files, comments, seal, vt] = await Promise.all([
       db.query.attachments.findMany({ where: eq(attachments.entryId, entry.id) }),
       db.query.entryComments.findMany({ where: eq(entryComments.entryId, entry.id) }),
+      db.query.seals.findFirst({ where: eq(seals.entryId, entry.id) }),
+      db.query.verificationTokens.findFirst({ where: eq(verificationTokens.entryId, entry.id) }),
     ]);
-    res.json({ data: { ...entry, attachments: files, comments } });
+    res.json({ data: { ...entry, attachments: files, comments,
+      seal: seal ? { digest: seal.digestSha256, kid: seal.kid, sealedAt: seal.sealedAt } : null,
+      verificationToken: vt && !vt.revokedAt ? vt.tokenUlid : null } });
   } catch (e) { next(e); }
 });
 
