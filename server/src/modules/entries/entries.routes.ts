@@ -57,6 +57,11 @@ entriesRouter.delete("/:id", loadOwnedEntry, async (req, res, next) => {
   catch (e) { next(e); }
 });
 
+entriesRouter.post("/:id/correct", loadOwnedEntry, async (req, res, next) => {
+  try { res.status(201).json({ data: await svc.issueCorrection((req as EntryReq).entry, env.APP_TIMEZONE) }); }
+  catch (e) { next(e); }
+});
+
 entriesRouter.post("/:id/submit", loadOwnedEntry, async (req, res, next) => {
   try { res.json({ data: await svc.submitEntry((req as EntryReq).entry, env.APP_TIMEZONE) }); }
   catch (e) { next(e); }

@@ -89,6 +89,22 @@ export async function submitEntry(entry: Entry, tz: string) {
   return row;
 }
 
+/** FR-LOG-13 / UC-06 — issue a correction: new draft version pre-filled from the approved original. */
+export async function issueCorrection(entry: Entry, tz: string) {
+  if (entry.state !== "approved") throw new ApiError(409, "NOT_CORRECTABLE", "Only approved entries can be corrected.");
+  const internship = await db.query.internships.findFirst({ where: eq(internships.id, entry.internshipId) });
+  assertLoggingWindowOpen(internship!.endDate, tz); // window must still be open (UC-06 exception)
+  const existing = await db.query.logEntries.findFirst({ where: eq(logEntries.supersedesId, entry.id) });
+  if (existing) throw new ApiError(409, "CORRECTION_EXISTS", "A correction for this entry already exists.");
+  const [row] = await db.insert(logEntries).values({
+    internshipId: entry.internshipId, studentId: entry.studentId,
+    version: entry.version + 1, supersedesId: entry.id, state: "draft",
+    workDate: entry.workDate, hours: String(entry.hours), activity: entry.activity,
+    reflection: entry.reflection, skills: entry.skills,
+  }).returning();
+  return row;
+}
+
 export async function listEntries(studentId: string, state?: string) {
   return db.query.logEntries.findMany({
     where: and(eq(logEntries.studentId, studentId),
