@@ -1,5 +1,6 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { QRCodeSVG } from "qrcode.react";
 import { Card, StatusPill, Button } from "../../components/ui";
 import { entriesApi } from "../../features/entries/api";
 import { ApiClientError } from "../../lib/api";
@@ -56,6 +57,25 @@ export function EntryDetailPage() {
                 <span className="hint"> · {Math.round(a.size / 1024)} KB · sha256 {a.sha256.slice(0, 12)}…</span>
               </p>
             ))}
+          </div>
+        )}
+        {e.seal && e.verificationToken && (
+          <div style={{ borderTop: "1px solid var(--line)", paddingTop: 14 }}>
+            <h3 style={{ marginBottom: 10 }}>Cryptographic seal</h3>
+            <div style={{ display: "flex", gap: 18, flexWrap: "wrap", alignItems: "flex-start" }}>
+              <div style={{ background: "#fff", padding: 10, border: "1px solid var(--line)", borderRadius: 12 }}>
+                <QRCodeSVG value={`${location.origin}/verify/${e.verificationToken}`} size={132} fgColor="#0D530E" />
+              </div>
+              <div style={{ display: "grid", gap: 6, fontSize: ".86rem", flex: 1, minWidth: 220 }}>
+                <span><span className="hint">Sealed</span> {new Date(e.seal.sealedAt).toLocaleString()} · key <b>{e.seal.kid}</b></span>
+                <span className="hint">SHA-256</span>
+                <code style={{ wordBreak: "break-all", fontSize: ".78rem" }}>{e.seal.digest}</code>
+                <a className="btn btn-3 btn-sm" style={{ width: "fit-content" }} href={`/verify/${e.verificationToken}`} target="_blank" rel="noreferrer">
+                  Open public verification page
+                </a>
+              </div>
+            </div>
+            <p className="hint" style={{ marginTop: 10 }}>Anyone scanning this QR sees a minimal-disclosure authenticity result — no login required.</p>
           </div>
         )}
         {e.comments.length > 0 && (

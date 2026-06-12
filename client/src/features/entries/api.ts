@@ -7,7 +7,11 @@ export interface Entry {
   workDate: string; hours: string; activity: string; reflection: string | null; skills: string[];
   version: number; rejectReason: string | null; submittedAt: string | null; decidedAt: string | null;
 }
-export interface EntryDetail extends Entry { attachments: Attachment[]; comments: EntryComment[] }
+export interface EntryDetail extends Entry {
+  attachments: Attachment[]; comments: EntryComment[];
+  seal: { digest: string; kid: string; sealedAt: string } | null;
+  verificationToken: string | null;
+}
 export interface EntryInput { workDate: string; hours: number; activity: string; skills: string[]; reflection?: string }
 
 export const entriesApi = {
