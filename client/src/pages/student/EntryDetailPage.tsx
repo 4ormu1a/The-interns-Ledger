@@ -1,0 +1,75 @@
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Card, StatusPill, Button } from "../../components/ui";
+import { entriesApi } from "../../features/entries/api";
+import { ApiClientError } from "../../lib/api";
+import { useState } from "react";
+
+export function EntryDetailPage() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+  const [error, setError] = useState("");
+  const { data: e, isLoading } = useQuery({ queryKey: ["entry", id], queryFn: () => entriesApi.get(id!) });
+
+  const submit = useMutation({
+    mutationFn: () => entriesApi.submit(id!),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["entry", id] }); qc.invalidateQueries({ queryKey: ["entries"] }); },
+    onError: (err) => setError(err instanceof ApiClientError ? err.message : "Submit failed."),
+  });
+  const remove = useMutation({
+    mutationFn: () => entriesApi.remove(id!),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["entries"] }); navigate("/student/logbook"); },
+    onError: (err) => setError(err instanceof ApiClientError ? err.message : "Delete failed."),
+  });
+
+  if (isLoading || !e) return null;
+  const editable = e.state === "draft" || e.state === "rejected";
+
+  return (
+    <>
+      <div className="crumbs"><Link to="/student/logbook">Logbook</Link><span className="sep">/</span><span>{e.workDate}</span></div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, flexWrap: "wrap", gap: 10 }}>
+        <h1>{e.workDate} · {Number(e.hours)}h {e.version > 1 && <span style={{ fontSize: ".7em", color: "var(--muted)" }}>v{e.version}</span>}</h1>
+        <StatusPill state={e.state} />
+      </div>
+      {error && <p className="formerr" style={{ maxWidth: 680 }}>{error}</p>}
+      {e.state === "rejected" && e.rejectReason && <p className="formerr" style={{ maxWidth: 680 }}>Rejection reason: {e.rejectReason}</p>}
+      <Card style={{ padding: 26, maxWidth: 680, display: "grid", gap: 16 }}>
+        <div>
+          <h3 style={{ marginBottom: 6 }}>Activity</h3>
+          <p style={{ whiteSpace: "pre-wrap" }}>{e.activity}</p>
+        </div>
+        {e.reflection && <div><h3 style={{ marginBottom: 6 }}>Reflection</h3><p style={{ whiteSpace: "pre-wrap" }}>{e.reflection}</p></div>}
+        <div>
+          <h3 style={{ marginBottom: 6 }}>Skills</h3>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {e.skills.map((s) => <span key={s} className="st st-draft">{s}</span>)}
+          </div>
+        </div>
+        {e.attachments.length > 0 && (
+          <div>
+            <h3 style={{ marginBottom: 6 }}>Evidence</h3>
+            {e.attachments.map((a) => (
+              <p key={a.id} style={{ fontSize: ".9rem", padding: "4px 0" }}>
+                <a href={a.blobUrl} target="_blank" rel="noreferrer" style={{ color: "var(--green-700)", fontWeight: 600 }}>{a.filename}</a>
+                <span className="hint"> · {Math.round(a.size / 1024)} KB · sha256 {a.sha256.slice(0, 12)}…</span>
+              </p>
+            ))}
+          </div>
+        )}
+        {e.comments.length > 0 && (
+          <div>
+            <h3 style={{ marginBottom: 6 }}>Supervisor comments</h3>
+            {e.comments.map((c) => <p key={c.id} style={{ fontSize: ".92rem", padding: "6px 0", borderBottom: "1px solid var(--line)" }}>{c.body}</p>)}
+          </div>
+        )}
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          {editable && <Link className="btn btn-1 btn-sm" to={`/student/logbook/${e.id}/edit`}>{e.state === "rejected" ? "Fix & resubmit" : "Edit draft"}</Link>}
+          {editable && <Button size="sm" variant={3} onClick={() => submit.mutate()} disabled={submit.isPending}>Submit for review</Button>}
+          {e.state === "draft" && <Button size="sm" variant="danger" onClick={() => { if (confirm("Delete this draft?")) remove.mutate(); }}>Delete draft</Button>}
+        </div>
+      </Card>
+    </>
+  );
+}
