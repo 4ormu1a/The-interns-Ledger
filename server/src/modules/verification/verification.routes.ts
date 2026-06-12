@@ -4,7 +4,7 @@ import { Router } from "express";
 import { rateLimit } from "express-rate-limit";
 import { eq } from "drizzle-orm";
 import { db } from "../../db/client.js";
-import { verificationTokens, seals, logEntries, users, internships, signingKeys } from "../../db/schema/index.js";
+import { verificationTokens, seals, logEntries, users, internships, signingKeys, reports } from "../../db/schema/index.js";
 import { canonicalStringify } from "../../lib/canonical.js";
 import { sha256hex, verifyDigest } from "../../lib/crypto.js";
 import { env } from "../../config/env.js";
@@ -24,7 +24,34 @@ verificationRouter.get("/:token", async (req, res, next) => {
     if (!/^[0-9A-HJKMNP-TV-Z]{26}$/.test(token)) return res.json({ data: cannotVerify() }); // ULID shape; uniform response
 
     const vt = await db.query.verificationTokens.findFirst({ where: eq(verificationTokens.tokenUlid, token) });
-    if (!vt || vt.scope !== "entry" || !vt.entryId) return res.json({ data: cannotVerify() });
+    if (!vt) return res.json({ data: cannotVerify() });
+
+    // ── report-scope verification (FR-QR-07 / FR-INT-05) ──
+    if (vt.scope === "report" && vt.reportId) {
+      if (vt.revokedAt) return res.json({ data: { status: "revoked", institution: env.INSTITUTION_NAME,
+        message: "This report's verification was revoked by the institution.", revokedAt: vt.revokedAt, reason: vt.revokeReason ?? undefined } });
+      const report = await db.query.reports.findFirst({ where: eq(reports.id, vt.reportId) });
+      if (!report || report.type !== "sealed" || !report.aggregateSha256) return res.json({ data: cannotVerify() });
+      const internshipR = await db.query.internships.findFirst({ where: eq(internships.id, report.internshipId) });
+      const studentR = internshipR ? await db.query.users.findFirst({ where: eq(users.id, internshipR.studentId) }) : null;
+      const keyR = await db.query.signingKeys.findFirst({ where: eq(signingKeys.kid, report.kid!) });
+      const digests = (report.snapshot as { memberDigests?: string[] } | null)?.memberDigests ?? [];
+      const recomputed = sha256hex(digests.join(""));
+      const sigOk = keyR ? verifyDigest(report.aggregateSha256, report.aggregateSignature!, keyR.publicKey) : false;
+      if (!keyR || keyR.status === "revoked" || recomputed !== report.aggregateSha256 || !sigOk) {
+        return res.json({ data: { status: "not_authentic", institution: env.INSTITUTION_NAME,
+          message: "Integrity check failed — this report does not match its cryptographic seal." } });
+      }
+      return res.json({ data: {
+        status: "authentic", scope: "report", institution: env.INSTITUTION_NAME,
+        studentName: studentR?.fullName, company: internshipR?.company,
+        entryCount: digests.length, sealedAt: report.createdAt,
+        digest: report.aggregateSha256, kid: report.kid, publicKey: keyR.publicKey,
+        signature: report.aggregateSignature, disclosure: "minimal",
+      } });
+    }
+
+    if (vt.scope !== "entry" || !vt.entryId) return res.json({ data: cannotVerify() });
 
     if (vt.revokedAt) {
       return res.json({ data: {

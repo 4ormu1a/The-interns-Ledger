@@ -9,6 +9,8 @@ import { entriesRouter } from "./modules/entries/entries.routes.js";
 import { attachmentsRouter } from "./modules/entries/attachments.routes.js";
 import { reviewRouter } from "./modules/review/review.routes.js";
 import { verificationRouter } from "./modules/verification/verification.routes.js";
+import { reportsRouter } from "./modules/reports/reports.routes.js";
+import { facultyRouter } from "./modules/faculty/faculty.routes.js";
 import { errorHandler, notFound } from "./middleware/error.js";
 
 export function createApp() {
@@ -33,6 +35,8 @@ export function createApp() {
   app.use("/api/entries", entriesRouter);
   app.use("/api/review", reviewRouter);
   app.use("/api/verify", verificationRouter); // public — no auth
+  app.use("/api/reports", reportsRouter);
+  app.use("/api/faculty", facultyRouter);
 
   app.use(notFound);
   app.use(errorHandler);
