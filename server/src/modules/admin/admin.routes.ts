@@ -3,7 +3,7 @@
  *  M1 erasure/export, FR-ADM-01..07, AC-09/10/11 */
 import { Router } from "express";
 import { z } from "zod";
-import { and, desc, eq, gte, ilike, isNull, lte, or, sql } from "drizzle-orm";
+import { and, desc, eq, gte, ilike, inArray, isNull, lte, or, sql } from "drizzle-orm";
 import { db } from "../../db/client.js";
 import {
   users, internships, assignments, logEntries,
@@ -261,8 +261,8 @@ adminRouter.get("/audit", async (req, res, next) => {
     const actorIds = [...new Set(rows.filter(r => r.actorId).map(r => r.actorId!))];
     const actorNames: Record<string, string> = {};
     if (actorIds.length) {
-      const actorRows = await db.execute(sql`SELECT id, full_name FROM users WHERE id = ANY(${actorIds}::uuid[])`);
-      for (const r of actorRows.rows as { id: string; full_name: string }[]) actorNames[r.id] = r.full_name;
+      const actorRows = await db.select({ id: users.id, fullName: users.fullName }).from(users).where(inArray(users.id, actorIds));
+      for (const r of actorRows) actorNames[r.id] = r.fullName ?? '';
     }
     const enriched = rows.map(r => ({ ...r, actorName: r.actorId ? (actorNames[r.actorId] ?? r.actorId) : null }));
     res.json({ data: enriched });
