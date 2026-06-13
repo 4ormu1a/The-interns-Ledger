@@ -17,7 +17,7 @@ const card = (title: string, body: string, cta: { href: string; label: string })
       <h2 style="color:#0D530E;margin-top:0">${title}</h2>
       <p style="color:#030302;line-height:1.6">${body}</p>
       <a href="${cta.href}" style="display:inline-block;background:#0D530E;color:#fff;border-radius:999px;padding:12px 24px;text-decoration:none">${cta.label}</a>
-      <p style="color:#777;font-size:12px;margin-bottom:0">Interns Ledger · ${env.INSTITUTION_NAME}</p>
+      <p style="color:#777;font-size:12px;margin-bottom:0">Interns Ledger</p>
     </div>
   </div>`;
 
@@ -28,5 +28,10 @@ export const sendVerificationEmail = (to: string, token: string) =>
 
 export const sendResetEmail = (to: string, token: string) =>
   send(to, "Reset your Interns Ledger password",
-    card("Reset your password", "Click below to choose a new password. The link is single-use and expires in 30 minutes. If you didn't ask for this, ignore this email.",
+    card("Reset your password", "Click below to choose a new password. The link is single-use and expires in 30 minutes.",
       { href: `${env.CLIENT_ORIGIN}/reset?token=${token}`, label: "Reset password" }));
+
+export const sendProvisionEmail = (to: string, name: string, resetToken: string) =>
+  send(to, "Your Interns Ledger account is ready",
+    card("Welcome to Interns Ledger", `Hello ${name}, an administrator has provisioned your account. Set your password to get started. This link is valid for 7 days.`,
+      { href: `${env.CLIENT_ORIGIN}/reset?token=${resetToken}`, label: "Set your password" }));

@@ -11,13 +11,14 @@ import { reviewRouter } from "./modules/review/review.routes.js";
 import { verificationRouter } from "./modules/verification/verification.routes.js";
 import { reportsRouter } from "./modules/reports/reports.routes.js";
 import { facultyRouter } from "./modules/faculty/faculty.routes.js";
+import { adminRouter } from "./modules/admin/admin.routes.js";
 import { errorHandler, notFound } from "./middleware/error.js";
 
 export function createApp() {
   const app = express();
   app.set("trust proxy", 1);
   app.disable("x-powered-by");
-  app.use((_req, res, next) => { // secure headers (NFR-SEC; full pass in M1)
+  app.use((_req, res, next) => {
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("X-Frame-Options", "DENY");
     res.setHeader("Referrer-Policy", "no-referrer");
@@ -27,16 +28,17 @@ export function createApp() {
   app.use(express.json({ limit: "1mb" }));
   app.use(cookieParser());
 
-  app.get("/api/health", (_req, res) => res.json({ data: { status: "ok", time: new Date().toISOString() } })); // NFR-MNT-03
+  app.get("/api/health", (_req, res) => res.json({ data: { status: "ok", time: new Date().toISOString() } }));
   app.use("/api/auth", authRouter);
   app.use("/api/me", meRouter);
   app.use("/api/internships", internshipsRouter);
   app.use("/api/entries/:id/attachments", attachmentsRouter);
   app.use("/api/entries", entriesRouter);
   app.use("/api/review", reviewRouter);
-  app.use("/api/verify", verificationRouter); // public — no auth
+  app.use("/api/verify", verificationRouter);
   app.use("/api/reports", reportsRouter);
   app.use("/api/faculty", facultyRouter);
+  app.use("/api/admin", adminRouter);
 
   app.use(notFound);
   app.use(errorHandler);

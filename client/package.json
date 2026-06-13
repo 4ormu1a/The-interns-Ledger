@@ -20,6 +20,7 @@
     "zod": "^3.25.0"
   },
   "devDependencies": {
+    "@rollup/rollup-linux-x64-gnu": "^4.62.0",
     "@types/react": "^18.3.20",
     "@types/react-dom": "^18.3.6",
     "@vitejs/plugin-react": "^4.4.1",

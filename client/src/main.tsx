@@ -9,7 +9,6 @@ import { RegisterPage } from "./pages/public/RegisterPage";
 import { VerifyEmailPage } from "./pages/public/VerifyEmailPage";
 import { ResetPage } from "./pages/public/ResetPage";
 import { VerifyPage } from "./pages/public/VerifyPage";
-import { PortalStub } from "./pages/PortalStub";
 import { StudentShell } from "./components/layout/PortalShell";
 import { DashboardPage } from "./pages/student/DashboardPage";
 import { LogbookPage } from "./pages/student/LogbookPage";
@@ -30,6 +29,14 @@ import { QueuePage } from "./pages/industry/QueuePage";
 import { EntryReviewPage } from "./pages/industry/EntryReviewPage";
 import { StudentsPage } from "./pages/industry/StudentsPage";
 import { HistoryPage } from "./pages/industry/HistoryPage";
+import { AdminShell } from "./components/layout/AdminShell";
+import { AdminDashboard } from "./pages/admin/AdminDashboard";
+import { UsersPage } from "./pages/admin/UsersPage";
+import { AssignmentsPage } from "./pages/admin/AssignmentsPage";
+import { AuditPage } from "./pages/admin/AuditPage";
+import { KeysPage } from "./pages/admin/KeysPage";
+import { TokensPage } from "./pages/admin/TokensPage";
+import { ErasurePage } from "./pages/admin/ErasurePage";
 import "./styles/global.css";
 import "./styles/auth.css";
 
@@ -72,7 +79,15 @@ createRoot(document.getElementById("root")!).render(
               <Route path="assess/:internshipId" element={<AssessmentPage />} />
               <Route path="assessments" element={<AssessmentHistoryPage />} />
             </Route>
-            <Route path="/admin" element={<PortalStub role="admin" title="Administrator portal" />} />
+            <Route path="/admin" element={<AdminShell />}>
+              <Route index element={<AdminDashboard />} />
+              <Route path="users" element={<UsersPage />} />
+              <Route path="assignments" element={<AssignmentsPage />} />
+              <Route path="audit" element={<AuditPage />} />
+              <Route path="keys" element={<KeysPage />} />
+              <Route path="tokens" element={<TokensPage />} />
+              <Route path="erasure" element={<ErasurePage />} />
+            </Route>
           </Routes>
         </AuthProvider>
       </BrowserRouter>
