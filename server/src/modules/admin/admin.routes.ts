@@ -3,7 +3,7 @@
  *  M1 erasure/export, FR-ADM-01..07, AC-09/10/11 */
 import { Router } from "express";
 import { z } from "zod";
-import { and, eq, gte, ilike, isNull, lte, or, sql } from "drizzle-orm";
+import { and, desc, eq, gte, ilike, isNull, lte, or, sql } from "drizzle-orm";
 import { db } from "../../db/client.js";
 import {
   users, internships, assignments, logEntries,
@@ -252,12 +252,11 @@ adminRouter.get("/audit", async (req, res, next) => {
     if (from) conditions.push(gte(auditLog.createdAt, new Date(from)));
     if (to) conditions.push(lte(auditLog.createdAt, new Date(to)));
 
-    const rows = await db.query.auditLog.findMany({
-      where: conditions.length ? and(...conditions) : undefined,
-      orderBy: (a, { desc }) => [desc(a.seq)],
-      limit: Math.min(Number(limit), 500),
-      offset: Number(offset),
-    });
+    const rows = await db.select().from(auditLog)
+      .where(conditions.length ? and(...conditions) : undefined)
+      .orderBy(desc(auditLog.seq))
+      .limit(Math.min(Number(limit), 500))
+      .offset(Number(offset));
     // Also join actor names for display
     const actorIds = [...new Set(rows.filter(r => r.actorId).map(r => r.actorId!))];
     const actorNames: Record<string, string> = {};
