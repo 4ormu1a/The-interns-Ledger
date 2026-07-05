@@ -2,7 +2,7 @@ import { and, eq, gt, isNull } from "drizzle-orm";
 import { hash, verify } from "@node-rs/argon2";
 import jwt from "jsonwebtoken";
 import { db } from "../../db/client.js";
-import { users, emailTokens, refreshTokens, loginAttempts } from "../../db/schema/index.js";
+import { users, emailTokens, refreshTokens, loginAttempts, invitations, assignments, notifications } from "../../db/schema/index.js";
 import { env } from "../../config/env.js";
 import { ApiError } from "../../middleware/error.js";
 import { newOpaqueToken, sha256hex } from "../../lib/tokens.js";
@@ -94,6 +94,66 @@ async function recordFailure(email: string) {
   }
 }
 
+export async function acceptInvite(token: string, fullName: string, plain: string) {
+  const tokenHash = sha256hex(token);
+  const invite = await db.query.invitations.findFirst({
+    where: and(
+      eq(invitations.tokenHash, tokenHash),
+      isNull(invitations.acceptedAt),
+      gt(invitations.expiresAt, new Date())
+    )
+  });
+
+  if (!invite) {
+    throw new ApiError(400, "INVALID_INVITE", "This invitation is invalid or has expired.");
+  }
+
+  // Find existing user or create a new one
+  let user = await db.query.users.findFirst({ where: eq(users.email, invite.email) });
+  
+  if (!user) {
+    const passwordHash = await hash(plain, ARGON);
+    const [newUser] = await db.insert(users).values({
+      role: invite.role,
+      email: invite.email,
+      passwordHash,
+      fullName,
+      status: "active",
+      emailVerifiedAt: new Date(),
+      consentAt: new Date(),
+    }).returning();
+    user = newUser;
+  } else {
+    // If they already exist but as a student, we can't let them be a supervisor
+    if (user.role === "student") {
+      throw new ApiError(409, "ROLE_CONFLICT", "This email is registered as a student account.");
+    }
+  }
+
+  // Create the assignment
+  await db.insert(assignments).values({
+    internshipId: invite.internshipId,
+    supervisorId: user.id,
+    kind: invite.role === "industry_supervisor" ? "industry" : "faculty",
+    isPrimaryApprover: true // For now, assume they are primary
+  });
+
+  // Mark invite as accepted
+  await db.update(invitations)
+    .set({ acceptedAt: new Date() })
+    .where(eq(invitations.id, invite.id));
+
+  // Notify the student that their supervisor accepted
+  await db.insert(notifications).values({
+    recipientId: invite.inviterId,
+    type: "supervisor.accepted",
+    payload: { supervisorName: user.fullName }
+  });
+
+  // Login
+  return issueSession(user.id, user.role, user.fullName);
+}
+
 async function issueSession(userId: string, role: string, name: string) {
   const access = jwt.sign({ sub: userId, role, name }, env.JWT_SECRET, { expiresIn: env.ACCESS_TOKEN_TTL } as jwt.SignOptions);
   const refresh = newOpaqueToken();
@@ -104,7 +164,8 @@ async function issueSession(userId: string, role: string, name: string) {
   return { access, refresh, user: { id: userId, role, name } };
 }
 
-export async function rotateRefresh(presented: string) {
+export async function rotateRefresh(presented: string | undefined) {
+  if (!presented) throw new ApiError(401, "REFRESH_INVALID", "Session expired. Log in again.");
   const row = await db.query.refreshTokens.findFirst({
     where: and(eq(refreshTokens.tokenHash, sha256hex(presented)), isNull(refreshTokens.revokedAt),
       gt(refreshTokens.expiresAt, new Date())),

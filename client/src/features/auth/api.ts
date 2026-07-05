@@ -13,4 +13,5 @@ export const authApi = {
   logout: () => post<{ loggedOut: boolean }>("/auth/logout"),
   forgot: (email: string) => post<{ sent: boolean }>("/auth/forgot", { email }),
   reset: (token: string, password: string) => post<{ reset: boolean }>("/auth/reset", { token, password }),
+  acceptInvite: (token: string, fullName: string, password: string) => post<LoginResponse>("/auth/accept-invite", { token, fullName, password }),
 };

@@ -143,6 +143,19 @@ adminRouter.patch("/users/:id", async (req, res, next) => {
    ASSIGNMENT MANAGEMENT  (FR-ADM-02/03/04)
 ──────────────────────────────────────────────────────────────── */
 
+// List lightweight internships for assignment dropdowns
+adminRouter.get("/internships", async (_req, res, next) => {
+  try {
+    const rows = await db.execute(sql`
+      SELECT i.id, i.company, i.role_title, u.full_name AS student_name
+      FROM internships i
+      JOIN users u ON u.id = i.student_id
+      ORDER BY i.created_at DESC
+    `);
+    res.json({ data: rows.rows });
+  } catch (e) { next(e); }
+});
+
 // List all assignments (join internship + supervisor info)
 adminRouter.get("/assignments", async (req, res, next) => {
   try {

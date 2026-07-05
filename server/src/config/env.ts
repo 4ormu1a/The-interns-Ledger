@@ -14,7 +14,8 @@ const Env = z.object({
   INSTITUTION_NAME: z.string().min(1),
   APP_TIMEZONE: z.string().default("Africa/Accra"),
   CLIENT_ORIGIN: z.string().url(),
-  RESEND_API_KEY: z.string().optional().default(""),
+  SMTP_USER: z.string().optional().default(""),
+  SMTP_PASS: z.string().optional().default(""),
   BLOB_READ_WRITE_TOKEN: z.string().optional().default(""),
   ED25519_PRIVATE_KEY: z.string().optional().default(""), // PKCS8 PEM, env-injected (NFR-SEC-04)
   ED25519_KID: z.string().default("UMAT-K1"),

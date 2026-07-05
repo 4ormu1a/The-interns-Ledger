@@ -9,6 +9,7 @@ import { RegisterPage } from "./pages/public/RegisterPage";
 import { VerifyEmailPage } from "./pages/public/VerifyEmailPage";
 import { ResetPage } from "./pages/public/ResetPage";
 import { VerifyPage } from "./pages/public/VerifyPage";
+import { AcceptInvitePage } from "./pages/public/AcceptInvitePage";
 import { StudentShell } from "./components/layout/PortalShell";
 import { DashboardPage } from "./pages/student/DashboardPage";
 import { LogbookPage } from "./pages/student/LogbookPage";
@@ -55,6 +56,7 @@ createRoot(document.getElementById("root")!).render(
             <Route path="/reset" element={<ResetPage />} />
             <Route path="/verify" element={<VerifyPage />} />
             <Route path="/verify/:token" element={<VerifyPage />} />
+            <Route path="/invite" element={<AcceptInvitePage />} />
             <Route path="/student" element={<StudentShell />}>
               <Route index element={<DashboardPage />} />
               <Route path="logbook" element={<LogbookPage />} />

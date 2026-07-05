@@ -5,6 +5,7 @@ export const getUsers = (params?: string) => api<any[]>(`/admin/users${params ? 
 export const provisionUser = (d: any) => post<any>("/admin/users", d);
 export const patchUser = (id: string, d: any) => api<any>(`/admin/users/${id}`, { method: "PATCH", body: JSON.stringify(d), headers: { "Content-Type": "application/json" } });
 
+export const getInternships = () => api<any[]>("/admin/internships");
 export const getAssignments = (params?: string) => api<any[]>(`/admin/assignments${params ? "?" + params : ""}`);
 export const createAssignment = (d: any) => post<any>("/admin/assignments", d);
 export const deleteAssignment = (id: string) => api<any>(`/admin/assignments/${id}`, { method: "DELETE" });

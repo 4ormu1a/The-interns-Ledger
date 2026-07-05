@@ -21,7 +21,12 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   const body = await res.json().catch(() => null);
   if (!res.ok) {
     const e = body?.error ?? { code: "UNKNOWN", message: "Request failed" };
-    throw new ApiClientError(e.code, e.message, e.details);
+    let msg = e.message;
+    if (e.code === "VALIDATION" && e.details?.fieldErrors) {
+      const fields = Object.values(e.details.fieldErrors).flat();
+      if (fields.length > 0) msg = fields[0] as string;
+    }
+    throw new ApiClientError(e.code, msg, e.details);
   }
   return body.data as T;
 }

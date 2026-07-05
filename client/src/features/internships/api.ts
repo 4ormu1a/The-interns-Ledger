@@ -13,4 +13,5 @@ export const internshipsApi = {
   list: () => api<Internship[]>("/internships"),
   create: (d: Omit<Internship, "id" | "status">) => post<Internship>("/internships", d),
   progress: (id: string) => api<Progress>(`/internships/${id}/progress`),
+  inviteSupervisor: (id: string, email: string, role: string) => post<{message: string}>(`/internships/${id}/invite-supervisor`, { email, role }),
 };

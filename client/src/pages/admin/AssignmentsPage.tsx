@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, Button, Field } from "../../components/ui";
-import { getAssignments, createAssignment, deleteAssignment, reassign } from "../../features/admin/api";
+import { getInternships, getAssignments, createAssignment, deleteAssignment, reassign } from "../../features/admin/api";
 import { getUsers } from "../../features/admin/api";
 
 export function AssignmentsPage() {
@@ -16,10 +16,16 @@ export function AssignmentsPage() {
     queryKey: ["admin-assignments"], queryFn: () => getAssignments(),
   });
 
-  const { data: supervisors = [] } = useQuery({
-    queryKey: ["admin-users-sups"],
-    queryFn: () => getUsers("role=industry_supervisor&status=active&limit=200"),
+  const { data: internships = [] } = useQuery({
+    queryKey: ["admin-internships"],
+    queryFn: () => getInternships(),
   });
+
+  const { data: allUsers = [] } = useQuery({
+    queryKey: ["admin-users-sups"],
+    queryFn: () => getUsers("status=active&limit=200"),
+  });
+  const supervisors = (allUsers as any[]).filter(u => u.role === "industry_supervisor" || u.role === "faculty_supervisor");
 
   const createMut = useMutation({
     mutationFn: createAssignment,
@@ -94,8 +100,20 @@ export function AssignmentsPage() {
         <Card>
           <h2 style={{ marginTop: 0 }}>Add assignment</h2>
           <div style={{ display: "grid", gap: 16, maxWidth: 480 }}>
-            <Field label="Internship ID (UUID)" value={addForm.internshipId} onChange={(e) => setAddForm({ ...addForm, internshipId: e.target.value })} placeholder="paste internship UUID" />
-            <Field label="Supervisor ID (UUID)" value={addForm.supervisorId} onChange={(e) => setAddForm({ ...addForm, supervisorId: e.target.value })} placeholder="paste supervisor UUID" />
+            <div style={{ display: "grid", gap: 6 }}>
+              <label>Select Internship</label>
+              <select value={addForm.internshipId} onChange={(e) => setAddForm({ ...addForm, internshipId: e.target.value })} style={{ padding: "10px 14px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--surface)", fontSize: 16 }}>
+                <option value="">-- Choose Internship --</option>
+                {(internships as any[]).map(i => <option key={i.id} value={i.id}>{i.student_name} - {i.company} ({i.role_title})</option>)}
+              </select>
+            </div>
+            <div style={{ display: "grid", gap: 6 }}>
+              <label>Select Supervisor</label>
+              <select value={addForm.supervisorId} onChange={(e) => setAddForm({ ...addForm, supervisorId: e.target.value })} style={{ padding: "10px 14px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--surface)", fontSize: 16 }}>
+                <option value="">-- Choose Supervisor --</option>
+                {supervisors.map(s => <option key={s.id} value={s.id}>{s.fullName} ({s.role.replace('_', ' ')})</option>)}
+              </select>
+            </div>
             <div style={{ display: "grid", gap: 6 }}>
               <label>Kind</label>
               <select value={addForm.kind} onChange={(e) => setAddForm({ ...addForm, kind: e.target.value })}
@@ -121,9 +139,27 @@ export function AssignmentsPage() {
           <h2 style={{ marginTop: 0 }}>Reassign pending entries (FR-ADM-04)</h2>
           <p style={{ color: "var(--muted)" }}>When a supervisor leaves, transfer their primary-approver role and requeue all submitted entries to a new supervisor on the same internship.</p>
           <div style={{ display: "grid", gap: 16, maxWidth: 480 }}>
-            <Field label="Internship ID (UUID)" value={reassignForm.internshipId} onChange={(e) => setReassignForm({ ...reassignForm, internshipId: e.target.value })} />
-            <Field label="From supervisor ID (UUID)" value={reassignForm.fromSupervisorId} onChange={(e) => setReassignForm({ ...reassignForm, fromSupervisorId: e.target.value })} />
-            <Field label="To supervisor ID (UUID)" value={reassignForm.toSupervisorId} onChange={(e) => setReassignForm({ ...reassignForm, toSupervisorId: e.target.value })} />
+            <div style={{ display: "grid", gap: 6 }}>
+              <label>Select Internship</label>
+              <select value={reassignForm.internshipId} onChange={(e) => setReassignForm({ ...reassignForm, internshipId: e.target.value })} style={{ padding: "10px 14px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--surface)", fontSize: 16 }}>
+                <option value="">-- Choose Internship --</option>
+                {(internships as any[]).map(i => <option key={i.id} value={i.id}>{i.student_name} - {i.company} ({i.role_title})</option>)}
+              </select>
+            </div>
+            <div style={{ display: "grid", gap: 6 }}>
+              <label>From Supervisor</label>
+              <select value={reassignForm.fromSupervisorId} onChange={(e) => setReassignForm({ ...reassignForm, fromSupervisorId: e.target.value })} style={{ padding: "10px 14px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--surface)", fontSize: 16 }}>
+                <option value="">-- Choose Old Supervisor --</option>
+                {supervisors.map(s => <option key={s.id} value={s.id}>{s.fullName} ({s.role.replace('_', ' ')})</option>)}
+              </select>
+            </div>
+            <div style={{ display: "grid", gap: 6 }}>
+              <label>To Supervisor</label>
+              <select value={reassignForm.toSupervisorId} onChange={(e) => setReassignForm({ ...reassignForm, toSupervisorId: e.target.value })} style={{ padding: "10px 14px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--surface)", fontSize: 16 }}>
+                <option value="">-- Choose New Supervisor --</option>
+                {supervisors.map(s => <option key={s.id} value={s.id}>{s.fullName} ({s.role.replace('_', ' ')})</option>)}
+              </select>
+            </div>
             {err && <p style={{ color: "var(--danger)", margin: 0 }}>{err}</p>}
             {reassignResult && (
               <div style={{ padding: 16, borderRadius: 12, background: "var(--green-50)", color: "var(--green-900)" }}>

@@ -4,6 +4,58 @@ import { Card, Field, Button } from "../../components/ui";
 import { internshipsApi } from "../../features/internships/api";
 import { ApiClientError } from "../../lib/api";
 
+function InviteSupervisor({ internshipId }: { internshipId: string }) {
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState("industry_supervisor");
+  const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const invite = useMutation({
+    mutationFn: () => internshipsApi.inviteSupervisor(internshipId, email, role),
+    onSuccess: () => {
+      setStatus("success");
+      setEmail("");
+    },
+    onError: (e) => {
+      setStatus("error");
+      setErrorMsg(e instanceof ApiClientError ? e.message : "Failed to send invite");
+    }
+  });
+
+  if (status === "success") {
+    return (
+      <Card style={{ padding: 26, maxWidth: 640, marginTop: 24, border: "1px solid var(--success)", background: "rgba(13,83,14,0.05)" }}>
+        <h3 style={{ margin: "0 0 8px 0", color: "var(--success)" }}>Invitation sent!</h3>
+        <p style={{ margin: 0, fontSize: ".9rem", color: "var(--success)" }}>An email with a magic link has been sent to your supervisor.</p>
+        <Button onClick={() => setStatus("idle")} style={{ marginTop: 12 }} variant="ghost">Send another invite</Button>
+      </Card>
+    );
+  }
+
+  return (
+    <Card style={{ padding: 26, maxWidth: 640, marginTop: 24 }}>
+      <h3 style={{ margin: "0 0 4px 0" }}>Invite a Supervisor</h3>
+      <p style={{ color: "var(--muted)", margin: "0 0 16px 0", fontSize: ".9rem" }}>Send a magic link to your supervisor so they can review your logs.</p>
+      <form onSubmit={(e) => { e.preventDefault(); invite.mutate(); }} style={{ display: "grid", gap: 12 }}>
+        {status === "error" && <p className="formerr" role="alert">{errorMsg}</p>}
+        <div style={{ display: "flex", gap: 12, alignItems: "flex-end" }}>
+          <div style={{ flex: 1 }}>
+            <Field label="Supervisor Email" name="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="supervisor@nestle.com" />
+          </div>
+          <div style={{ width: 160 }}>
+            <label className="field-label" style={{ display: "block", marginBottom: 6, fontSize: ".85rem", fontWeight: 500 }}>Role</label>
+            <select value={role} onChange={(e) => setRole(e.target.value)} style={{ width: "100%", padding: "10px 12px", border: "1px solid var(--border)", borderRadius: 6, background: "rgba(255,255,255,0.05)" }}>
+              <option value="industry_supervisor">Industry</option>
+              <option value="faculty_supervisor">Faculty</option>
+            </select>
+          </div>
+        </div>
+        <Button disabled={invite.isPending || !email}>{invite.isPending ? "Sending..." : "Send Invitation"}</Button>
+      </form>
+    </Card>
+  );
+}
+
 export function InternshipPage() {
   const qc = useQueryClient();
   const { data, isLoading } = useQuery({ queryKey: ["internships"], queryFn: internshipsApi.list });
@@ -33,6 +85,8 @@ export function InternshipPage() {
         </dl>
         <p className="hint" style={{ marginTop: 16 }}>Internship details are fixed once created — contact your administrator for corrections.</p>
       </Card>
+      
+      <InviteSupervisor internshipId={internship.id} />
     </>
   );
 

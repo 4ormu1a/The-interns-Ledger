@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { z } from "zod";
 import { rateLimit } from "express-rate-limit";
 import { validate } from "../../middleware/validate.js";
 import { env } from "../../config/env.js";
@@ -34,6 +35,20 @@ authRouter.post("/resend-verification", validate(s.resendSchema), async (req, re
 authRouter.post("/login", validate(s.loginSchema), async (req, res, next) => {
   try {
     const { access, refresh, user } = await svc.login(req.body.email, req.body.password);
+    res.cookie(REFRESH_COOKIE, refresh, cookieOpts);
+    res.json({ data: { accessToken: access, user } });
+  } catch (e) { next(e); }
+});
+
+const acceptInviteSchema = z.object({
+  token: z.string().min(10),
+  fullName: z.string().min(2),
+  password: z.string().min(8)
+});
+
+authRouter.post("/accept-invite", validate(acceptInviteSchema), async (req, res, next) => {
+  try {
+    const { access, refresh, user } = await svc.acceptInvite(req.body.token, req.body.fullName, req.body.password);
     res.cookie(REFRESH_COOKIE, refresh, cookieOpts);
     res.json({ data: { accessToken: access, user } });
   } catch (e) { next(e); }

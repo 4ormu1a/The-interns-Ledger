@@ -5,6 +5,7 @@ import { notificationsApi } from "../../features/entries/api";
 const LABEL: Record<string, string> = {
   "entry.approved": "Entry approved & sealed",
   "entry.rejected": "Entry returned with feedback",
+  "supervisor.accepted": "Supervisor accepted your invitation",
 };
 
 export function NotificationsPage() {
@@ -21,6 +22,7 @@ export function NotificationsPage() {
                 <b style={{ color: "var(--green-900)" }}>{LABEL[n.type] ?? n.type}</b>
                 <span style={{ fontSize: ".86rem", color: "var(--muted)" }}>
                   {String((n.payload as { workDate?: string })?.workDate ?? "")}
+                  {(n.payload as { supervisorName?: string })?.supervisorName ?? ""}
                   {(n.payload as { reason?: string })?.reason ? ` — ${(n.payload as { reason?: string }).reason}` : ""}
                   {" · "}{new Date(n.createdAt).toLocaleString()}
                 </span>

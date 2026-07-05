@@ -2,7 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { eq, and } from "drizzle-orm";
 import { db } from "../../db/client.js";
-import { internships, logEntries } from "../../db/schema/index.js";
+import { internships, logEntries, users } from "../../db/schema/index.js";
 import { requireAuth, requireRole } from "../../middleware/auth.js";
 import { validate } from "../../middleware/validate.js";
 import { loadOwnedInternship } from "../../middleware/scope.js";
@@ -65,5 +65,51 @@ internshipsRouter.get("/:id/progress", loadOwnedInternship, async (req, res, nex
       requiredHours: internship.requiredHours, requiredWeeks: internship.requiredWeeks,
       percentComplete: Math.min(100, Math.round((totalHours / internship.requiredHours) * 100)),
     } });
+  } catch (e) { next(e); }
+});
+
+const inviteSchema = z.object({
+  email: z.string().email(),
+  role: z.enum(["industry_supervisor", "faculty_supervisor"]).default("industry_supervisor")
+});
+
+internshipsRouter.post("/:id/invite-supervisor", loadOwnedInternship, validate(inviteSchema), async (req, res, next) => {
+  try {
+    const internship = (req as never as { internship: { id: string; company: string } }).internship;
+    const { email, role } = req.body;
+    
+    // Check if the user is already assigned
+    const user = await db.query.users.findFirst({ where: eq(users.email, email) });
+    if (user) {
+      const existingAssignment = await db.query.assignments.findFirst({
+        where: and(
+          eq(db.query.assignments.internshipId, internship.id),
+          eq(db.query.assignments.supervisorId, user.id)
+        )
+      });
+      // In a real app we might auto-assign them here if they have an account,
+      // but for now we'll just let the invite flow handle it or return an error.
+    }
+
+    const { newOpaqueToken, sha256hex } = await import("../../lib/tokens.js");
+    const { sendSupervisorInviteEmail } = await import("../../lib/email.js");
+    const { invitations } = await import("../../db/schema/index.js");
+
+    const token = newOpaqueToken();
+    const tokenHash = sha256hex(token);
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+    await db.insert(invitations).values({
+      internshipId: internship.id,
+      inviterId: req.user!.sub,
+      email,
+      role: role as "industry_supervisor" | "faculty_supervisor",
+      tokenHash,
+      expiresAt
+    });
+
+    await sendSupervisorInviteEmail(email, req.user!.name, internship.company, role, token);
+
+    res.status(200).json({ message: "Invitation sent successfully" });
   } catch (e) { next(e); }
 });

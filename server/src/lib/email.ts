@@ -1,14 +1,21 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 import { env } from "../config/env.js";
 
-const resend = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
+const transporter = env.SMTP_USER && env.SMTP_PASS ? nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: env.SMTP_USER,
+    pass: env.SMTP_PASS,
+  },
+}) : null;
 
 async function send(to: string, subject: string, html: string) {
-  if (!resend) {
+  if (!transporter) {
     console.log(`[email:dev] to=${to} subject="${subject}"\n${html}`);
     return;
   }
-  await resend.emails.send({ from: env.EMAIL_FROM, to, subject, html });
+  
+  await transporter.sendMail({ from: env.EMAIL_FROM, to, subject, html });
 }
 
 const card = (title: string, body: string, cta: { href: string; label: string }) => `
@@ -35,3 +42,8 @@ export const sendProvisionEmail = (to: string, name: string, resetToken: string)
   send(to, "Your Interns Ledger account is ready",
     card("Welcome to Interns Ledger", `Hello ${name}, an administrator has provisioned your account. Set your password to get started. This link is valid for 7 days.`,
       { href: `${env.CLIENT_ORIGIN}/reset?token=${resetToken}`, label: "Set your password" }));
+
+export const sendSupervisorInviteEmail = (to: string, studentName: string, company: string, role: string, token: string) =>
+  send(to, `${studentName} invited you to review their internship logs`,
+    card("Supervisor Invitation", `Hello, ${studentName} has invited you to be their ${role === "faculty_supervisor" ? "Faculty" : "Industry"} Supervisor for their internship at ${company}. Please accept this invitation to create your account and review their logs.`,
+      { href: `${env.CLIENT_ORIGIN}/invite?token=${token}`, label: "Accept Invitation" }));
