@@ -27,7 +27,7 @@ function InviteSupervisor({ internshipId }: { internshipId: string }) {
       <Card style={{ padding: 26, maxWidth: 640, marginTop: 24, border: "1px solid var(--success)", background: "rgba(13,83,14,0.05)" }}>
         <h3 style={{ margin: "0 0 8px 0", color: "var(--success)" }}>Invitation sent!</h3>
         <p style={{ margin: 0, fontSize: ".9rem", color: "var(--success)" }}>An email with a magic link has been sent to your supervisor.</p>
-        <Button onClick={() => setStatus("idle")} style={{ marginTop: 12 }} variant="ghost">Send another invite</Button>
+        <Button onClick={() => setStatus("idle")} style={{ marginTop: 12 }} variant={3}>Send another invite</Button>
       </Card>
     );
   }

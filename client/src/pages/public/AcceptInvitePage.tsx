@@ -33,7 +33,7 @@ export function AcceptInvitePage() {
       <Card style={{ padding: 32, textAlign: "center" }}>
         <h1 style={{ color: "var(--danger)", margin: "0 0 16px 0" }}>Invalid Link</h1>
         <p>This invitation link is missing or invalid.</p>
-        <Button onClick={() => navigate("/login")} variant="outline">Go to Login</Button>
+        <Button onClick={() => navigate("/login")} variant={3}>Go to Login</Button>
       </Card>
     );
   }

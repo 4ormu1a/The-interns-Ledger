@@ -76,7 +76,10 @@ export async function login(email: string, plain: string) {
     await recordFailure(email);
     throw new ApiError(401, "BAD_CREDENTIALS", "Email or password is incorrect.");
   }
-  if (user.status === "pending") throw new ApiError(403, "EMAIL_UNVERIFIED", "Verify your email before logging in.");
+  if (user.status === "pending") {
+    if (user.role === "student") throw new ApiError(403, "EMAIL_UNVERIFIED", "Verify your email before logging in.");
+    throw new ApiError(403, "PENDING_VERIFICATION", "Your account is pending verification by an administrator.");
+  }
   if (user.status === "deactivated") throw new ApiError(403, "DEACTIVATED", "This account has been deactivated.");
   await db.delete(loginAttempts).where(eq(loginAttempts.email, email));
   return issueSession(user.id, user.role, user.fullName);
@@ -118,7 +121,7 @@ export async function acceptInvite(token: string, fullName: string, plain: strin
       email: invite.email,
       passwordHash,
       fullName,
-      status: "active",
+      status: "pending", // FR-ADM-06: Supervisors must be verified by admin
       emailVerifiedAt: new Date(),
       consentAt: new Date(),
     }).returning();

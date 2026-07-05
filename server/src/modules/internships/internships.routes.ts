@@ -2,7 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { eq, and } from "drizzle-orm";
 import { db } from "../../db/client.js";
-import { internships, logEntries, users } from "../../db/schema/index.js";
+import { internships, logEntries, users, assignments } from "../../db/schema/index.js";
 import { requireAuth, requireRole } from "../../middleware/auth.js";
 import { validate } from "../../middleware/validate.js";
 import { loadOwnedInternship } from "../../middleware/scope.js";
@@ -83,8 +83,8 @@ internshipsRouter.post("/:id/invite-supervisor", loadOwnedInternship, validate(i
     if (user) {
       const existingAssignment = await db.query.assignments.findFirst({
         where: and(
-          eq(db.query.assignments.internshipId, internship.id),
-          eq(db.query.assignments.supervisorId, user.id)
+          eq(assignments.internshipId, internship.id),
+          eq(assignments.supervisorId, user.id)
         )
       });
       // In a real app we might auto-assign them here if they have an account,
