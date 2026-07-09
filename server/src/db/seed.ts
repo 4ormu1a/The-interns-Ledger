@@ -13,7 +13,7 @@ async function main() {
   const [ama, kwabena, esi, selorm] = await db.insert(users).values([
     { ...base, role: "student", fullName: "Ama Mensah", email: "ama.mensah@st.umat.edu.gh" },
     { ...base, role: "industry_supervisor", fullName: "Kwabena Osei", email: "kwabena.osei@nimbus-software.example" },
-    { ...base, role: "faculty_supervisor", fullName: "Dr. Esi Dankwa", email: "esi.dankwa@umat.edu.gh" },
+    { ...base, role: "department_supervisor", fullName: "Dr. Esi Dankwa", email: "esi.dankwa@umat.edu.gh" },
     { ...base, role: "admin", fullName: "Selorm Adjei", email: "selorm.adjei@umat.edu.gh" },
   ]).returning();
 
@@ -25,7 +25,7 @@ async function main() {
 
   await db.insert(assignments).values([
     { internshipId: internship.id, supervisorId: kwabena.id, kind: "industry", isPrimaryApprover: true },
-    { internshipId: internship.id, supervisorId: esi.id, kind: "faculty", isPrimaryApprover: false },
+
   ]);
 
   console.log("Seeded: 4 personas + 1 internship + 2 assignments. Demo password:", PASSWORD);

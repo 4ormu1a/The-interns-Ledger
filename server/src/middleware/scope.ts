@@ -29,7 +29,7 @@ export async function loadOwnedEntry(req: Request, _res: Response, next: NextFun
 }
 
 /** True if supervisor (industry/faculty per kind) is assigned to the internship. */
-export async function isAssignedSupervisor(supervisorId: string, internshipId: string, kind?: "industry" | "faculty") {
+export async function isAssignedSupervisor(supervisorId: string, internshipId: string, kind?: "industry") {
   const row = await db.query.assignments.findFirst({
     where: and(eq(assignments.supervisorId, supervisorId), eq(assignments.internshipId, internshipId),
       ...(kind ? [eq(assignments.kind, kind)] : [])),

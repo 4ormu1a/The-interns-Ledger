@@ -62,7 +62,7 @@ departmentRouter.get("/submissions/:id", async (req, res, next) => {
 
     // Fetch logs for the internship
     const logs = await db.query.logEntries.findMany({
-      where: eq(logEntries.internshipId, submission.internship_id),
+      where: eq(logEntries.internshipId, submission.internship_id as string),
       orderBy: (logs, { desc }) => [desc(logs.workDate)],
     });
 

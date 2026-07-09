@@ -5,7 +5,7 @@ import { ApiError } from "./error.js";
 
 export interface AccessClaims {
   sub: string;
-  role: "student" | "industry_supervisor" | "faculty_supervisor" | "admin";
+  role: "student" | "industry_supervisor" | "department_supervisor" | "admin";
   name: string;
 }
 

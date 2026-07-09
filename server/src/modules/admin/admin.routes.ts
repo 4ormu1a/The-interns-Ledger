@@ -74,7 +74,7 @@ adminRouter.get("/users", async (req, res, next) => {
 const provisionSchema = z.object({
   fullName: z.string().min(2),
   email: z.string().email(),
-  role: z.enum(["industry_supervisor", "faculty_supervisor", "admin"]),
+  role: z.enum(["industry_supervisor", "department_supervisor", "admin"]),
 });
 
 adminRouter.post("/users", async (req, res, next) => {
@@ -112,7 +112,7 @@ adminRouter.post("/users", async (req, res, next) => {
 // Update user (deactivate / reactivate / role change)
 const patchUserSchema = z.object({
   status: z.enum(["active", "deactivated"]).optional(),
-  role: z.enum(["industry_supervisor", "faculty_supervisor", "admin"]).optional(),
+  role: z.enum(["industry_supervisor", "department_supervisor", "admin"]).optional(),
 }).refine(d => d.status !== undefined || d.role !== undefined, { message: "Nothing to update" });
 
 adminRouter.patch("/users/:id", async (req, res, next) => {
@@ -179,7 +179,7 @@ adminRouter.get("/assignments", async (req, res, next) => {
 const assignSchema = z.object({
   internshipId: z.string().uuid(),
   supervisorId: z.string().uuid(),
-  kind: z.enum(["industry", "faculty"]),
+  kind: z.enum(["industry"]),
   isPrimaryApprover: z.boolean().default(false),
 });
 

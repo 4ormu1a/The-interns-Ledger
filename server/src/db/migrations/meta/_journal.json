@@ -15,6 +15,13 @@
       "when": 1783258057396,
       "tag": "0001_grey_silk_fever",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1783606854466,
+      "tag": "0002_curly_living_mummy",
+      "breakpoints": true
     }
   ]
 }

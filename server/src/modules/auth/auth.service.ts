@@ -134,12 +134,14 @@ export async function acceptInvite(token: string, fullName: string, plain: strin
   }
 
   // Create the assignment
-  await db.insert(assignments).values({
-    internshipId: invite.internshipId,
-    supervisorId: user.id,
-    kind: invite.role === "industry_supervisor" ? "industry" : "faculty",
-    isPrimaryApprover: true // For now, assume they are primary
-  });
+  if (invite.role === "industry_supervisor") {
+    await db.insert(assignments).values({
+      internshipId: invite.internshipId,
+      supervisorId: user.id,
+      kind: "industry",
+      isPrimaryApprover: true // For now, assume they are primary
+    });
+  }
 
   // Mark invite as accepted
   await db.update(invitations)
