@@ -21,6 +21,22 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   const body = await res.json().catch(() => null);
   if (!res.ok) {
     const e = body?.error ?? { code: "UNKNOWN", message: "Request failed" };
+    
+    // Silent token refresh interceptor
+    if (res.status === 401 && path !== "/auth/refresh" && path !== "/auth/login") {
+      try {
+        const refreshRes = await fetch(`${BASE}/api/auth/refresh`, { method: "POST", credentials: "include" });
+        if (refreshRes.ok) {
+          const refreshBody = await refreshRes.json();
+          accessToken = refreshBody.data.accessToken;
+          // Retry the original request with the new token
+          return api<T>(path, init);
+        }
+      } catch (err) {
+        // Fall through to throw the original error if refresh fails
+      }
+    }
+
     let msg = e.message;
     if (e.code === "VALIDATION" && e.details?.fieldErrors) {
       const fields = Object.values(e.details.fieldErrors).flat();

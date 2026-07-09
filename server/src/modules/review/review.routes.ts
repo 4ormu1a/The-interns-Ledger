@@ -3,7 +3,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { db } from "../../db/client.js";
-import { assignments, internships, logEntries, users, entryComments, attachments } from "../../db/schema/index.js";
+import { assignments, internships, logEntries, users, entryComments, attachments, seals } from "../../db/schema/index.js";
 import { requireAuth, requireRole } from "../../middleware/auth.js";
 import { validate } from "../../middleware/validate.js";
 import { ApiError } from "../../middleware/error.js";
@@ -48,12 +48,17 @@ reviewRouter.get("/queue", async (req, res, next) => {
 reviewRouter.get("/entries/:id", async (req, res, next) => {
   try {
     const entry = await assertEntryInScope(req.params.id, req.user!.sub);
+    let previousEntry = null;
+    if (entry.supersedesId) {
+      const prev = await db.query.logEntries.findFirst({ where: eq(logEntries.id, entry.supersedesId), columns: { activity: true, reflection: true } });
+      if (prev) previousEntry = prev;
+    }
     const [student, files, comments] = await Promise.all([
       db.query.users.findFirst({ where: eq(users.id, entry.studentId), columns: { fullName: true, email: true } }),
       db.query.attachments.findMany({ where: eq(attachments.entryId, entry.id) }),
       db.query.entryComments.findMany({ where: eq(entryComments.entryId, entry.id) }),
     ]);
-    res.json({ data: { ...entry, student, attachments: files, comments } });
+    res.json({ data: { ...entry, student, attachments: files, comments, previousEntry } });
   } catch (e) { next(e); }
 });
 
@@ -89,7 +94,24 @@ reviewRouter.get("/students", async (req, res, next) => {
       requiredHours: internships.requiredHours, studentId: users.id, studentName: users.fullName,
     }).from(internships).innerJoin(users, eq(users.id, internships.studentId))
       .where(inArray(internships.id, ids));
-    res.json({ data: rows });
+
+    const entries = await db.query.logEntries.findMany({
+      where: inArray(logEntries.internshipId, ids),
+      columns: { internshipId: true, state: true, hours: true, submittedAt: true }
+    });
+
+    const enriched = rows.map(r => {
+      const studentEntries = entries.filter(e => e.internshipId === r.internshipId);
+      const approvedHours = studentEntries.filter(e => e.state === 'approved').reduce((acc, e) => acc + Number(e.hours), 0);
+      const pendingHours = studentEntries.filter(e => e.state === 'submitted').reduce((acc, e) => acc + Number(e.hours), 0);
+      const lastActive = studentEntries.reduce((latest, e) => {
+        if (!e.submittedAt) return latest;
+        return latest && new Date(latest) > new Date(e.submittedAt) ? latest : e.submittedAt;
+      }, null as Date | null);
+      return { ...r, approvedHours, pendingHours, lastActive };
+    });
+    
+    res.json({ data: enriched });
   } catch (e) { next(e); }
 });
 
@@ -101,9 +123,21 @@ reviewRouter.get("/history", async (req, res, next) => {
       id: logEntries.id, workDate: logEntries.workDate, state: logEntries.state,
       decidedAt: logEntries.decidedAt, rejectReason: logEntries.rejectReason,
       studentName: users.fullName, version: logEntries.version,
+      digestSha256: seals.digestSha256, kid: seals.kid,
     }).from(logEntries).innerJoin(users, eq(users.id, logEntries.studentId))
+      .leftJoin(seals, eq(seals.entryId, logEntries.id))
       .where(and(inArray(logEntries.internshipId, ids), eq(logEntries.decidedBy, req.user!.sub)))
       .orderBy(desc(logEntries.decidedAt)).limit(100);
-    res.json({ data: rows });
+
+    if (rows.length === 0) return res.json({ data: [] });
+
+    const rowIds = rows.map(r => r.id);
+    const superseding = await db.select({ supersedesId: logEntries.supersedesId })
+      .from(logEntries)
+      .where(inArray(logEntries.supersedesId, rowIds));
+    const supersededSet = new Set(superseding.map(s => s.supersedesId));
+
+    const enriched = rows.map(r => ({ ...r, isSuperseded: supersededSet.has(r.id) }));
+    res.json({ data: enriched });
   } catch (e) { next(e); }
 });

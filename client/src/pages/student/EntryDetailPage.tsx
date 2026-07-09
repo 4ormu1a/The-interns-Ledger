@@ -42,12 +42,12 @@ export function EntryDetailPage() {
       </div>
       {error && <p className="formerr" style={{ maxWidth: 680 }}>{error}</p>}
       {e.state === "rejected" && e.rejectReason && <p className="formerr" style={{ maxWidth: 680 }}>Rejection reason: {e.rejectReason}</p>}
-      <Card style={{ padding: 26, maxWidth: 680, display: "grid", gap: 16 }}>
+      <Card className="premium-card" style={{ padding: 26, maxWidth: 680, display: "grid", gap: 16 }}>
         <div>
           <h3 style={{ marginBottom: 6 }}>Activity</h3>
-          <p style={{ whiteSpace: "pre-wrap" }}>{e.activity}</p>
+          <p style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{e.activity}</p>
         </div>
-        {e.reflection && <div><h3 style={{ marginBottom: 6 }}>Reflection</h3><p style={{ whiteSpace: "pre-wrap" }}>{e.reflection}</p></div>}
+        {e.reflection && <div><h3 style={{ marginBottom: 6 }}>Reflection</h3><p style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{e.reflection}</p></div>}
         <div>
           <h3 style={{ marginBottom: 6 }}>Skills</h3>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>

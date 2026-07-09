@@ -21,13 +21,9 @@ const createSchema = z.object({
 export const internshipsRouter = Router();
 internshipsRouter.use(requireAuth);
 
-// FR-LOG-01 — student creates internship metadata (one active per student in v1)
+// FR-LOG-01 — student creates internship metadata
 internshipsRouter.post("/", requireRole("student"), validate(createSchema), async (req, res, next) => {
   try {
-    const existing = await db.query.internships.findFirst({
-      where: and(eq(internships.studentId, req.user!.sub), eq(internships.status, "active")),
-    });
-    if (existing) throw new ApiError(409, "ALREADY_EXISTS", "You already have an active internship.");
     const [row] = await db.insert(internships).values({ ...req.body, studentId: req.user!.sub }).returning();
     res.status(201).json({ data: row });
   } catch (e) { next(e); }
@@ -70,7 +66,7 @@ internshipsRouter.get("/:id/progress", loadOwnedInternship, async (req, res, nex
 
 const inviteSchema = z.object({
   email: z.string().email(),
-  role: z.enum(["industry_supervisor", "faculty_supervisor"]).default("industry_supervisor")
+  role: z.enum(["industry_supervisor", "department_supervisor"]).default("industry_supervisor")
 });
 
 internshipsRouter.post("/:id/invite-supervisor", loadOwnedInternship, validate(inviteSchema), async (req, res, next) => {
@@ -103,7 +99,7 @@ internshipsRouter.post("/:id/invite-supervisor", loadOwnedInternship, validate(i
       internshipId: internship.id,
       inviterId: req.user!.sub,
       email,
-      role: role as "industry_supervisor" | "faculty_supervisor",
+      role: role as "industry_supervisor" | "department_supervisor",
       tokenHash,
       expiresAt
     });
@@ -111,5 +107,49 @@ internshipsRouter.post("/:id/invite-supervisor", loadOwnedInternship, validate(i
     await sendSupervisorInviteEmail(email, req.user!.name, internship.company, role, token);
 
     res.status(200).json({ message: "Invitation sent successfully" });
+  } catch (e) { next(e); }
+});
+
+// Submit for department review
+internshipsRouter.post("/:id/submit-for-review", loadOwnedInternship, async (req, res, next) => {
+  try {
+    const internship = (req as never as { internship: { id: string; requiredHours: number } }).internship;
+    
+    // Validate 100% of required hours are logged and approved
+    const approved = await db.query.logEntries.findMany({
+      where: and(eq(logEntries.internshipId, internship.id), eq(logEntries.state, "approved")),
+      columns: { hours: true },
+    });
+    
+    const totalHours = approved.reduce((s, e) => s + Number(e.hours), 0);
+    if (totalHours < internship.requiredHours) {
+      throw new ApiError(400, "VALIDATION_FAILED", "You must complete 100% of required hours before submitting.");
+    }
+    
+    // Check if there are any pending/draft entries left? We could enforce this.
+    // For now, we trust the approved hours >= required hours.
+
+    // Check if already submitted
+    const { internshipSubmissions } = await import("../../db/schema/departments.js");
+    const existing = await db.query.internshipSubmissions.findFirst({
+      where: eq(internshipSubmissions.internshipId, internship.id)
+    });
+
+    if (existing && existing.status !== "changes_requested") {
+      throw new ApiError(400, "ALREADY_EXISTS", "Internship already submitted for review.");
+    }
+
+    if (existing && existing.status === "changes_requested") {
+      await db.update(internshipSubmissions)
+        .set({ status: "submitted_to_department", submittedAt: new Date(), comment: null })
+        .where(eq(internshipSubmissions.id, existing.id));
+    } else {
+      await db.insert(internshipSubmissions).values({
+        studentId: req.user!.sub,
+        internshipId: internship.id,
+      });
+    }
+
+    res.json({ message: "Submitted successfully" });
   } catch (e) { next(e); }
 });

@@ -56,7 +56,7 @@ export function EntryEditorPage() {
   const rejected = existing.data?.state === "rejected";
   if (id && existing.isLoading) return null;
   if (id && existing.data && existing.data.state !== "draft" && !rejected) {
-    return <Card style={{ padding: 26 }}><p>This entry is {existing.data.state} and can no longer be edited (FR-LOG-10).</p></Card>;
+    return <Card className="premium-card" style={{ padding: 26 }}><p>This entry is {existing.data.state} and can no longer be edited.</p></Card>;
   }
 
   return (
@@ -66,12 +66,12 @@ export function EntryEditorPage() {
         <p className="formerr" style={{ maxWidth: 680 }}>Rejected: {existing.data.rejectReason}</p>
       )}
       <p style={{ color: "var(--muted)", marginBottom: 18 }}>Drafts are private until you submit. Submit within 7 days of the work date.</p>
-      <Card style={{ padding: 26, maxWidth: 680 }}>
+      <Card className="premium-card" style={{ padding: 26, maxWidth: 680 }}>
         <form onSubmit={(e: FormEvent) => { e.preventDefault(); setError(""); save.mutate(false); }} style={{ display: "grid", gap: 14 }}>
           {error && <p className="formerr" role="alert">{error}</p>}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 200px), 1fr))", gap: 14 }}>
             <Field label="Work date" name="workDate" type="date" required value={form.workDate}
-              onChange={(e) => setForm({ ...form, workDate: e.target.value })} hint="Up to 7 days back (BR-03)" />
+              onChange={(e) => setForm({ ...form, workDate: e.target.value })} hint="Up to 7 days back" />
             <Field label="Hours" name="hours" type="number" min={0.5} max={24} step={0.5} required value={form.hours}
               onChange={(e) => setForm({ ...form, hours: Number(e.target.value) })} />
           </div>

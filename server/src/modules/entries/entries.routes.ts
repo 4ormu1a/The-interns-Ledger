@@ -10,10 +10,10 @@ import { env } from "../../config/env.js";
 import * as svc from "./entries.service.js";
 
 const entrySchema = z.object({
-  workDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  hours: z.number().min(0.5).max(24),
-  activity: z.string().min(10).max(4000),
-  skills: z.array(z.string().min(1).max(60)).min(1).max(12),
+  workDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { message: "Please provide a valid date." }),
+  hours: z.number().min(0.5, { message: "Hours must be at least 0.5." }).max(24, { message: "Hours cannot exceed 24." }),
+  activity: z.string().min(10, { message: "Activity description must be at least 10 characters long." }).max(4000),
+  skills: z.array(z.string().min(1).max(60)).min(1, { message: "Please provide at least one skill (e.g. React, SQL)." }).max(12, { message: "You can specify a maximum of 12 skills." }),
   reflection: z.string().max(4000).optional(),
 });
 

@@ -5,11 +5,12 @@ export interface ReviewEntry {
   id: string; state: string; workDate: string; hours: string; activity: string; reflection: string | null;
   skills: string[]; version: number; submittedAt: string;
   student: { fullName: string; email: string };
-  attachments: { id: string; filename: string; blobUrl: string; size: number; sha256: string }[];
+  attachments: { id: string; filename: string; blobUrl: string; size: number; sha256: string; mime: string }[];
   comments: { id: string; body: string; createdAt: string }[];
+  previousEntry?: { activity: string; reflection: string | null };
 }
-export interface AssignedStudent { internshipId: string; company: string; roleTitle: string; requiredHours: number; studentId: string; studentName: string }
-export interface Decision { id: string; workDate: string; state: string; decidedAt: string; rejectReason: string | null; studentName: string; version: number }
+export interface AssignedStudent { internshipId: string; company: string; roleTitle: string; requiredHours: number; studentId: string; studentName: string; approvedHours: number; pendingHours: number; lastActive: string | null; }
+export interface Decision { id: string; workDate: string; state: string; decidedAt: string; rejectReason: string | null; studentName: string; version: number; digestSha256?: string | null; kid?: string | null; isSuperseded?: boolean; }
 
 export const reviewApi = {
   queue: () => api<QueueItem[]>("/review/queue"),

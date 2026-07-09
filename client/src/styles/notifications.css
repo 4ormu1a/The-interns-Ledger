@@ -1,0 +1,131 @@
+/* ═══════════════════════════════════════════════════════════
+   PREMIUM NOTIFICATIONS SCOPED STYLES
+   Implements view transitions, unread indicators, and 
+   elegant typography per the UI overhaul plan.
+   ═══════════════════════════════════════════════════════════ */
+
+/* View Transitions for smooth state changes */
+::view-transition-group(*),
+::view-transition-old(*),
+::view-transition-new(*) {
+  animation-duration: 0.25s;
+  animation-timing-function: cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.premium-notification-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--line);
+  transition: background-color 0.2s ease, opacity 0.3s ease;
+  text-decoration: none;
+  align-items: flex-start;
+  position: relative;
+  view-transition-name: notification-row;
+}
+
+.premium-notification-row:last-child {
+  border-bottom: none;
+}
+
+.premium-notification-row:hover {
+  background-color: rgba(13, 83, 14, 0.03);
+}
+
+/* Unread State */
+.premium-notification-row.unread {
+  background-color: rgba(13, 83, 14, 0.05);
+  opacity: 1;
+}
+
+/* Read State */
+.premium-notification-row.read {
+  opacity: 0.65;
+}
+
+.premium-notification-row.read:hover {
+  opacity: 0.9;
+}
+
+/* The Unread Dot */
+.unread-dot {
+  width: 10px;
+  height: 10px;
+  background-color: var(--green-bright);
+  border-radius: 50%;
+  margin-top: 6px;
+  flex-shrink: 0;
+  box-shadow: 0 0 8px rgba(8, 203, 0, 0.4);
+}
+
+/* Icon Container */
+.notification-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 1.1rem;
+}
+
+.notification-icon.approved {
+  background: rgba(8, 203, 0, 0.15);
+  color: var(--green-700);
+}
+
+.notification-icon.rejected {
+  background: var(--amber-bg);
+  color: var(--amber);
+}
+
+.notification-icon.supervisor {
+  background: var(--violet-bg);
+  color: var(--violet);
+}
+
+/* Content Area */
+.notification-content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.notification-title {
+  color: var(--green-900);
+  font-size: 0.95rem;
+}
+
+.premium-notification-row.unread .notification-title {
+  font-weight: 700;
+}
+
+.premium-notification-row.read .notification-title {
+  font-weight: 500;
+}
+
+.notification-meta {
+  font-size: 0.86rem;
+  color: var(--muted);
+}
+
+/* Supervisor Quote styling */
+.notification-quote {
+  margin-top: 6px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.6);
+  border-left: 3px solid var(--amber);
+  border-radius: 4px 8px 8px 4px;
+  font-size: 0.88rem;
+  color: var(--ink);
+  font-style: italic;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* Mark Read Action Button */
+.notification-action {
+  flex-shrink: 0;
+}

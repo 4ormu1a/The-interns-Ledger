@@ -1,0 +1,109 @@
+/* ═══════════════════════════════════════════════════════════
+   PREMIUM SUPERVISOR SCOPED STYLES
+   Implements glassmorphism, brand-tinted shadows, and 
+   refined typography per the UI overhaul plan.
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Glassmorphic Premium Cards ── */
+div.card.premium-card {
+  background-color: rgba(255, 255, 255, 0.45) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.8) !important;
+  border-radius: var(--radius) !important;
+  /* Brand-tinted layered shadow */
+  box-shadow: 0 10px 25px -5px rgba(20, 50, 30, 0.04), 0 8px 10px -6px rgba(20, 50, 30, 0.02) !important;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease !important;
+}
+
+div.card.premium-card:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: 0 14px 28px -5px rgba(20, 50, 30, 0.06), 0 10px 12px -6px rgba(20, 50, 30, 0.03) !important;
+}
+
+/* ── Premium Typography (Metrics) ── */
+p.premium-metric {
+  font-family: 'Outfit', system-ui, sans-serif !important;
+  font-size: 4rem !important;
+  font-weight: 500 !important;
+  letter-spacing: -0.03em !important;
+  background: linear-gradient(135deg, #0A4A22 0%, #1A7A3A 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+  color: transparent !important;
+  line-height: 1 !important;
+  margin-bottom: 0.5rem !important;
+}
+
+@media (min-width: 769px) {
+  .premium-nav {
+    display: flex;
+    gap: 8px;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+}
+
+.premium-nav-item {
+  background: transparent !important;
+  color: rgba(13, 83, 14, 0.6) !important; /* dark green at 60% opacity */
+  box-shadow: none !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease !important;
+}
+
+.premium-nav-item[data-active="true"],
+.premium-nav-item.active {
+  background: rgba(13, 83, 14, 0.08) !important; /* 8% opacity dark green */
+  color: var(--green-900) !important; /* 100% opacity dark green */
+  font-weight: 600 !important;
+}
+
+/* ── Pulsing Primary Button ── */
+.btn-premium-pulse {
+  position: relative;
+  transition: all 0.2s ease, transform 0.1s ease !important;
+}
+
+.btn-premium-pulse::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  background: rgba(8, 203, 0, 0.2);
+  z-index: -1;
+  animation: pulse-glow 2s infinite ease-in-out;
+}
+
+.btn-premium-pulse:active {
+  transform: scale(0.97) !important;
+}
+
+@keyframes pulse-glow {
+  0% { opacity: 0.1; transform: scale(0.98); }
+  50% { opacity: 0.35; transform: scale(1.02); }
+  100% { opacity: 0.1; transform: scale(0.98); }
+}
+
+/* ── Elegant Empty State ── */
+.premium-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  text-align: center;
+}
+
+.premium-empty-icon {
+  font-size: 3rem;
+  color: rgba(13, 83, 14, 0.15); /* bespoke watermark icon */
+  margin-bottom: 1rem;
+}
+
+.premium-empty-text {
+  font-size: 1.1rem;
+  color: var(--muted-2);
+  font-weight: 500;
+}

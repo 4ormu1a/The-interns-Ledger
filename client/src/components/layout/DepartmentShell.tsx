@@ -1,36 +1,41 @@
-/** Student portal shell — topbar + breadcrumbs per design-reference portal pages (classes from main.css). */
 import { useState } from "react";
 import { Navigate, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { BrandMark } from "../ui";
 import { useAuth, portalPath } from "../../features/auth/AuthContext";
-import { notificationsApi } from "../../features/entries/api";
+import { departmentApi } from "../../features/department/api";
 import "../../styles/supervisor.css";
 
 const NAV = [
-  { to: "/student", label: "Dashboard", end: true },
-  { to: "/student/logbook", label: "Logbook" },
-  { to: "/student/internship", label: "Internship" },
-  { to: "/student/reports", label: "Reports" },
+  { to: "/department", label: "Inbox", end: true, key: "inbox" },
+  { to: "/department/attention", label: "Needs attention", key: "attention" },
+  { to: "/department/students", label: "Students" },
+  { to: "/department/settings", label: "Settings" },
 ];
 
-export function StudentShell() {
+export function DepartmentShell() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, ready, logout } = useAuth();
   const navigate = useNavigate();
-  const notifications = useQuery({ queryKey: ["notifications"], queryFn: notificationsApi.list, enabled: ready && !!user });
-  const unreadCount = notifications.data?.filter(n => !n.readAt).length || 0;
+  
+  const stats = useQuery({ 
+    queryKey: ["department", "stats"], 
+    queryFn: departmentApi.stats, 
+    enabled: ready && !!user && user.role === "department_supervisor" 
+  });
+  
   if (!ready) return null;
   if (!user) return <Navigate to="/login" replace />;
-  if (user.role !== "student") return <Navigate to={portalPath(user.role)} replace />;
+  if (user.role !== "department_supervisor") return <Navigate to={portalPath(user.role)} replace />;
+  
   const initials = user.name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
-
+  
   return (
     <>
       <a className="skip" href="#main">Skip to content</a>
       <header className="topbar">
         <div className="tb-inner">
-          <NavLink className="brand" to="/student">
+          <NavLink className="brand" to="/department">
             <BrandMark />
             <span className="name"><b>THE INTERNS</b><span>LEDGER</span></span>
           </NavLink>
@@ -50,33 +55,33 @@ export function StudentShell() {
               )}
             </svg>
           </button>
-          
           <nav className={`premium-nav ${mobileMenuOpen ? 'mobile-open' : ''}`} aria-label="Portal">
-            {NAV.map((n) => (
-              <NavLink key={n.to} to={n.to} end={n.end} className={({ isActive }) => "btn btn-sm premium-nav-item " + (isActive ? "active" : "")}
-                style={{ borderColor: "transparent" }} onClick={() => setMobileMenuOpen(false)}>
-                {n.label}
-              </NavLink>
-            ))}
+            {NAV.map((n) => {
+              const count = n.key ? (stats.data as any)?.[n.key] : 0;
+              return (
+                <NavLink key={n.to} to={n.to} end={n.end} className={({ isActive }) => "btn btn-sm premium-nav-item " + (isActive ? "active" : "")} style={{ borderColor: "transparent", display: "flex", alignItems: "center", gap: 6 }} onClick={() => setMobileMenuOpen(false)}>
+                  {n.label}
+                  {!!count && count > 0 && (
+                    <span style={{
+                      background: "rgba(255,255,255,0.15)",
+                      color: "#fff",
+                      fontSize: "0.75rem",
+                      padding: "2px 6px",
+                      borderRadius: 12,
+                      fontWeight: 600,
+                      lineHeight: 1
+                    }}>
+                      {count}
+                    </span>
+                  )}
+                </NavLink>
+              );
+            })}
           </nav>
-          
           <div className="tb-right" style={{ gap: 24, alignItems: "center" }}>
-            <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
-              <NavLink to="/student/notifications" className={({ isActive }) => (isActive ? "active" : "")} style={{ color: "var(--muted)", textDecoration: "none", fontSize: "1.1rem", position: "relative" }} title="Alerts">
-                🔔
-                {unreadCount > 0 && (
-                  <span style={{
-                    position: "absolute", top: -4, right: -6, background: "var(--green-bright)", color: "#fff",
-                    fontSize: "0.65rem", fontWeight: "bold", padding: "1px 5px", borderRadius: 10, lineHeight: 1
-                  }}>
-                    {unreadCount}
-                  </span>
-                )}
-              </NavLink>
-            </div>
             <div className="user" style={{ gap: 12 }}>
-              <span className="avatar" style={{ cursor: "pointer" }} onClick={() => navigate("/student/account")} title="Account Settings">{initials}</span>
-              <span className="u-meta"><b>{user.name}</b><span className="role">Student</span></span>
+              <span className="avatar">{initials}</span>
+              <span className="u-meta"><b>{user.name}</b><span className="role">Department Sup.</span></span>
             </div>
             <button 
               className="logout-btn"

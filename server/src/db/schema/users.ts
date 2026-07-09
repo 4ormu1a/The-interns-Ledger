@@ -1,9 +1,11 @@
 import { pgTable, uuid, text, timestamp, integer } from "drizzle-orm/pg-core";
 import { userRole, userStatus, emailTokenPurpose } from "./enums.js";
+import { departments } from "./departments.js";
 
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
   tenantId: uuid("tenant_id"), // reserved, unused in v1 (SRS §19)
+  departmentId: uuid("department_id").references(() => departments.id),
   role: userRole("role").notNull(),
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),

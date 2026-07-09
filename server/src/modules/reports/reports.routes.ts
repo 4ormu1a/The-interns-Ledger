@@ -37,7 +37,6 @@ async function collect(internshipId: string) {
 
 reportsRouter.post("/", validate(z.object({ type: z.enum(["live", "sealed"]) })), async (req, res, next) => {
   try {
-    if (!env.BLOB_READ_WRITE_TOKEN) throw new ApiError(503, "REPORTS_UNCONFIGURED", "Report storage is not configured.");
     const u = req.user!;
     const internship = u.role === "admin"
       ? null
@@ -74,15 +73,27 @@ reportsRouter.post("/", validate(z.object({ type: z.enum(["live", "sealed"]) }))
       entries: reportEntries, aggregateHash, reportToken, kid: req.body.type === "sealed" ? env.ED25519_KID : undefined,
       generatedAt: new Date(), verifyBaseUrl: env.CLIENT_ORIGIN,
     });
-    const blob = await put(`reports/${internship.id}/${crypto.randomUUID()}-${req.body.type}.pdf`, Buffer.from(pdfBytes), {
-      access: "public", contentType: "application/pdf", token: env.BLOB_READ_WRITE_TOKEN,
-    });
+    let blobUrl = "";
+    if (env.BLOB_READ_WRITE_TOKEN) {
+      const blob = await put(`reports/${internship.id}/${crypto.randomUUID()}-${req.body.type}.pdf`, Buffer.from(pdfBytes), {
+        access: "public", contentType: "application/pdf", token: env.BLOB_READ_WRITE_TOKEN,
+      });
+      blobUrl = blob.url;
+    } else {
+      const fs = await import("fs");
+      const path = await import("path");
+      const dir = path.join(process.cwd(), "public", "reports", internship.id);
+      fs.mkdirSync(dir, { recursive: true });
+      const filename = `${crypto.randomUUID()}-${req.body.type}.pdf`;
+      fs.writeFileSync(path.join(dir, filename), pdfBytes);
+      blobUrl = `http://localhost:3000/reports/${internship.id}/${filename}`; // served locally via static middleware
+    }
 
     const [row] = await db.insert(reports).values({
       internshipId: internship.id, type: req.body.type,
       snapshot: req.body.type === "sealed" ? { memberDigests: reportEntries.map((e) => e.digest) } : null,
       aggregateSha256: aggregateHash ?? null, aggregateSignature: aggregateSignature ?? null,
-      kid: req.body.type === "sealed" ? env.ED25519_KID : null, pdfBlobUrl: blob.url,
+      kid: req.body.type === "sealed" ? env.ED25519_KID : null, pdfBlobUrl: blobUrl,
     }).returning();
     if (reportToken) {
       await db.insert(verificationTokens).values({ tokenUlid: reportToken, scope: "report", reportId: row.id });

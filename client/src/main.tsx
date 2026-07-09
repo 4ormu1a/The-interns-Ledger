@@ -19,11 +19,12 @@ import { InternshipPage } from "./pages/student/InternshipPage";
 import { AccountPage } from "./pages/student/AccountPage";
 import { ReportsPage } from "./pages/student/ReportsPage";
 import { NotificationsPage } from "./pages/student/NotificationsPage";
-import { FacultyShell } from "./components/layout/FacultyShell";
-import { FacultyStudentsPage } from "./pages/faculty/FacultyStudentsPage";
-import { FacultyLogbookPage } from "./pages/faculty/FacultyLogbookPage";
-import { AssessmentPage } from "./pages/faculty/AssessmentPage";
-import { AssessmentHistoryPage } from "./pages/faculty/AssessmentHistoryPage";
+import { DepartmentShell } from "./components/layout/DepartmentShell";
+import { SubmissionsInboxPage } from "./pages/department/SubmissionsInboxPage";
+import { SubmissionReviewPage } from "./pages/department/SubmissionReviewPage";
+import { NeedsAttentionPage } from "./pages/department/NeedsAttentionPage";
+import { DepartmentStudentsPage } from "./pages/department/DepartmentStudentsPage";
+import { DepartmentSettingsPage } from "./pages/department/DepartmentSettingsPage";
 import { SupervisorShell } from "./components/layout/SupervisorShell";
 import { SupervisorDashboard } from "./pages/industry/SupervisorDashboard";
 import { QueuePage } from "./pages/industry/QueuePage";
@@ -40,6 +41,7 @@ import { TokensPage } from "./pages/admin/TokensPage";
 import { ErasurePage } from "./pages/admin/ErasurePage";
 import "./styles/global.css";
 import "./styles/auth.css";
+import "./styles/notifications.css";
 
 const qc = new QueryClient();
 
@@ -75,11 +77,12 @@ createRoot(document.getElementById("root")!).render(
               <Route path="students" element={<StudentsPage />} />
               <Route path="history" element={<HistoryPage />} />
             </Route>
-            <Route path="/faculty" element={<FacultyShell />}>
-              <Route index element={<FacultyStudentsPage />} />
-              <Route path="logbook/:internshipId" element={<FacultyLogbookPage />} />
-              <Route path="assess/:internshipId" element={<AssessmentPage />} />
-              <Route path="assessments" element={<AssessmentHistoryPage />} />
+            <Route path="/department" element={<DepartmentShell />}>
+              <Route index element={<SubmissionsInboxPage />} />
+              <Route path="submissions/:id" element={<SubmissionReviewPage />} />
+              <Route path="attention" element={<NeedsAttentionPage />} />
+              <Route path="students" element={<DepartmentStudentsPage />} />
+              <Route path="settings" element={<DepartmentSettingsPage />} />
             </Route>
             <Route path="/admin" element={<AdminShell />}>
               <Route index element={<AdminDashboard />} />

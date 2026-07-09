@@ -44,5 +44,5 @@ export function useAuth() {
 }
 
 export const portalPath = (role: string) => ({
-  student: "/student", industry_supervisor: "/industry", faculty_supervisor: "/faculty", admin: "/admin",
+  student: "/student", industry_supervisor: "/industry", department_supervisor: "/department", admin: "/admin",
 }[role] ?? "/login");

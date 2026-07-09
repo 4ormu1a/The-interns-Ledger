@@ -10,7 +10,7 @@ import { attachmentsRouter } from "./modules/entries/attachments.routes.js";
 import { reviewRouter } from "./modules/review/review.routes.js";
 import { verificationRouter } from "./modules/verification/verification.routes.js";
 import { reportsRouter } from "./modules/reports/reports.routes.js";
-import { facultyRouter } from "./modules/faculty/faculty.routes.js";
+import { departmentRouter } from "./modules/department/department.routes.js";
 import { adminRouter } from "./modules/admin/admin.routes.js";
 import { errorHandler, notFound } from "./middleware/error.js";
 
@@ -29,6 +29,7 @@ export function createApp() {
   app.use(cookieParser());
 
   app.get("/api/health", (_req, res) => res.json({ data: { status: "ok", time: new Date().toISOString() } }));
+  app.use(express.static("public"));
   app.use("/api/auth", authRouter);
   app.use("/api/me", meRouter);
   app.use("/api/internships", internshipsRouter);
@@ -37,7 +38,7 @@ export function createApp() {
   app.use("/api/review", reviewRouter);
   app.use("/api/verify", verificationRouter);
   app.use("/api/reports", reportsRouter);
-  app.use("/api/faculty", facultyRouter);
+  app.use("/api/department", departmentRouter);
   app.use("/api/admin", adminRouter);
 
   app.use(notFound);
