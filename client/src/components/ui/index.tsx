@@ -17,7 +17,7 @@ export const Field = forwardRef<HTMLInputElement,
   function Field({ label, hint, error, id, ...rest }, ref) {
     const fieldId = id ?? rest.name;
     return (
-      <div style={{ display: "grid", gap: 6 }}>
+      <div style={{ display: "grid", gap: 6, minWidth: 0 }}>
         <label htmlFor={fieldId}>{label}</label>
         <input id={fieldId} ref={ref} aria-invalid={!!error} {...rest} />
         {error ? <span className="hint" style={{ color: "var(--danger)" }} role="alert">{error}</span>
