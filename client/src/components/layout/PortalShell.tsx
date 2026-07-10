@@ -55,6 +55,10 @@ export function StudentShell() {
           <nav className={`premium-nav ${mobileMenuOpen ? 'mobile-open' : ''}`} aria-label="Portal">
             <div className="drawer-header mobile-only">
               <div className="drawer-profile">
+                <div className="brand" style={{ marginBottom: 16 }}>
+                  <BrandMark size={28} />
+                  <span className="name"><b>THE INTERNS</b><span>LEDGER</span></span>
+                </div>
                 <span className="avatar">{initials}</span>
                 <div className="u-meta">
                   <b>{user.name}</b>
