@@ -27,14 +27,14 @@ export function KeysPage() {
   });
 
   const revokeMut = useMutation({
-    mutationFn: revokeKey,
+    mutationFn: (kid: string) => revokeKey(kid, "Admin revoked"),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-keys"] }),
   });
 
   return (
     <div style={{ display: "grid", gap: 24 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h1 style={{ margin: 0 }}>Signing keys (AC-09)</h1>
+        <h1 style={{ margin: 0 }}>Signing keys</h1>
         <Button variant={1} onClick={() => setShowAdd(true)}>Register new key</Button>
       </div>
 

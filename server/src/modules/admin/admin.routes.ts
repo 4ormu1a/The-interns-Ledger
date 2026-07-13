@@ -9,10 +9,19 @@ import {
   users, internships, assignments, logEntries,
   signingKeys, verificationTokens, auditLog,
   assessments, seals, notifications, attachments,
+  departments, supervisorDepartments
 } from "../../db/schema/index.js";
 import { requireAuth, requireRole } from "../../middleware/auth.js";
 import { ApiError } from "../../middleware/error.js";
 import { appendAudit, verifyChain } from "../audit/audit.service.js";
+
+const requireStepUp = (req: any, res: any, next: any) => {
+  if (req.cookies?.il_stepup !== "active") {
+    return next(new ApiError(403, "STEP_UP_REQUIRED", "Please verify your password to continue."));
+  }
+  next();
+};
+
 import { hash } from "@node-rs/argon2";
 import { sendProvisionEmail } from "../../lib/email.js";
 import { newOpaqueToken, sha256hex } from "../../lib/tokens.js";
@@ -26,12 +35,14 @@ adminRouter.use(requireAuth, requireRole("admin"));
 ──────────────────────────────────────────────────────────────── */
 adminRouter.get("/overview", async (_req, res, next) => {
   try {
-    const [userCount, internshipCount, entryCount, pendingCount, auditCount] = await Promise.all([
+    const [userCount, internshipCount, entryCount, pendingCount, auditCount, unstaffedDepts, sealedReports] = await Promise.all([
       db.execute(sql`SELECT count(*)::int AS n FROM users WHERE erased_at IS NULL`),
       db.execute(sql`SELECT count(*)::int AS n FROM internships`),
       db.execute(sql`SELECT count(*)::int AS n FROM log_entries`),
       db.execute(sql`SELECT count(*)::int AS n FROM log_entries WHERE state = 'submitted'`),
       db.execute(sql`SELECT count(*)::int AS n FROM audit_log`),
+      db.execute(sql`SELECT count(*)::int AS n FROM departments d LEFT JOIN supervisor_departments sd ON d.id = sd.department_id WHERE sd.supervisor_id IS NULL`),
+      db.execute(sql`SELECT count(*)::int AS n FROM reports WHERE type = 'sealed'`),
     ]);
     const byRole = await db.execute(sql`
       SELECT role, count(*)::int AS n FROM users WHERE erased_at IS NULL GROUP BY role`);
@@ -41,6 +52,8 @@ adminRouter.get("/overview", async (_req, res, next) => {
       entries: (entryCount.rows[0] as { n: number }).n,
       pendingReview: (pendingCount.rows[0] as { n: number }).n,
       auditRows: (auditCount.rows[0] as { n: number }).n,
+      unstaffedDepartments: (unstaffedDepts.rows[0] as { n: number }).n,
+      sealedReports: (sealedReports.rows[0] as { n: number }).n,
       byRole: Object.fromEntries((byRole.rows as { role: string; n: number }[]).map(r => [r.role, r.n])),
     } });
   } catch (e) { next(e); }
@@ -109,6 +122,76 @@ adminRouter.post("/users", async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// Bulk import students
+const bulkSchema = z.object({
+  users: z.array(z.object({
+    fullName: z.string().min(2),
+    email: z.string().email(),
+    departmentName: z.string(),
+  })),
+  dryRun: z.boolean().default(false),
+});
+
+adminRouter.post("/users/bulk", async (req, res, next) => {
+  try {
+    const { users: inputUsers, dryRun } = bulkSchema.parse(req.body);
+    
+    // Fetch all departments
+    const { departments } = await import("../../db/schema/index.js");
+    const allDepts = await db.query.departments.findMany();
+    const deptMap = new Map(allDepts.map(d => [d.name.toLowerCase(), d.id]));
+
+    // Fetch existing emails
+    const existingUsers = await db.query.users.findMany({ columns: { email: true } });
+    const existingEmails = new Set(existingUsers.map(u => u.email.toLowerCase()));
+
+    const results = [];
+    const validUsers = [];
+    
+    for (const u of inputUsers) {
+      const deptId = deptMap.get(u.departmentName.toLowerCase());
+      const isDuplicate = existingEmails.has(u.email.toLowerCase());
+      
+      let error = null;
+      if (!deptId) error = "Invalid department code/name";
+      else if (isDuplicate) error = "Duplicate email";
+      
+      results.push({ ...u, error, valid: !error });
+      
+      if (!error) {
+        validUsers.push({
+          role: "student" as const,
+          email: u.email,
+          fullName: u.fullName,
+          departmentId: deptId,
+          status: "pending" as const,
+        });
+        existingEmails.add(u.email.toLowerCase()); // prevent duplicates within the same batch
+      }
+    }
+
+    if (dryRun) {
+      res.json({ data: { results, validCount: validUsers.length, totalCount: inputUsers.length } });
+      return;
+    }
+
+    if (validUsers.length > 0) {
+      const tempPw = newOpaqueToken().slice(0, 20);
+      const passwordHash = await hash(tempPw, { memoryCost: 19456, timeCost: 2, parallelism: 1 });
+      
+      const insertData = validUsers.map(u => ({ ...u, passwordHash }));
+      const inserted = await db.insert(users).values(insertData).returning({ id: users.id, email: users.email });
+      
+      await appendAudit({ actorId: req.user!.sub, action: "user.bulk_import", targetType: "user",
+        targetId: "bulk", metadata: { count: inserted.length } });
+        
+      res.json({ data: { results, importedCount: inserted.length } });
+    } else {
+      res.json({ data: { results, importedCount: 0 } });
+    }
+  } catch (e) { next(e); }
+});
+
 // Update user (deactivate / reactivate / role change)
 const patchUserSchema = z.object({
   status: z.enum(["active", "deactivated"]).optional(),
@@ -147,12 +230,93 @@ adminRouter.patch("/users/:id", async (req, res, next) => {
 adminRouter.get("/internships", async (_req, res, next) => {
   try {
     const rows = await db.execute(sql`
-      SELECT i.id, i.company, i.role_title, u.full_name AS student_name
+      SELECT i.id, i.company, i.role_title, i.start_date, i.end_date, i.required_hours, u.full_name AS student_name, u.email AS student_email
       FROM internships i
       JOIN users u ON u.id = i.student_id
       ORDER BY i.created_at DESC
     `);
     res.json({ data: rows.rows });
+  } catch (e) { next(e); }
+});
+
+const patchInternshipSchema = z.object({
+  company: z.string().optional(),
+  roleTitle: z.string().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  requiredHours: z.number().optional(),
+});
+
+adminRouter.patch("/internships/:id", async (req, res, next) => {
+  try {
+    const body = patchInternshipSchema.parse(req.body);
+    const updates: any = { updatedAt: new Date() };
+    if (body.company) updates.company = body.company;
+    if (body.roleTitle) updates.roleTitle = body.roleTitle;
+    if (body.startDate) updates.startDate = new Date(body.startDate);
+    if (body.endDate) updates.endDate = new Date(body.endDate);
+    if (body.requiredHours) updates.requiredHours = body.requiredHours;
+    
+    const [updated] = await db.update(internships).set(updates).where(eq(internships.id, req.params.id)).returning();
+    await appendAudit({ actorId: req.user!.sub, action: "internship.update", targetType: "internship", targetId: req.params.id, metadata: body });
+    res.json({ data: updated });
+  } catch (e) { next(e); }
+});
+
+const bulkInternshipsSchema = z.object({
+  internships: z.array(z.object({
+    studentEmail: z.string().email(),
+    company: z.string(),
+    roleTitle: z.string(),
+    startDate: z.string(),
+    endDate: z.string(),
+    requiredHours: z.number()
+  })),
+  dryRun: z.boolean().default(false)
+});
+
+adminRouter.post("/internships/bulk", async (req, res, next) => {
+  try {
+    const { internships: inputList, dryRun } = bulkInternshipsSchema.parse(req.body);
+    
+    const existingUsers = await db.query.users.findMany({ columns: { email: true, id: true } });
+    const userMap = new Map(existingUsers.map(u => [u.email.toLowerCase(), u.id]));
+    
+    const results = [];
+    const validRows = [];
+    
+    for (const row of inputList) {
+      const studentId = userMap.get(row.studentEmail.toLowerCase());
+      let error = null;
+      if (!studentId) error = "Student not found for email";
+      
+      results.push({ ...row, error, valid: !error });
+      
+      if (!error) {
+        validRows.push({
+          studentId,
+          company: row.company,
+          roleTitle: row.roleTitle,
+          startDate: new Date(row.startDate),
+          endDate: new Date(row.endDate),
+          requiredHours: row.requiredHours,
+          isActive: true
+        });
+      }
+    }
+    
+    if (dryRun) {
+      res.json({ data: { results, validCount: validRows.length, totalCount: inputList.length } });
+      return;
+    }
+    
+    if (validRows.length > 0) {
+      const inserted = await db.insert(internships).values(validRows).returning({ id: internships.id });
+      await appendAudit({ actorId: req.user!.sub, action: "internship.bulk_import", targetType: "internship", targetId: "bulk", metadata: { count: inserted.length } });
+      res.json({ data: { results, importedCount: inserted.length } });
+    } else {
+      res.json({ data: { results, importedCount: 0 } });
+    }
   } catch (e) { next(e); }
 });
 
@@ -295,7 +459,7 @@ adminRouter.post("/audit/verify-chain", async (req, res, next) => {
 /* ─────────────────────────────────────────────────────────────
    SIGNING KEY LIFECYCLE  (FR-ADM-06, AC-09)
 ──────────────────────────────────────────────────────────────── */
-adminRouter.get("/keys", async (_req, res, next) => {
+adminRouter.get("/keys", requireStepUp, async (_req, res, next) => {
   try {
     const rows = await db.query.signingKeys.findMany({ orderBy: (k, { desc }) => [desc(k.createdAt)] });
     res.json({ data: rows });
@@ -307,7 +471,7 @@ const registerKeySchema = z.object({
   publicKey: z.string().min(50), // PEM public key only — private never enters system
 });
 
-adminRouter.post("/keys", async (req, res, next) => {
+adminRouter.post("/keys", requireStepUp, async (req, res, next) => {
   try {
     const body = registerKeySchema.parse(req.body);
     const existing = await db.query.signingKeys.findFirst({ where: eq(signingKeys.kid, body.kid) });
@@ -319,7 +483,7 @@ adminRouter.post("/keys", async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-adminRouter.post("/keys/:kid/retire", async (req, res, next) => {
+adminRouter.post("/keys/:kid/retire", requireStepUp, async (req, res, next) => {
   try {
     const row = await db.query.signingKeys.findFirst({ where: eq(signingKeys.kid, req.params.kid) });
     if (!row) throw new ApiError(404, "NOT_FOUND", "Key not found");
@@ -331,7 +495,7 @@ adminRouter.post("/keys/:kid/retire", async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-adminRouter.post("/keys/:kid/revoke", async (req, res, next) => {
+adminRouter.post("/keys/:kid/revoke", requireStepUp, async (req, res, next) => {
   try {
     const row = await db.query.signingKeys.findFirst({ where: eq(signingKeys.kid, req.params.kid) });
     if (!row) throw new ApiError(404, "NOT_FOUND", "Key not found");
@@ -464,5 +628,148 @@ adminRouter.post("/export", async (req, res, next) => {
       assessments: userAssessments,
       notifications: userNotifications,
     } });
+  } catch (e) { next(e); }
+});
+
+/* ─────────────────────────────────────────────────────────────
+   DEPARTMENTS MANAGEMENT
+──────────────────────────────────────────────────────────────── */
+adminRouter.get("/departments", async (req, res, next) => {
+  try {
+    const rows = await db.query.departments.findMany({
+      orderBy: (d, { asc }) => [asc(d.name)],
+    });
+    const supervisorLinks = await db.query.supervisorDepartments.findMany();
+    
+    // Attach supervisors to each department
+    const enhancedRows = rows.map(dept => {
+      return {
+        ...dept,
+        supervisorIds: supervisorLinks.filter(l => l.departmentId === dept.id).map(l => l.supervisorId)
+      };
+    });
+    
+    res.json({ data: enhancedRows });
+  } catch (e) { next(e); }
+});
+
+const createDeptSchema = z.object({ name: z.string().min(2) });
+adminRouter.post("/departments", async (req, res, next) => {
+  try {
+    const { name } = createDeptSchema.parse(req.body);
+    const existing = await db.query.departments.findFirst({ where: eq(departments.name, name) });
+    if (existing) throw new ApiError(400, "DUPLICATE", "Department name already exists");
+    
+    const inserted = await db.insert(departments).values({ name }).returning();
+    await appendAudit({ actorId: req.user!.sub, action: "department.create", targetType: "department", targetId: inserted[0].id });
+    res.json({ data: inserted[0] });
+  } catch (e) { next(e); }
+});
+
+adminRouter.patch("/departments/:id", async (req, res, next) => {
+  try {
+    const { name } = createDeptSchema.parse(req.body);
+    const existing = await db.query.departments.findFirst({ where: eq(departments.name, name) });
+    if (existing && existing.id !== req.params.id) throw new ApiError(400, "DUPLICATE", "Department name already exists");
+    
+    const updated = await db.update(departments).set({ name, updatedAt: new Date() }).where(eq(departments.id, req.params.id)).returning();
+    await appendAudit({ actorId: req.user!.sub, action: "department.update", targetType: "department", targetId: req.params.id, metadata: { name } });
+    res.json({ data: updated[0] });
+  } catch (e) { next(e); }
+});
+
+const assignSupSchema = z.object({ supervisorId: z.string().uuid() });
+adminRouter.post("/departments/:id/supervisors", async (req, res, next) => {
+  try {
+    const { supervisorId } = assignSupSchema.parse(req.body);
+    await db.insert(supervisorDepartments).values({ supervisorId, departmentId: req.params.id }).onConflictDoNothing();
+    await appendAudit({ actorId: req.user!.sub, action: "department.assign_supervisor", targetType: "department", targetId: req.params.id, metadata: { supervisorId } });
+    res.json({ data: { success: true } });
+  } catch (e) { next(e); }
+});
+
+adminRouter.delete("/departments/:id/supervisors/:supervisorId", async (req, res, next) => {
+  try {
+    await db.delete(supervisorDepartments).where(and(
+      eq(supervisorDepartments.departmentId, req.params.id),
+      eq(supervisorDepartments.supervisorId, req.params.supervisorId)
+    ));
+    await appendAudit({ actorId: req.user!.sub, action: "department.remove_supervisor", targetType: "department", targetId: req.params.id, metadata: { supervisorId: req.params.supervisorId } });
+    res.json({ data: { success: true } });
+  } catch (e) { next(e); }
+});
+
+/* ─────────────────────────────────────────────────────────────
+   ANALYTICS (FR-ADM-05 / FR-ADM-06)
+──────────────────────────────────────────────────────────────── */
+adminRouter.get("/analytics", async (req, res, next) => {
+  try {
+    const rows = await db.execute(sql`
+      SELECT 
+        i.company,
+        COUNT(i.id)::int as intern_count,
+        AVG(i.required_hours)::numeric as avg_required,
+        SUM(COALESCE(e.hours, 0))::numeric as total_logged_hours
+      FROM internships i
+      LEFT JOIN (
+        SELECT internship_id, SUM(duration_minutes)/60.0 as hours 
+        FROM log_entries 
+        WHERE state = 'approved' 
+        GROUP BY internship_id
+      ) e ON i.id = e.internship_id
+      GROUP BY i.company
+      ORDER BY intern_count DESC
+    `);
+    
+    // basic completion metrics
+    const overall = await db.execute(sql`
+      WITH stats AS (
+        SELECT 
+          i.id,
+          i.required_hours,
+          COALESCE(SUM(le.duration_minutes)/60.0, 0) as logged
+        FROM internships i
+        LEFT JOIN log_entries le ON i.id = le.internship_id AND le.state = 'approved'
+        GROUP BY i.id
+      )
+      SELECT 
+        COUNT(id)::int as total_internships,
+        COUNT(CASE WHEN logged >= required_hours THEN 1 END)::int as completed_internships,
+        COUNT(CASE WHEN logged < required_hours * 0.5 THEN 1 END)::int as behind_schedule
+      FROM stats
+    `);
+
+    res.json({ 
+      data: {
+        companies: rows.rows,
+        overall: overall.rows[0]
+      } 
+    });
+  } catch (e) { next(e); }
+});
+
+/* ─────────────────────────────────────────────────────────────
+   SYSTEM SETTINGS (FR-ADM-08)
+──────────────────────────────────────────────────────────────── */
+// In-memory store for settings since no schema migration is permitted
+const systemSettings = {
+  defaultNeedsAttentionThresholdDays: 7,
+  currentTerm: "Fall",
+  currentYear: new Date().getFullYear(),
+};
+
+adminRouter.get("/settings", requireStepUp, (req, res) => {
+  res.json({ data: systemSettings });
+});
+
+adminRouter.patch("/settings", requireStepUp, async (req, res, next) => {
+  try {
+    const { defaultNeedsAttentionThresholdDays, currentTerm, currentYear } = req.body;
+    if (defaultNeedsAttentionThresholdDays !== undefined) systemSettings.defaultNeedsAttentionThresholdDays = defaultNeedsAttentionThresholdDays;
+    if (currentTerm !== undefined) systemSettings.currentTerm = currentTerm;
+    if (currentYear !== undefined) systemSettings.currentYear = currentYear;
+    
+    await appendAudit({ actorId: req.user!.sub, action: "settings.update", targetType: "system", targetId: "settings", metadata: req.body });
+    res.json({ data: systemSettings });
   } catch (e) { next(e); }
 });

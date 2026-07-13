@@ -17,6 +17,11 @@
   /* derived tokens */
   --muted:#5d6b54; --muted-2:#7c8a73;
   --line:rgba(13,83,14,.16);
+  --green-50:rgba(8,203,0,.06);
+  --danger-soft:rgba(179,38,30,.07);
+  --surface:rgba(255,255,255,.7);
+  --border:rgba(13,83,14,.12);
+  --canvas:rgba(251,245,221,.5);
   --danger:#b3261e; --danger-bg:rgba(179,38,30,.07); --danger-line:rgba(179,38,30,.3);
   --amber:#8a6a00; --amber-bg:rgba(224,168,0,.15); --amber-line:rgba(224,168,0,.45);
   --violet:#534AB7; --violet-bg:rgba(83,74,183,.1);

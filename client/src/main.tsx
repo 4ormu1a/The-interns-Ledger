@@ -34,12 +34,16 @@ import { HistoryPage } from "./pages/industry/HistoryPage";
 import { AdminShell } from "./components/layout/AdminShell";
 import { AdminDashboard } from "./pages/admin/AdminDashboard";
 import { UsersPage } from "./pages/admin/UsersPage";
-import { AssignmentsPage } from "./pages/admin/AssignmentsPage";
+import { DepartmentsPage } from "./pages/admin/DepartmentsPage";
+import { InternshipsPage } from "./pages/admin/InternshipsPage";
+import { AnalyticsPage } from "./pages/admin/AnalyticsPage";
+
 import { AuditPage } from "./pages/admin/AuditPage";
-import { KeysPage } from "./pages/admin/KeysPage";
+import { SettingsPage } from "./pages/admin/SettingsPage";
 import { TokensPage } from "./pages/admin/TokensPage";
 import { ErasurePage } from "./pages/admin/ErasurePage";
 import "./styles/global.css";
+import "./styles/admin.css";
 import "./styles/auth.css";
 import "./styles/notifications.css";
 
@@ -87,9 +91,11 @@ createRoot(document.getElementById("root")!).render(
             <Route path="/admin" element={<AdminShell />}>
               <Route index element={<AdminDashboard />} />
               <Route path="users" element={<UsersPage />} />
-              <Route path="assignments" element={<AssignmentsPage />} />
+              <Route path="departments" element={<DepartmentsPage />} />
+              <Route path="internships" element={<InternshipsPage />} />
+              <Route path="analytics" element={<AnalyticsPage />} />
               <Route path="audit" element={<AuditPage />} />
-              <Route path="keys" element={<KeysPage />} />
+              <Route path="settings" element={<SettingsPage />} />
               <Route path="tokens" element={<TokensPage />} />
               <Route path="erasure" element={<ErasurePage />} />
             </Route>

@@ -64,7 +64,7 @@ export function AccountPage() {
         <Card style={{ padding: 24 }}>
           <h3 style={{ marginBottom: 8 }}>Privacy</h3>
           <p style={{ fontSize: ".92rem", color: "var(--muted)" }}>
-            Consent recorded {new Date(me.data.consentAt).toLocaleDateString()}. Data export and erasure requests arrive in Sprint 6 (FR-ADM-07).
+            Consent recorded {new Date(me.data.consentAt).toLocaleDateString()}. Data export and erasure requests arrive in Sprint 6.
           </p>
         </Card>
       </div>

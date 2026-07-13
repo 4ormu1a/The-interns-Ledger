@@ -1,7 +1,19 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, Button } from "../../components/ui";
+import { Button, StatusBadge, CopyButton, CustomSelect, SkeletonTable } from "../../components/ui";
+import type { SelectOption } from "../../components/ui";
 import { getTokens, revokeToken } from "../../features/admin/api";
+
+const SCOPE_OPTS: SelectOption[] = [
+  { value: "", label: "All scopes" },
+  { value: "entry", label: "Entry" },
+  { value: "report", label: "Report" },
+];
+const STATE_OPTS: SelectOption[] = [
+  { value: "", label: "All states" },
+  { value: "false", label: "Active only" },
+  { value: "true", label: "Revoked only" },
+];
 
 export function TokensPage() {
   const qc = useQueryClient();
@@ -27,67 +39,61 @@ export function TokensPage() {
   });
 
   return (
-    <div style={{ display: "grid", gap: 24 }}>
+    <div className="page-enter" style={{ display: "grid", gap: 24 }}>
       <h1 style={{ margin: 0 }}>Verification tokens</h1>
 
       {revokeTarget && (
-        <Card style={{ border: "2px solid var(--danger)" }}>
+        <div className="glass-card no-hover" style={{ border: "2px solid var(--danger)" }}>
           <h2 style={{ marginTop: 0, color: "var(--danger)" }}>Revoke token</h2>
-          <p>Token: <code>{revokeTarget.ulid}</code></p>
+          <p style={{ fontSize: "0.88rem", marginBottom: 16 }}>Token: <CopyButton text={revokeTarget.ulid} /></p>
           <div style={{ display: "grid", gap: 12, maxWidth: 480 }}>
             <div style={{ display: "grid", gap: 6 }}>
               <label>Reason (required, min 5 chars)</label>
-              <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Reason for revocation..."
-                style={{ padding: "10px 14px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--surface)", fontSize: 16 }} />
+              <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Reason for revocation…"
+                style={{ padding: "10px 14px", borderRadius: 11, border: "1.5px solid var(--line)", fontSize: "0.92rem" }} />
             </div>
-            {err && <p style={{ color: "var(--danger)", margin: 0 }}>{err}</p>}
+            {err && <p style={{ color: "var(--danger)", margin: 0, fontSize: "0.88rem" }}>{err}</p>}
             <div style={{ display: "flex", gap: 12 }}>
               <Button variant="danger" onClick={() => revokeMut.mutate({ id: revokeTarget.id, reason })} disabled={revokeMut.isPending}>
-                {revokeMut.isPending ? "Revoking..." : "Confirm revoke"}
+                {revokeMut.isPending ? "Revoking…" : "Confirm revoke"}
               </Button>
               <Button variant={3} onClick={() => { setRevokeTarget(null); setErr(""); }}>Cancel</Button>
             </div>
           </div>
-        </Card>
+        </div>
       )}
 
-      <Card>
-        <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
-          <select value={scopeFilter} onChange={(e) => setScopeFilter(e.target.value)}
-            style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--surface)", fontSize: 14 }}>
-            <option value="">All scopes</option>
-            <option value="entry">Entry</option>
-            <option value="report">Report</option>
-          </select>
-          <select value={revokedFilter} onChange={(e) => setRevokedFilter(e.target.value)}
-            style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--surface)", fontSize: 14 }}>
-            <option value="">All states</option>
-            <option value="false">Active only</option>
-            <option value="true">Revoked only</option>
-          </select>
+      <div className="glass-card no-hover">
+        <div className="admin-filters">
+          <div className="filter-group" style={{ minWidth: 160 }}>
+            <span className="filter-label">Scope</span>
+            <CustomSelect options={SCOPE_OPTS} value={scopeFilter} onChange={setScopeFilter} placeholder="All scopes" />
+          </div>
+          <div className="filter-group" style={{ minWidth: 160 }}>
+            <span className="filter-label">State</span>
+            <CustomSelect options={STATE_OPTS} value={revokedFilter} onChange={setRevokedFilter} placeholder="All states" />
+          </div>
         </div>
 
-        {isLoading ? <p>Loading...</p> : (
+        {isLoading ? <SkeletonTable rows={6} cols={6} /> : (
           <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-              <thead><tr style={{ borderBottom: "2px solid var(--border)" }}>
-                {["ULID", "Scope", "Disclosure", "State", "Created", "Actions"].map((h) => (
-                  <th key={h} style={{ textAlign: "left", padding: "8px 10px", color: "var(--muted)", fontWeight: 600 }}>{h}</th>
-                ))}
+            <table className="admin-table">
+              <thead><tr>
+                <th>ULID</th><th>Scope</th><th>Disclosure</th><th>State</th><th>Created</th><th>Actions</th>
               </tr></thead>
               <tbody>
                 {(tokens as any[]).map((t: any) => (
-                  <tr key={t.id} style={{ borderBottom: "1px solid var(--border)" }}>
-                    <td style={{ padding: "8px 10px", fontFamily: "monospace", fontSize: 12 }}>{t.tokenUlid}</td>
-                    <td style={{ padding: "8px 10px" }}>{t.scope}</td>
-                    <td style={{ padding: "8px 10px" }}>{t.disclosure}</td>
-                    <td style={{ padding: "8px 10px" }}>
+                  <tr key={t.id}>
+                    <td><CopyButton text={t.tokenUlid} /></td>
+                    <td><StatusBadge status={t.scope} /></td>
+                    <td style={{ fontSize: "0.86rem" }}>{t.disclosure}</td>
+                    <td>
                       {t.revokedAt
-                        ? <span style={{ color: "var(--danger)", fontWeight: 600 }}>Revoked</span>
-                        : <span style={{ color: "var(--green-900)", fontWeight: 600 }}>Active</span>}
+                        ? <StatusBadge status="revoked" />
+                        : <StatusBadge status="active" />}
                     </td>
-                    <td style={{ padding: "8px 10px", color: "var(--muted)" }}>{new Date(t.createdAt).toLocaleDateString()}</td>
-                    <td style={{ padding: "8px 10px" }}>
+                    <td style={{ color: "var(--muted)", fontSize: "0.84rem" }}>{new Date(t.createdAt).toLocaleDateString()}</td>
+                    <td>
                       {!t.revokedAt && (
                         <Button size="sm" variant="danger" onClick={() => setRevokeTarget({ id: t.id, ulid: t.tokenUlid })}>
                           Revoke
@@ -98,10 +104,10 @@ export function TokensPage() {
                 ))}
               </tbody>
             </table>
-            {tokens.length === 0 && <p style={{ color: "var(--muted)", textAlign: "center" }}>No tokens match.</p>}
+            {tokens.length === 0 && <p className="admin-empty">No tokens match.</p>}
           </div>
         )}
-      </Card>
+      </div>
     </div>
   );
 }

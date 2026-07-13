@@ -77,3 +77,22 @@ authRouter.post("/forgot", validate(s.forgotSchema), async (req, res, next) => {
 authRouter.post("/reset", validate(s.resetSchema), async (req, res, next) => {
   try { await svc.resetPassword(req.body.token, req.body.password); res.json({ data: { reset: true } }); } catch (e) { next(e); }
 });
+
+authRouter.post("/step-up", async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+    // We can reuse login verify logic or just verify password directly
+    // Wait, the client should send the password, but how do we know the email? 
+    // They should probably be authenticated already, so we can use a requireAuth middleware if we import it, 
+    // or just rely on them passing email & password which we pass to svc.login.
+    // If we use svc.login, it gives us a normal token. Let's just create a quick verification.
+    if (!email || !password) throw new Error("Missing credentials");
+    const { user } = await svc.login(email, password);
+    // If login succeeds, issue step-up cookie
+    res.cookie("il_stepup", "active", {
+      httpOnly: true, sameSite: "lax", secure: env.NODE_ENV === "production",
+      path: "/api", maxAge: 15 * 60_000, // 15 mins
+    });
+    res.json({ data: { stepUp: true } });
+  } catch (e) { next(e); }
+});

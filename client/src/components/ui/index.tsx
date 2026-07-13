@@ -26,8 +26,21 @@ export const Field = forwardRef<HTMLInputElement,
     );
   });
 
+/** Legacy pill — kept for backward compat; new code should use StatusBadge */
 export function StatusPill({ state }: { state: string }) {
   return <span className={`st st-${state}`}>{state}</span>;
+}
+
+/** Color-coded status badge with dot indicator */
+const BADGE_MAP: Record<string, string> = {
+  active: "badge-active", pending: "badge-pending", deactivated: "badge-deactivated",
+  revoked: "badge-revoked", retired: "badge-retired", sealed: "badge-sealed",
+  draft: "badge-draft", submitted: "badge-submitted", approved: "badge-approved",
+  rejected: "badge-rejected", industry: "badge-industry", faculty: "badge-faculty",
+};
+export function StatusBadge({ status }: { status: string }) {
+  const cls = BADGE_MAP[status] ?? "badge-draft";
+  return <span className={`badge ${cls}`}>{status}</span>;
 }
 
 /* Brand mark — open-ledger sketch (from 2.svg brand asset, simplified) */
@@ -40,3 +53,9 @@ export function BrandMark({ size = 34 }: { size?: number }) {
     </svg>
   );
 }
+
+/* Re-exports for new admin components */
+export { CustomSelect } from "./CustomSelect";
+export type { SelectOption } from "./CustomSelect";
+export { CopyButton } from "./CopyButton";
+export { SkeletonText, SkeletonRow, SkeletonTable, SkeletonCard, SkeletonStats } from "./Skeleton";
