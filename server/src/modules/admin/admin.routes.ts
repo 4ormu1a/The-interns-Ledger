@@ -247,14 +247,45 @@ const patchInternshipSchema = z.object({
   requiredHours: z.number().optional(),
 });
 
+const createInternshipSchema = z.object({
+  studentEmail: z.string().email(),
+  company: z.string(),
+  roleTitle: z.string(),
+  startDate: z.string(),
+  endDate: z.string(),
+  requiredHours: z.number()
+});
+
+adminRouter.post("/internships", async (req, res, next) => {
+  try {
+    const body = createInternshipSchema.parse(req.body);
+    const targetStudent = await db.query.users.findFirst({ where: eq(sql`lower(email)`, body.studentEmail.toLowerCase()) });
+    if (!targetStudent) throw new ApiError(404, "NOT_FOUND", "Student not found");
+    
+    const [inserted] = await db.insert(internships).values({
+      studentId: targetStudent.id,
+      company: body.company,
+      roleTitle: body.roleTitle,
+      startDate: body.startDate,
+      endDate: body.endDate,
+      requiredHours: body.requiredHours,
+      location: "TBD",
+      requiredWeeks: 0
+    }).returning();
+    
+    await appendAudit({ actorId: req.user!.sub, action: "internship.create", targetType: "internship", targetId: inserted.id, metadata: body });
+    res.json({ data: inserted });
+  } catch (e) { next(e); }
+});
+
 adminRouter.patch("/internships/:id", async (req, res, next) => {
   try {
     const body = patchInternshipSchema.parse(req.body);
     const updates: any = { updatedAt: new Date() };
     if (body.company) updates.company = body.company;
     if (body.roleTitle) updates.roleTitle = body.roleTitle;
-    if (body.startDate) updates.startDate = new Date(body.startDate);
-    if (body.endDate) updates.endDate = new Date(body.endDate);
+    if (body.startDate) updates.startDate = body.startDate;
+    if (body.endDate) updates.endDate = body.endDate;
     if (body.requiredHours) updates.requiredHours = body.requiredHours;
     
     const [updated] = await db.update(internships).set(updates).where(eq(internships.id, req.params.id)).returning();
@@ -294,13 +325,14 @@ adminRouter.post("/internships/bulk", async (req, res, next) => {
       
       if (!error) {
         validRows.push({
-          studentId,
+          studentId: studentId!,
           company: row.company,
           roleTitle: row.roleTitle,
-          startDate: new Date(row.startDate),
-          endDate: new Date(row.endDate),
+          startDate: row.startDate,
+          endDate: row.endDate,
           requiredHours: row.requiredHours,
-          isActive: true
+          location: "TBD",
+          requiredWeeks: 0
         });
       }
     }
