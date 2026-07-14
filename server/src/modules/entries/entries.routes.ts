@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { rateLimit } from "express-rate-limit";
 import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { db } from "../../db/client.js";
@@ -10,10 +11,10 @@ import { env } from "../../config/env.js";
 import * as svc from "./entries.service.js";
 
 const entrySchema = z.object({
-  workDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { message: "Please provide a valid date." }),
-  hours: z.number().min(0.5, { message: "Hours must be at least 0.5." }).max(24, { message: "Hours cannot exceed 24." }),
-  activity: z.string().min(10, { message: "Activity description must be at least 10 characters long." }).max(4000),
-  skills: z.array(z.string().min(1).max(60)).min(1, { message: "Please provide at least one skill (e.g. React, SQL)." }).max(12, { message: "You can specify a maximum of 12 skills." }),
+  workDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { message: "Please choose a valid date for this entry." }),
+  hours: z.number().min(0.5, { message: "Please enter how many hours you worked (minimum 0.5)." }).max(24, { message: "You can't log more than 24 hours in a single day." }),
+  activity: z.string().min(10, { message: "Please write a little more about what you did (at least 10 characters)." }).max(4000),
+  skills: z.array(z.string().min(1).max(60)).min(1, { message: "Please provide at least one skill (e.g., React, SQL)." }).max(12, { message: "You can only list up to 12 skills per entry." }),
   reflection: z.string().max(4000).optional(),
 });
 
@@ -22,7 +23,10 @@ type EntryReq = Parameters<typeof loadOwnedEntry>[0] & { entry: NonNullable<Awai
 export const entriesRouter = Router();
 entriesRouter.use(requireAuth, requireRole("student"));
 
-entriesRouter.post("/", validate(entrySchema), async (req, res, next) => {
+const saveLimiter = rateLimit({ windowMs: 15 * 60_000, limit: 300, standardHeaders: true, legacyHeaders: false });
+const submitLimiter = rateLimit({ windowMs: 15 * 60_000, limit: 30, standardHeaders: true, legacyHeaders: false });
+
+entriesRouter.post("/", submitLimiter, validate(entrySchema), async (req, res, next) => {
   try { res.status(201).json({ data: await svc.createDraft(req.user!.sub, req.body, env.APP_TIMEZONE) }); }
   catch (e) { next(e); }
 });
@@ -47,7 +51,7 @@ entriesRouter.get("/:id", loadOwnedEntry, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-entriesRouter.patch("/:id", loadOwnedEntry, validate(entrySchema.partial()), async (req, res, next) => {
+entriesRouter.patch("/:id", saveLimiter, loadOwnedEntry, validate(entrySchema.partial()), async (req, res, next) => {
   try { res.json({ data: await svc.updateEntry((req as EntryReq).entry, req.body, env.APP_TIMEZONE) }); }
   catch (e) { next(e); }
 });
@@ -57,12 +61,12 @@ entriesRouter.delete("/:id", loadOwnedEntry, async (req, res, next) => {
   catch (e) { next(e); }
 });
 
-entriesRouter.post("/:id/correct", loadOwnedEntry, async (req, res, next) => {
+entriesRouter.post("/:id/correct", submitLimiter, loadOwnedEntry, async (req, res, next) => {
   try { res.status(201).json({ data: await svc.issueCorrection((req as EntryReq).entry, env.APP_TIMEZONE) }); }
   catch (e) { next(e); }
 });
 
-entriesRouter.post("/:id/submit", loadOwnedEntry, async (req, res, next) => {
+entriesRouter.post("/:id/submit", submitLimiter, loadOwnedEntry, async (req, res, next) => {
   try { res.json({ data: await svc.submitEntry((req as EntryReq).entry, env.APP_TIMEZONE) }); }
   catch (e) { next(e); }
 });

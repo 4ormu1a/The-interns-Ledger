@@ -21,7 +21,7 @@ export async function register(input: { fullName: string; email: string; passwor
       `Registration is limited to ${env.INSTITUTION_NAME} student emails (@${env.INSTITUTION_EMAIL_DOMAIN}).`);
   }
   const existing = await db.query.users.findFirst({ where: eq(users.email, input.email) });
-  if (existing) throw new ApiError(409, "EMAIL_TAKEN", "An account with this email already exists.");
+  if (existing) throw new ApiError(409, "EMAIL_TAKEN", "This email is already registered. Try signing in instead.");
 
   const passwordHash = await hash(input.password, ARGON);
   const [user] = await db.insert(users).values({
@@ -51,7 +51,7 @@ export async function verifyEmail(token: string) {
     where: and(eq(emailTokens.tokenHash, sha256hex(token)), eq(emailTokens.purpose, "verify"),
       isNull(emailTokens.usedAt), gt(emailTokens.expiresAt, new Date())),
   });
-  if (!row) throw new ApiError(400, "TOKEN_INVALID", "This verification link is invalid or has expired.");
+  if (!row) throw new ApiError(400, "TOKEN_INVALID", "This verification link has expired or isn't valid. You might need to request a new one.");
   await db.update(emailTokens).set({ usedAt: new Date() }).where(eq(emailTokens.id, row.id));
   await db.update(users).set({ status: "active", emailVerifiedAt: new Date(), updatedAt: new Date() })
     .where(eq(users.id, row.userId)); // FR-AUTH-02
@@ -68,19 +68,19 @@ export async function login(email: string, plain: string) {
   // FR-AUTH-08 — lockout
   const attempt = await db.query.loginAttempts.findFirst({ where: eq(loginAttempts.email, email) });
   if (attempt?.lockedUntil && attempt.lockedUntil > new Date()) {
-    throw new ApiError(429, "LOCKED", "Too many failed attempts. Try again later.");
+    throw new ApiError(429, "LOCKED", "You've tried too many times. Please wait a bit before trying again.");
   }
   const user = await db.query.users.findFirst({ where: eq(users.email, email) });
   const ok = user ? await verify(user.passwordHash, plain) : false;
   if (!user || !ok) {
     await recordFailure(email);
-    throw new ApiError(401, "BAD_CREDENTIALS", "Email or password is incorrect.");
+    throw new ApiError(401, "BAD_CREDENTIALS", "We couldn't sign you in. Please check your email and password.");
   }
   if (user.status === "pending") {
-    if (user.role === "student") throw new ApiError(403, "EMAIL_UNVERIFIED", "Verify your email before logging in.");
-    throw new ApiError(403, "PENDING_VERIFICATION", "Your account is pending verification by an administrator.");
+    if (user.role === "student") throw new ApiError(403, "EMAIL_UNVERIFIED", "Please verify your email address before signing in.");
+    throw new ApiError(403, "PENDING_VERIFICATION", "Your account is still waiting for administrator approval.");
   }
-  if (user.status === "deactivated") throw new ApiError(403, "DEACTIVATED", "This account has been deactivated.");
+  if (user.status === "deactivated") throw new ApiError(403, "DEACTIVATED", "Your account has been deactivated. Please contact your administrator.");
   await db.delete(loginAttempts).where(eq(loginAttempts.email, email));
   return issueSession(user.id, user.role, user.fullName);
 }
@@ -108,7 +108,7 @@ export async function acceptInvite(token: string, fullName: string, plain: strin
   });
 
   if (!invite) {
-    throw new ApiError(400, "INVALID_INVITE", "This invitation is invalid or has expired.");
+    throw new ApiError(400, "INVALID_INVITE", "This invitation link has expired or isn't valid.");
   }
 
   // Find existing user or create a new one
@@ -129,7 +129,7 @@ export async function acceptInvite(token: string, fullName: string, plain: strin
   } else {
     // If they already exist but as a student, we can't let them be a supervisor
     if (user.role === "student") {
-      throw new ApiError(409, "ROLE_CONFLICT", "This email is registered as a student account.");
+      throw new ApiError(409, "ROLE_CONFLICT", "This email is already registered as a student account.");
     }
   }
 
@@ -170,14 +170,14 @@ async function issueSession(userId: string, role: string, name: string) {
 }
 
 export async function rotateRefresh(presented: string | undefined) {
-  if (!presented) throw new ApiError(401, "REFRESH_INVALID", "Session expired. Log in again.");
+  if (!presented) throw new ApiError(401, "REFRESH_INVALID", "You've been logged out for security. Please log back in to continue.");
   const row = await db.query.refreshTokens.findFirst({
     where: and(eq(refreshTokens.tokenHash, sha256hex(presented)), isNull(refreshTokens.revokedAt),
       gt(refreshTokens.expiresAt, new Date())),
   });
-  if (!row) throw new ApiError(401, "REFRESH_INVALID", "Session expired. Log in again.");
+  if (!row) throw new ApiError(401, "REFRESH_INVALID", "You've been logged out for security. Please log back in to continue.");
   const user = await db.query.users.findFirst({ where: eq(users.id, row.userId) });
-  if (!user || user.status !== "active") throw new ApiError(401, "REFRESH_INVALID", "Session expired. Log in again.");
+  if (!user || user.status !== "active") throw new ApiError(401, "REFRESH_INVALID", "You've been logged out for security. Please log back in to continue.");
   await db.update(refreshTokens).set({ revokedAt: new Date() }).where(eq(refreshTokens.id, row.id)); // rotation
   return issueSession(user.id, user.role, user.fullName);
 }
@@ -200,7 +200,7 @@ export async function resetPassword(token: string, newPassword: string) {
     where: and(eq(emailTokens.tokenHash, sha256hex(token)), eq(emailTokens.purpose, "reset"),
       isNull(emailTokens.usedAt), gt(emailTokens.expiresAt, new Date())),
   });
-  if (!row) throw new ApiError(400, "TOKEN_INVALID", "This reset link is invalid or has expired.");
+  if (!row) throw new ApiError(400, "TOKEN_INVALID", "This reset link has expired or isn't valid. Please request a new one.");
   const passwordHash = await hash(newPassword, ARGON);
   await db.update(emailTokens).set({ usedAt: new Date() }).where(eq(emailTokens.id, row.id));
   await db.update(users).set({ passwordHash, updatedAt: new Date() }).where(eq(users.id, row.userId));

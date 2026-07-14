@@ -10,7 +10,6 @@ const NAV = [
   { to: "/department", label: "Inbox", end: true, key: "inbox" },
   { to: "/department/attention", label: "Needs attention", key: "attention" },
   { to: "/department/students", label: "Students" },
-  { to: "/department/settings", label: "Settings" },
 ];
 
 export function DepartmentShell() {

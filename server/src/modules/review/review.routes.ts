@@ -1,5 +1,6 @@
 /** D1-D2 — supervisor review surface. Scope: assigned students only (FR-SUP-01, BR-12). */
 import { Router } from "express";
+import { rateLimit } from "express-rate-limit";
 import { z } from "zod";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { db } from "../../db/client.js";
@@ -12,6 +13,8 @@ import { approveAndSeal, rejectEntry } from "./seal.service.js";
 export const reviewRouter = Router();
 reviewRouter.use(requireAuth, requireRole("industry_supervisor", "admin"));
 
+const reviewLimiter = rateLimit({ windowMs: 15 * 60_000, limit: 500, standardHeaders: true, legacyHeaders: false });
+
 /** internship ids where caller is the (industry) supervisor — admins only count when explicitly assigned (BR-12) */
 async function assignedInternshipIds(supervisorId: string) {
   const rows = await db.query.assignments.findMany({
@@ -23,9 +26,9 @@ async function assignedInternshipIds(supervisorId: string) {
 
 async function assertEntryInScope(entryId: string, supervisorId: string) {
   const entry = await db.query.logEntries.findFirst({ where: eq(logEntries.id, entryId) });
-  if (!entry) throw new ApiError(404, "NOT_FOUND", "Entry not found");
+  if (!entry) throw new ApiError(404, "NOT_FOUND", "We couldn't find this entry. It may have been deleted.");
   const ids = await assignedInternshipIds(supervisorId);
-  if (!ids.includes(entry.internshipId)) throw new ApiError(403, "FORBIDDEN", "Entry belongs to a student not assigned to you.");
+  if (!ids.includes(entry.internshipId)) throw new ApiError(403, "FORBIDDEN", "This entry belongs to a student outside of your assigned group.");
   return entry;
 }
 
@@ -62,7 +65,7 @@ reviewRouter.get("/entries/:id", async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-reviewRouter.post("/entries/:id/approve", async (req, res, next) => {
+reviewRouter.post("/entries/:id/approve", reviewLimiter, async (req, res, next) => {
   try {
     await assertEntryInScope(req.params.id, req.user!.sub);
     const result = await approveAndSeal(req.params.id, req.user!.sub);
@@ -70,7 +73,7 @@ reviewRouter.post("/entries/:id/approve", async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-reviewRouter.post("/entries/:id/reject", validate(z.object({ reason: z.string().min(5).max(1000) })), async (req, res, next) => {
+reviewRouter.post("/entries/:id/reject", reviewLimiter, validate(z.object({ reason: z.string().min(5).max(1000) })), async (req, res, next) => {
   try {
     await assertEntryInScope(req.params.id, req.user!.sub);
     res.json({ data: await rejectEntry(req.params.id, req.user!.sub, req.body.reason) }); // BR-06

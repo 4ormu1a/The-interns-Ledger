@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button, Field, StatusBadge, CopyButton, SkeletonCard } from "../../components/ui";
 import { getSettings, patchSettings, stepUpAuth, getKeys, registerKey, retireKey, revokeKey, generateKey } from "../../features/admin/api";
 import { useAuth } from "../../features/auth/AuthContext";
+import { ApiClientError } from "../../lib/api";
 
 export function SettingsPage() {
   const { user } = useAuth();
@@ -23,7 +24,7 @@ export function SettingsPage() {
       refetchSettings();
       refetchKeys();
     },
-    onError: (e: any) => setStepUpErr(e.message || "Authentication failed"),
+    onError: (e: any) => setStepUpErr(e instanceof ApiClientError ? e.message : "Authentication failed"),
   });
 
   const [form, setForm] = useState<any>({});
@@ -33,7 +34,7 @@ export function SettingsPage() {
   const settingsMut = useMutation({
     mutationFn: patchSettings,
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin-settings"] }); setIsEditing(false); setSettingsErr(""); },
-    onError: (e: any) => setSettingsErr(e.message),
+    onError: (e: any) => setSettingsErr(e instanceof ApiClientError ? e.message : "We couldn't connect right now. Check your internet connection and try again."),
   });
 
   const [keyErr, setKeyErr] = useState("");
@@ -41,7 +42,7 @@ export function SettingsPage() {
   const generateMut = useMutation({
     mutationFn: generateKey,
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin-keys"] }); setKeyErr(""); },
-    onError: (e: any) => setKeyErr(e.message),
+    onError: (e: any) => setKeyErr(e instanceof ApiClientError ? e.message : "We couldn't connect right now. Check your internet connection and try again."),
   });
 
   const retireMut = useMutation({ mutationFn: retireKey, onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-keys"] }) });
@@ -148,7 +149,7 @@ export function SettingsPage() {
                     <Button size="sm" variant={3} onClick={() => { if (confirm("Retire this key?")) retireMut.mutate(k.kid); }}>
                       Retire
                     </Button>
-                    <Button size="sm" variant="danger" onClick={() => { if (confirm("REVOKE this key? All seals signed with it will verify as not_authentic.")) revokeMut.mutate(k.kid); }}>
+                    <Button size="sm" variant="danger" onClick={() => { if (confirm("REVOKE this key? Records sealed with this key will show as 'Verification Withdrawn' rather than appearing tampered or compromised.")) revokeMut.mutate(k.kid); }}>
                       Revoke
                     </Button>
                   </div>

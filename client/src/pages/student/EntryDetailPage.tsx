@@ -60,7 +60,7 @@ export function EntryDetailPage() {
             {e.attachments.map((a) => (
               <p key={a.id} style={{ fontSize: ".9rem", padding: "4px 0" }}>
                 <a href={a.blobUrl} target="_blank" rel="noreferrer" style={{ color: "var(--green-700)", fontWeight: 600 }}>{a.filename}</a>
-                <span className="hint"> · {Math.round(a.size / 1024)} KB · sha256 {a.sha256.slice(0, 12)}…</span>
+                <span className="hint"> · {Math.round(a.size / 1024)} KB · Fingerprint (SHA-256): {a.sha256.slice(0, 12)}…</span>
               </p>
             ))}
           </div>
@@ -74,14 +74,14 @@ export function EntryDetailPage() {
               </div>
               <div style={{ display: "grid", gap: 6, fontSize: ".86rem", flex: 1, minWidth: 220 }}>
                 <span><span className="hint">Sealed</span> {new Date(e.seal.sealedAt).toLocaleString()} · key <b>{e.seal.kid}</b></span>
-                <span className="hint">SHA-256</span>
+                <span className="hint">Digital fingerprint (SHA-256)</span>
                 <code style={{ wordBreak: "break-all", fontSize: ".78rem" }}>{e.seal.digest}</code>
                 <a className="btn btn-3 btn-sm" style={{ width: "fit-content" }} href={`/verify/${e.verificationToken}`} target="_blank" rel="noreferrer">
                   Open public verification page
                 </a>
               </div>
             </div>
-            <p className="hint" style={{ marginTop: 10 }}>Anyone scanning this QR sees a minimal-disclosure authenticity result — no login required.</p>
+            <p className="hint" style={{ marginTop: 10 }}>Anyone scanning this QR code can instantly verify this entry hasn't been tampered with — no login required.</p>
           </div>
         )}
         {e.comments.length > 0 && (
@@ -96,7 +96,7 @@ export function EntryDetailPage() {
           {e.state === "draft" && <Button size="sm" variant="danger" onClick={() => { if (confirm("Delete this draft?")) remove.mutate(); }}>Delete draft</Button>}
           {e.state === "approved" && (
             <Button size="sm" variant={3} disabled={correct.isPending}
-              onClick={() => { if (confirm("Issue a correction? The original stays sealed and verifiable; your fix becomes a new version that goes through review again.")) correct.mutate(); }}>
+              onClick={() => { if (confirm("Do you need to fix something? The original approved entry stays sealed and verifiable, but you can create a new version of it that will go through review again.")) correct.mutate(); }}>
               {correct.isPending ? "Creating…" : "Issue correction"}
             </Button>
           )}

@@ -4,6 +4,7 @@ import { Card, StatusPill } from "../../components/ui";
 import { internshipsApi } from "../../features/internships/api";
 import { entriesApi } from "../../features/entries/api";
 import { useAuth } from "../../features/auth/AuthContext";
+import { ApiClientError } from "../../lib/api";
 
 export function DashboardPage() {
   const { user } = useAuth();
@@ -66,7 +67,7 @@ export function DashboardPage() {
                     await internshipsApi.submitForReview(internship.id);
                     alert("Successfully submitted to department for review!");
                   } catch (e: any) {
-                    alert(e.message || "Failed to submit");
+                    alert(e instanceof ApiClientError ? e.message : "We couldn't connect right now. Check your internet connection and try again.");
                   }
                 }}
               >

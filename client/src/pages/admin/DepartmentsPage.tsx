@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button, Field, StatusBadge, CustomSelect, SkeletonCard, SkeletonText } from "../../components/ui";
 import type { SelectOption } from "../../components/ui";
 import { getDepartments, createDepartment, updateDepartment, assignDepartmentSupervisor, removeDepartmentSupervisor, getUsers } from "../../features/admin/api";
+import { ApiClientError } from "../../lib/api";
 
 const ROLE_LABELS: Record<string, string> = {
   department_supervisor: "Department Supervisor", faculty_supervisor: "Faculty Supervisor", admin: "Administrator",
@@ -25,19 +26,19 @@ export function DepartmentsPage() {
   const createMut = useMutation({
     mutationFn: createDepartment,
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin-departments"] }); setShowAdd(false); setForm({ name: "" }); setErr(""); },
-    onError: (e: any) => setErr(e.message),
+    onError: (e: any) => setErr(e instanceof ApiClientError ? e.message : "We couldn't connect right now. Check your internet connection and try again."),
   });
 
   const updateMut = useMutation({
     mutationFn: ({ id, d }: { id: string; d: any }) => updateDepartment(id, d),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin-departments"] }); setEditId(null); setErr(""); },
-    onError: (e: any) => setErr(e.message),
+    onError: (e: any) => setErr(e instanceof ApiClientError ? e.message : "We couldn't connect right now. Check your internet connection and try again."),
   });
 
   const assignMut = useMutation({
     mutationFn: ({ deptId, supervisorId }: { deptId: string; supervisorId: string }) => assignDepartmentSupervisor(deptId, supervisorId),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin-departments"] }); setAssignDeptId(null); setSupervisorIdToAssign(""); },
-    onError: (e: any) => setErr(e.message),
+    onError: (e: any) => setErr(e instanceof ApiClientError ? e.message : "We couldn't connect right now. Check your internet connection and try again."),
   });
 
   const removeMut = useMutation({
@@ -92,7 +93,7 @@ export function DepartmentsPage() {
           const uniqueSupervisorIds = [...new Set<string>(d.supervisorIds ?? [])];
 
           return (
-            <div key={d.id} className="glass-card no-hover">
+            <div key={d.id} className="glass-card no-hover" style={{ position: "relative", zIndex: assignDeptId === d.id ? 10 : 1 }}>
               {editId === d.id ? (
                 <div style={{ display: "grid", gap: 12 }}>
                   <Field label="Department name" value={form.name} onChange={(e) => setForm({ name: e.target.value })} />

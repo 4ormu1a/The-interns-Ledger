@@ -12,7 +12,7 @@ export function SupervisorDashboard() {
   return (
     <>
       <h1 style={{ marginBottom: 4 }}>Welcome back, {user?.name.split(" ")[0]}</h1>
-      <p style={{ color: "var(--muted)", marginBottom: 22 }}>Entries you approve are sealed instantly and become tamper-evident.</p>
+      <p style={{ color: "var(--muted)", marginBottom: 22 }}>Entries you approve are sealed instantly so they cannot be tampered with.</p>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))", gap: 24 }}>
         <Card className="premium-card" style={{ padding: 22 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
@@ -74,7 +74,7 @@ export function SupervisorDashboard() {
       <div style={{ marginTop: 24, padding: "12px 16px", background: "rgba(13, 83, 14, 0.04)", borderRadius: 8, display: "flex", alignItems: "center", gap: 12, width: "fit-content", border: "1px solid rgba(13, 83, 14, 0.1)" }}>
         <span style={{ height: 10, width: 10, borderRadius: "50%", background: "var(--green-bright)", boxShadow: "0 0 8px var(--green-bright)" }}></span>
         <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--green-900)" }}>Security Trust: UMAT-K1 Active</span>
-        <span style={{ fontSize: "0.8rem", color: "var(--muted)", marginLeft: 8 }}>Cryptographic seals are being correctly signed and verified.</span>
+        <span style={{ fontSize: "0.8rem", color: "var(--muted)", marginLeft: 8 }}>Digital fingerprints are being actively signed (Ed25519) and verified.</span>
       </div>
     </>
   );

@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Card } from "../../components/ui";
 import { notificationsApi } from "../../features/entries/api";
+import { useAuth } from "../../features/auth/AuthContext";
 
 const LABEL: Record<string, string> = {
   "entry.approved": "Entry approved & sealed",
@@ -29,6 +30,7 @@ function NotificationIcon({ type }: { type: string }) {
 }
 
 export function NotificationsPage() {
+  const { user } = useAuth();
   const qc = useQueryClient();
   const { data } = useQuery({ queryKey: ["notifications"], queryFn: notificationsApi.list });
 
@@ -45,7 +47,12 @@ export function NotificationsPage() {
           data.map((n) => {
             const isRead = !!n.readAt;
             const payload = n.payload as Record<string, string>;
-            const href = payload?.entryId ? `/student/logbook/${payload.entryId}` : undefined;
+            let href;
+            if (payload?.entryId) {
+              if (user?.role === "student") href = `/student/logbook/${payload.entryId}`;
+              else if (user?.role === "industry_supervisor") href = `/industry/review/${payload.entryId}`;
+              else if (user?.role === "department_supervisor" || user?.role === "faculty_supervisor") href = `/department/submissions/${payload.entryId}`;
+            }
 
             const content = (
               <>

@@ -22,6 +22,12 @@ export interface DepartmentStudent {
   completed_hours: number;
 }
 
+export interface NeedsAttentionStudent extends DepartmentStudent {
+  expectedHours: number;
+  weeksRemaining: number;
+  isBehind: boolean;
+}
+
 export const departmentApi = {
   submissions: async () => {
     return api<InternshipSubmission[]>("/department/submissions");
@@ -41,6 +47,10 @@ export const departmentApi = {
 
   students: async () => {
     return api<DepartmentStudent[]>("/department/students");
+  },
+
+  needsAttention: async () => {
+    return api<NeedsAttentionStudent[]>("/department/needs-attention");
   },
 
   stats: async () => {

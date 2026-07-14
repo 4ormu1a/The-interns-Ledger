@@ -16,7 +16,7 @@ const createSchema = z.object({
   endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   requiredHours: z.number().int().min(1).max(5000),
   requiredWeeks: z.number().int().min(1).max(104),
-}).refine((d) => d.endDate > d.startDate, { message: "End date must be after start date" });
+}).refine((d) => d.endDate > d.startDate, { message: "Your end date needs to be after your start date." });
 
 export const internshipsRouter = Router();
 internshipsRouter.use(requireAuth);
@@ -123,7 +123,7 @@ internshipsRouter.post("/:id/submit-for-review", loadOwnedInternship, async (req
     
     const totalHours = approved.reduce((s, e) => s + Number(e.hours), 0);
     if (totalHours < internship.requiredHours) {
-      throw new ApiError(400, "VALIDATION_FAILED", "You must complete 100% of required hours before submitting.");
+      throw new ApiError(400, "VALIDATION_FAILED", "You still need to log more hours before you can submit your final report. Keep logging — you're almost there.");
     }
     
     // Check if there are any pending/draft entries left? We could enforce this.
@@ -136,7 +136,7 @@ internshipsRouter.post("/:id/submit-for-review", loadOwnedInternship, async (req
     });
 
     if (existing && existing.status !== "changes_requested") {
-      throw new ApiError(400, "ALREADY_EXISTS", "Internship already submitted for review.");
+      throw new ApiError(400, "ALREADY_EXISTS", "You've already submitted this internship for review.");
     }
 
     if (existing && existing.status === "changes_requested") {

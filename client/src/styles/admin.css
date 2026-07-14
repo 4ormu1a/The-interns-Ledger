@@ -567,7 +567,7 @@
   top: calc(100% + 4px);
   left: 0;
   right: 0;
-  background: var(--glass-bg-heavy);
+  background: #ffffff;
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
   border: 1px solid var(--line);
@@ -800,6 +800,7 @@
   }
   .admin-sidebar.mobile-open {
     transform: translateX(0);
+    overflow-y: auto;
   }
   .sidebar-overlay {
     display: block;

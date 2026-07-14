@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, Button, Field } from "../../components/ui";
 import { departmentApi } from "../../features/department/api";
+import { ApiClientError } from "../../lib/api";
 
 export function SubmissionReviewPage() {
   const { id } = useParams();
@@ -10,6 +11,7 @@ export function SubmissionReviewPage() {
   const qc = useQueryClient();
   const [comment, setComment] = useState("");
   const [showRejectBox, setShowRejectBox] = useState(false);
+  const [error, setError] = useState("");
 
   const { data, isLoading } = useQuery({
     queryKey: ["department", "submission", id],
@@ -21,7 +23,8 @@ export function SubmissionReviewPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["department", "submissions"] });
       navigate("/department");
-    }
+    },
+    onError: (e: any) => setError(e instanceof ApiClientError ? e.message : "We couldn't connect right now. Check your internet connection and try again.")
   });
 
   const requestChanges = useMutation({
@@ -29,7 +32,8 @@ export function SubmissionReviewPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["department", "submissions"] });
       navigate("/department");
-    }
+    },
+    onError: (e: any) => setError(e instanceof ApiClientError ? e.message : "We couldn't connect right now. Check your internet connection and try again.")
   });
 
   if (isLoading || !data) return null;
@@ -43,6 +47,8 @@ export function SubmissionReviewPage() {
 
       <h1 style={{ marginBottom: 8 }}>Submission Review</h1>
       <p style={{ color: "var(--muted)", marginBottom: 32 }}>Review the completed internship logbook for {submission.student_name}.</p>
+      
+      {error && <p className="formerr">{error}</p>}
 
       <Card className="premium-card" style={{ padding: 32, marginBottom: 32 }}>
         <h2 style={{ marginTop: 0, marginBottom: 16 }}>{submission.student_name}</h2>

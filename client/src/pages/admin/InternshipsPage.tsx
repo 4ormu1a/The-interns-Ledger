@@ -5,6 +5,7 @@ import { Button, Field, StatusBadge, CustomSelect, SkeletonTable, SkeletonText }
 import type { SelectOption } from "../../components/ui";
 import { getInternships, importInternships, patchInternship, createInternship,
          getAssignments, createAssignment, deleteAssignment, reassign, getUsers } from "../../features/admin/api";
+import { ApiClientError } from "../../lib/api";
 
 const KIND_OPTIONS: SelectOption[] = [
   { value: "industry", label: "Industry" },
@@ -49,19 +50,19 @@ export function InternshipsPage() {
   const patchMut = useMutation({
     mutationFn: ({ id, d }: { id: string; d: any }) => patchInternship(id, d),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin-internships"] }); setEditId(null); setErr(""); },
-    onError: (e: any) => setErr(e.message),
+    onError: (e: any) => setErr(e instanceof ApiClientError ? e.message : "We couldn't connect right now. Check your internet connection and try again."),
   });
 
   const singleCreateMut = useMutation({
     mutationFn: createInternship,
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin-internships"] }); setShowAddSingle(false); setSingleForm({ studentEmail: "", company: "", roleTitle: "", startDate: "", endDate: "", requiredHours: 600 }); setErr(""); },
-    onError: (e: any) => setErr(e.message),
+    onError: (e: any) => setErr(e instanceof ApiClientError ? e.message : "We couldn't connect right now. Check your internet connection and try again."),
   });
 
   const bulkDryMut = useMutation({
     mutationFn: importInternships,
     onSuccess: (res) => setBulkPreview(res),
-    onError: (e: any) => setErr(e.message),
+    onError: (e: any) => setErr(e instanceof ApiClientError ? e.message : "We couldn't connect right now. Check your internet connection and try again."),
   });
 
   const bulkImportMut = useMutation({
@@ -71,13 +72,13 @@ export function InternshipsPage() {
       setBulkPreview(null); setShowBulk(false);
       alert(`Imported ${res.importedCount} internships successfully.`);
     },
-    onError: (e: any) => setErr(e.message),
+    onError: (e: any) => setErr(e instanceof ApiClientError ? e.message : "We couldn't connect right now. Check your internet connection and try again."),
   });
 
   const createAssignMut = useMutation({
     mutationFn: createAssignment,
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin-assignments"] }); setAddForm({ internshipId: "", supervisorId: "", kind: "industry", isPrimaryApprover: false }); setErr(""); },
-    onError: (e: any) => setErr(e.message),
+    onError: (e: any) => setErr(e instanceof ApiClientError ? e.message : "We couldn't connect right now. Check your internet connection and try again."),
   });
 
   const deleteAssignMut = useMutation({
@@ -88,7 +89,7 @@ export function InternshipsPage() {
   const reassignMut = useMutation({
     mutationFn: reassign,
     onSuccess: (r) => { qc.invalidateQueries({ queryKey: ["admin-assignments"] }); setReassignResult(r); },
-    onError: (e: any) => setErr(e.message),
+    onError: (e: any) => setErr(e instanceof ApiClientError ? e.message : "We couldn't connect right now. Check your internet connection and try again."),
   });
 
   /* ── CSV handler ── */
@@ -104,10 +105,10 @@ export function InternshipsPage() {
           studentEmail: row["Student Email"], company: row["Company"], roleTitle: row["Role"],
           startDate: row["Start Date"], endDate: row["End Date"], requiredHours: parseInt(row["Required Hours"], 10),
         })).filter(r => r.studentEmail && r.company && r.startDate && r.requiredHours);
-        if (formatted.length === 0) { setErr("No valid rows found. Ensure headers: 'Student Email', 'Company', 'Role', 'Start Date', 'End Date', 'Required Hours'."); return; }
+        if (formatted.length === 0) { setErr("We couldn't read your file. Please check that it has these exact column names: 'Student Email', 'Company', 'Role', 'Start Date', 'End Date', 'Required Hours'."); return; }
         bulkDryMut.mutate({ internships: formatted, dryRun: true });
       },
-      error: (error) => setErr("Failed to parse CSV: " + error.message),
+      error: (error) => setErr("We couldn't process your file: " + error.message),
     });
   };
 
@@ -347,7 +348,7 @@ export function InternshipsPage() {
         <div className="glass-card no-hover">
           <h2 style={{ marginTop: 0, marginBottom: 8 }}>Reassign pending entries</h2>
           <p style={{ color: "var(--muted)", fontSize: "0.88rem", marginBottom: 20 }}>
-            When a supervisor leaves, transfer their primary-approver role and requeue all submitted entries to a new supervisor on the same internship.
+            When a supervisor leaves, transfer their role and move all their pending reviews to a new supervisor on the same internship.
           </p>
           <div style={{ display: "grid", gap: 16, maxWidth: 520 }}>
             <div className="filter-group">

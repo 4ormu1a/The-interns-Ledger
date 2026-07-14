@@ -25,7 +25,7 @@ const entryOf = (req: unknown) => (req as { entry: EntryRow }).entry;
 
 function assertMutable(entry: EntryRow) {
   if (entry.state !== "draft" && entry.state !== "rejected") {
-    throw new ApiError(409, "NOT_EDITABLE", "Attachments can only change while an entry is draft or rejected.");
+    throw new ApiError(409, "NOT_EDITABLE", "You can only add or remove files while an entry is still a draft.");
   }
 }
 
@@ -34,11 +34,14 @@ attachmentsRouter.use(requireAuth, requireRole("student"), json({ limit: "6mb" }
 
 attachmentsRouter.post("/", loadOwnedEntry, validate(uploadSchema), async (req, res, next) => {
   try {
-    if (!env.BLOB_READ_WRITE_TOKEN) throw new ApiError(503, "ATTACHMENTS_UNCONFIGURED", "Attachment storage is not configured in this environment.");
+    if (!env.BLOB_READ_WRITE_TOKEN) {
+      console.error("Attachment storage is not configured in this environment.");
+      throw new ApiError(503, "ATTACHMENTS_UNCONFIGURED", "We couldn't complete this right now. Please try again shortly, or contact your administrator if it continues.");
+    }
     const entry = entryOf(req);
     assertMutable(entry);
     const bytes = Buffer.from(req.body.dataBase64, "base64");
-    if (bytes.length === 0 || bytes.length > MAX_BYTES) throw new ApiError(422, "FILE_TOO_LARGE", "Files must be between 1 byte and 4 MB.");
+    if (bytes.length === 0 || bytes.length > MAX_BYTES) throw new ApiError(422, "FILE_TOO_LARGE", "That file is either empty or too large. Please upload something under 4MB.");
     const sha256 = createHash("sha256").update(bytes).digest("hex"); // covered by the seal (FR-INT-01)
     const blob = await put(`entries/${entry.id}/${crypto.randomUUID()}-${req.body.filename}`, bytes, {
       access: "public", contentType: req.body.mime, token: env.BLOB_READ_WRITE_TOKEN,

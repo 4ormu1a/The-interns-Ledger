@@ -100,7 +100,7 @@ export function EntryEditorPage() {
                 </div>
               ))}
               <input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={onAttach} disabled={busy} style={{ marginTop: 8 }} />
-              <p className="hint">JPEG/PNG/WebP/PDF, max 4 MB. Each file's SHA-256 is recorded and covered by the seal.</p>
+              <p className="hint">JPEG/PNG/WebP/PDF, max 4 MB. Each file gets a unique digital fingerprint (SHA-256) that's covered by the seal.</p>
             </div>
           )}
           {!id && <p className="hint">Save the draft first to add photo evidence.</p>}

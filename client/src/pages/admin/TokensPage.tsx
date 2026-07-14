@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button, StatusBadge, CopyButton, CustomSelect, SkeletonTable } from "../../components/ui";
 import type { SelectOption } from "../../components/ui";
 import { getTokens, revokeToken } from "../../features/admin/api";
+import { ApiClientError } from "../../lib/api";
 
 const SCOPE_OPTS: SelectOption[] = [
   { value: "", label: "All scopes" },
@@ -35,7 +36,7 @@ export function TokensPage() {
   const revokeMut = useMutation({
     mutationFn: ({ id, reason }: { id: string; reason: string }) => revokeToken(id, reason),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin-tokens"] }); setRevokeTarget(null); setReason(""); setErr(""); },
-    onError: (e: any) => setErr(e.message),
+    onError: (e: any) => setErr(e instanceof ApiClientError ? e.message : "We couldn't connect right now. Check your internet connection and try again."),
   });
 
   return (

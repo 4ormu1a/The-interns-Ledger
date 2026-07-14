@@ -4,6 +4,7 @@ import Papa from "papaparse";
 import { Button, Field, StatusBadge, CustomSelect, SkeletonTable, SkeletonText } from "../../components/ui";
 import type { SelectOption } from "../../components/ui";
 import { getUsers, provisionUser, patchUser, importUsers } from "../../features/admin/api";
+import { ApiClientError } from "../../lib/api";
 
 const ROLES = ["industry_supervisor", "faculty_supervisor", "admin"];
 const ROLE_LABELS: Record<string, string> = {
@@ -41,7 +42,7 @@ export function UsersPage() {
   const provisionMut = useMutation({
     mutationFn: provisionUser,
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin-users"] }); setShowProvision(false); setForm({ fullName: "", email: "", role: "industry_supervisor" }); setErr(""); },
-    onError: (e: any) => setErr(e.message),
+    onError: (e: any) => setErr(e instanceof ApiClientError ? e.message : "We couldn't connect right now. Check your internet connection and try again."),
   });
 
   const patchMut = useMutation({
@@ -52,7 +53,7 @@ export function UsersPage() {
   const bulkDryMut = useMutation({
     mutationFn: importUsers,
     onSuccess: (res) => setBulkPreview(res),
-    onError: (e: any) => setErr(e.message),
+    onError: (e: any) => setErr(e instanceof ApiClientError ? e.message : "We couldn't connect right now. Check your internet connection and try again."),
   });
 
   const bulkImportMut = useMutation({
@@ -63,7 +64,7 @@ export function UsersPage() {
       setShowBulk(false);
       alert(`Imported ${res.importedCount} users successfully.`);
     },
-    onError: (e: any) => setErr(e.message),
+    onError: (e: any) => setErr(e instanceof ApiClientError ? e.message : "We couldn't connect right now. Check your internet connection and try again."),
   });
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -83,13 +84,13 @@ export function UsersPage() {
         })).filter(r => r.fullName && r.email && r.departmentName);
         
         if (formatted.length === 0) {
-          setErr("No valid rows found. Please ensure headers are 'Full Name', 'Email', and 'Department'.");
+          setErr("We couldn't read your file. Please check that it has these exact column names: 'Full Name', 'Email', and 'Department'.");
           return;
         }
         
         bulkDryMut.mutate({ users: formatted, dryRun: true });
       },
-      error: (error) => setErr("Failed to parse CSV: " + error.message)
+      error: (error) => setErr("We couldn't process your file: " + error.message)
     });
   };
 
@@ -123,7 +124,7 @@ export function UsersPage() {
               </Button>
               <Button variant={3} onClick={() => { setShowProvision(false); setErr(""); }}>Cancel</Button>
             </div>
-            <p style={{ color: "var(--muted)", fontSize: "0.82rem", margin: 0 }}>A password-set link is emailed to the new user (7-day expiry).</p>
+            <p style={{ color: "var(--muted)", fontSize: "0.82rem", margin: 0 }}>We will email the new user a link to set their password (expires in 7 days).</p>
           </div>
         </div>
       )}

@@ -12,14 +12,18 @@ import { appendAudit } from "../audit/audit.service.js";
 export async function approveAndSeal(entryId: string, approverId: string) {
   if (!signingAvailable()) {
     // UC-04 exception flow: signing unavailable → refuse approval, entry stays Submitted
-    throw new ApiError(503, "SIGNING_UNAVAILABLE", "Signing service is not configured; approval refused.");
+    console.error("SIGNING_UNAVAILABLE: Signing service is not configured; approval refused.");
+    throw new ApiError(503, "SIGNING_UNAVAILABLE", "We couldn't complete this right now. Please try again shortly, or contact your administrator if it continues.");
   }
   const entry = await db.query.logEntries.findFirst({ where: eq(logEntries.id, entryId) });
-  if (!entry) throw new ApiError(404, "NOT_FOUND", "Entry not found");
+  if (!entry) throw new ApiError(404, "NOT_FOUND", "We couldn't find this entry. It may have been deleted.");
   if (entry.state !== "submitted") throw new ApiError(409, "NOT_SUBMITTED", "Only submitted entries can be approved.");
 
   const activeKey = await db.query.signingKeys.findFirst({ where: and(eq(signingKeys.kid, env.ED25519_KID), eq(signingKeys.status, "active")) });
-  if (!activeKey) throw new ApiError(503, "KEY_NOT_PUBLISHED", `Active signing key ${env.ED25519_KID} is not published in signing_keys.`);
+  if (!activeKey) {
+    console.error(`KEY_NOT_PUBLISHED: Active signing key ${env.ED25519_KID} is not published in signing_keys.`);
+    throw new ApiError(503, "KEY_NOT_PUBLISHED", "We couldn't complete this right now. Please try again shortly, or contact your administrator if it continues.");
+  }
 
   const files = await db.query.attachments.findMany({ where: eq(attachments.entryId, entryId), columns: { id: true, sha256: true, filename: true } });
   const approvedAt = new Date();
@@ -46,7 +50,7 @@ export async function approveAndSeal(entryId: string, approverId: string) {
     const [updated] = await tx.update(logEntries)
       .set({ state: "approved", decidedAt: approvedAt, decidedBy: approverId, updatedAt: approvedAt })
       .where(and(eq(logEntries.id, entryId), eq(logEntries.state, "submitted"))).returning();
-    if (!updated) throw new ApiError(409, "RACE", "Entry was decided by someone else.");
+    if (!updated) throw new ApiError(409, "RACE", "This entry was already reviewed by another supervisor.");
     const [seal] = await tx.insert(seals).values({
       entryId, canonicalPayload: payload, digestSha256: digest, signatureEd25519: signature,
       kid: env.ED25519_KID, sealedAt: approvedAt, sealedBy: approverId,
@@ -73,13 +77,13 @@ export async function approveAndSeal(entryId: string, approverId: string) {
 
 export async function rejectEntry(entryId: string, approverId: string, reason: string) {
   const entry = await db.query.logEntries.findFirst({ where: eq(logEntries.id, entryId) });
-  if (!entry) throw new ApiError(404, "NOT_FOUND", "Entry not found");
+  if (!entry) throw new ApiError(404, "NOT_FOUND", "We couldn't find this entry. It may have been deleted.");
   if (entry.state !== "submitted") throw new ApiError(409, "NOT_SUBMITTED", "Only submitted entries can be rejected.");
   const now = new Date();
   const [updated] = await db.update(logEntries)
     .set({ state: "rejected", decidedAt: now, decidedBy: approverId, rejectReason: reason, updatedAt: now })
     .where(and(eq(logEntries.id, entryId), eq(logEntries.state, "submitted"))).returning();
-  if (!updated) throw new ApiError(409, "RACE", "Entry was decided by someone else.");
+  if (!updated) throw new ApiError(409, "RACE", "This entry was already reviewed by another supervisor.");
   await db.insert(notifications).values({
     recipientId: entry.studentId, type: "entry.rejected", payload: { entryId, workDate: entry.workDate, reason },
   });

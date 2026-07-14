@@ -24,7 +24,6 @@ import { SubmissionsInboxPage } from "./pages/department/SubmissionsInboxPage";
 import { SubmissionReviewPage } from "./pages/department/SubmissionReviewPage";
 import { NeedsAttentionPage } from "./pages/department/NeedsAttentionPage";
 import { DepartmentStudentsPage } from "./pages/department/DepartmentStudentsPage";
-import { DepartmentSettingsPage } from "./pages/department/DepartmentSettingsPage";
 import { SupervisorShell } from "./components/layout/SupervisorShell";
 import { SupervisorDashboard } from "./pages/industry/SupervisorDashboard";
 import { QueuePage } from "./pages/industry/QueuePage";
@@ -76,6 +75,7 @@ createRoot(document.getElementById("root")!).render(
             </Route>
             <Route path="/industry" element={<SupervisorShell />}>
               <Route index element={<SupervisorDashboard />} />
+              <Route path="notifications" element={<NotificationsPage />} />
               <Route path="queue" element={<QueuePage />} />
               <Route path="review/:id" element={<EntryReviewPage />} />
               <Route path="students" element={<StudentsPage />} />
@@ -83,10 +83,9 @@ createRoot(document.getElementById("root")!).render(
             </Route>
             <Route path="/department" element={<DepartmentShell />}>
               <Route index element={<SubmissionsInboxPage />} />
+              <Route path="notifications" element={<NotificationsPage />} />
               <Route path="submissions/:id" element={<SubmissionReviewPage />} />
-              <Route path="attention" element={<NeedsAttentionPage />} />
-              <Route path="students" element={<DepartmentStudentsPage />} />
-              <Route path="settings" element={<DepartmentSettingsPage />} />
+              <Route path="needs-attention" element={<NeedsAttentionPage />} />
             </Route>
             <Route path="/admin" element={<AdminShell />}>
               <Route index element={<AdminDashboard />} />

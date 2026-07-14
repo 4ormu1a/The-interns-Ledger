@@ -82,12 +82,12 @@ export function VerifyPage() {
                 </div>
               )}
               <div style={{ borderTop: "1px solid var(--line)", paddingTop: 12, display: "grid", gap: 8, fontSize: ".84rem" }}>
-                <div><span className="hint">SHA-256 digest</span><br /><code style={{ wordBreak: "break-all" }}>{result.digest}</code></div>
-                <div><span className="hint">Signature (Ed25519, key {result.kid})</span><br /><code style={{ wordBreak: "break-all" }}>{result.signature}</code></div>
+                <div><span className="hint">Digital fingerprint (SHA-256)</span><br /><code style={{ wordBreak: "break-all" }}>{result.digest}</code></div>
+                <div><span className="hint">Digital Signature (Ed25519, key {result.kid})</span><br /><code style={{ wordBreak: "break-all" }}>{result.signature}</code></div>
                 <details>
                   <summary style={{ cursor: "pointer", color: "var(--green-700)", fontWeight: 600 }}>Verify independently</summary>
                   <p className="hint" style={{ margin: "8px 0" }}>
-                    Recompute the SHA-256 of the canonical payload and check the Ed25519 signature against the institution's published public key — no trust in this page required:
+                    Recompute the digital fingerprint (SHA-256) of the original data and check the Ed25519 signature against the institution's published security key:
                   </p>
                   <pre style={{ fontSize: ".75rem", overflow: "auto", background: "#f3f1de", padding: 10, borderRadius: 8 }}>{result.publicKey}</pre>
                 </details>
@@ -98,7 +98,7 @@ export function VerifyPage() {
             <div style={{ marginTop: 16 }}>
               <p>{result.message}</p>
               {result.status === "erased" && result.digest && (
-                <p className="hint" style={{ marginTop: 8 }}>Seal retained: digest {result.digest.slice(0, 16)}… (key {result.kid}), sealed {new Date(result.sealedAt!).toLocaleDateString()}.</p>
+                <p className="hint" style={{ marginTop: 8 }}>Seal retained: fingerprint {result.digest.slice(0, 16)}… (key {result.kid}), sealed {new Date(result.sealedAt!).toLocaleDateString()}.</p>
               )}
               {result.status === "cannot_verify" && (
                 <ul style={{ margin: "10px 0 0 18px", color: "var(--muted)", fontSize: ".92rem" }}>

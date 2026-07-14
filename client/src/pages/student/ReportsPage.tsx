@@ -65,9 +65,9 @@ export function ReportsPage() {
             <h3 style={{ margin: 0, fontSize: "1.2rem", color: "white" }}>Sealed Final Report</h3>
           </div>
           <p style={{ color: "rgba(255,255,255,0.8)", fontSize: "0.95rem", marginBottom: 24, minHeight: 45 }}>
-            A permanent, cryptographically-signed snapshot with a unique QR code for independent verification.
+            A permanent, sealed snapshot of your approved logs. It includes a unique digital fingerprint (SHA-256) and QR code so anyone can verify it hasn't been tampered with.
           </p>
-          <Button variant={3} style={{ width: "100%", background: "white", color: "var(--green-900)", borderColor: "white" }} onClick={() => { setError(""); if (confirm("Ready to generate your final Sealed Report?\n\nThis creates a permanent snapshot of your current logs that cannot be modified, which employers and administrators can verify.")) gen.mutate("sealed"); }} disabled={gen.isPending}>
+          <Button variant={3} style={{ width: "100%", background: "white", color: "var(--green-900)", borderColor: "white" }} onClick={() => { setError(""); if (confirm("Ready to generate your final Sealed Report?\n\nThis creates a permanent snapshot of your current logs that cannot be silently modified. Employers and administrators can verify its authenticity using the QR code.")) gen.mutate("sealed"); }} disabled={gen.isPending}>
             {gen.isPending && gen.variables === "sealed" ? "Sealing Record..." : "Generate Sealed Report"}
           </Button>
         </Card>
@@ -97,7 +97,7 @@ export function ReportsPage() {
                 
                 {r.aggregateSha256 && (
                   <div style={{ background: "var(--cream)", padding: "10px 14px", borderRadius: 8, marginTop: 16, fontSize: "0.8rem", fontFamily: "monospace", color: "var(--muted)" }}>
-                    <div style={{ marginBottom: 4 }}><b>Signature Hash:</b> {r.aggregateSha256.slice(0, 32)}...</div>
+                    <div style={{ marginBottom: 4 }}><b>Digital Fingerprint (SHA-256):</b> {r.aggregateSha256.slice(0, 32)}...</div>
                     <div><b>Key ID:</b> {r.kid}</div>
                   </div>
                 )}

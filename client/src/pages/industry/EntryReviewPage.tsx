@@ -35,12 +35,12 @@ export function EntryReviewPage() {
   const approve = useMutation({
     mutationFn: () => reviewApi.approve(id!),
     onSuccess: (d) => { advanceQueue(d); },
-    onError: (err) => { setConfirming(null); setError(err instanceof ApiClientError ? err.message : "Approval failed."); },
+    onError: (err) => { setConfirming(null); setError(err instanceof ApiClientError ? err.message : "We couldn't connect right now. Check your internet connection and try again."); },
   });
   const reject = useMutation({
     mutationFn: () => reviewApi.reject(id!, reason),
     onSuccess: () => { advanceQueue(); },
-    onError: (err) => { setConfirming(null); setError(err instanceof ApiClientError ? err.message : "Rejection failed."); },
+    onError: (err) => { setConfirming(null); setError(err instanceof ApiClientError ? err.message : "We couldn't connect right now. Check your internet connection and try again."); },
   });
 
   useEffect(() => {
@@ -69,12 +69,12 @@ export function EntryReviewPage() {
         <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, background: "var(--green-bright)", color: "#fff", borderRadius: "50%", fontWeight: "bold" }}>✓</span>
         <h1 style={{ margin: 0 }}>Entry Approved & Sealed Successfully</h1>
       </div>
-      <p style={{ marginBottom: 14 }}>The entry is now approved, immutable and publicly verifiable.</p>
+      <p style={{ marginBottom: 14 }}>The entry is now approved and sealed. It cannot be changed, and anyone can verify its authenticity.</p>
       
       <details style={{ background: "rgba(0,0,0,0.03)", padding: 12, borderRadius: 8, marginTop: 16 }}>
-        <summary style={{ cursor: "pointer", fontWeight: 600, color: "var(--muted)", fontSize: "0.85rem" }}>View Cryptographic Proof</summary>
+        <summary style={{ cursor: "pointer", fontWeight: 600, color: "var(--muted)", fontSize: "0.85rem" }}>View Cryptographic Seal Details</summary>
         <dl style={{ display: "grid", gap: 8, fontSize: ".85rem", marginTop: 12 }}>
-          <div><dt className="hint">SHA-256 digest</dt><dd style={{ fontFamily: "monospace", wordBreak: "break-all", background: "rgba(0,0,0,0.05)", padding: 4, borderRadius: 4 }}>{sealed.digest}</dd></div>
+          <div><dt className="hint">Digital fingerprint (SHA-256)</dt><dd style={{ fontFamily: "monospace", wordBreak: "break-all", background: "rgba(0,0,0,0.05)", padding: 4, borderRadius: 4 }}>{sealed.digest}</dd></div>
           <div><dt className="hint">Signing key</dt><dd style={{ fontFamily: "monospace", background: "rgba(0,0,0,0.05)", padding: 4, borderRadius: 4 }}><b>{sealed.kid}</b> (Ed25519)</dd></div>
           <div><dt className="hint">Verification token</dt><dd style={{ fontFamily: "monospace", background: "rgba(0,0,0,0.05)", padding: 4, borderRadius: 4 }}>{sealed.token}</dd></div>
         </dl>
@@ -136,14 +136,22 @@ export function EntryReviewPage() {
           <div style={{ display: "flex", gap: 8 }}>
             <input value={comment} onChange={(ev) => setComment(ev.target.value)} placeholder="Visible to the student" />
             <Button size="sm" variant={3} type="button" disabled={!comment}
-              onClick={async () => { await reviewApi.comment(id!, comment); setComment(""); qc.invalidateQueries({ queryKey: ["review-entry", id] }); }}>Post</Button>
+              onClick={async () => { 
+                try {
+                  await reviewApi.comment(id!, comment); 
+                  setComment(""); 
+                  qc.invalidateQueries({ queryKey: ["review-entry", id] }); 
+                } catch (err: any) {
+                  setError(err instanceof ApiClientError ? err.message : "We couldn't connect right now. Check your internet connection and try again.");
+                }
+              }}>Post</Button>
           </div>
           {e.comments.map((c) => <p key={c.id} style={{ fontSize: ".9rem", padding: "6px 0", borderBottom: "1px solid var(--line)" }}>{c.body}</p>)}
         </div>
 
         {confirming === "approve" ? (
           <Card style={{ padding: 16, background: "rgba(8,203,0,.06)" }}>
-            <p style={{ marginBottom: 10 }}><b>Approve and seal?</b> This is permanent — the entry becomes immutable and any later change needs a new approved version.</p>
+            <p style={{ marginBottom: 10 }}><b>Approve and seal?</b> This creates a permanent record. If the student needs to fix it later, they will have to submit a new version for review.</p>
             <div style={{ display: "flex", gap: 8 }}>
               <Button size="sm" onClick={() => approve.mutate()} disabled={approve.isPending}>{approve.isPending ? "Sealing…" : "Yes, approve & seal"}</Button>
               <Button size="sm" variant={3} onClick={() => setConfirming(null)}>Cancel</Button>

@@ -153,8 +153,8 @@ adminRouter.post("/users/bulk", async (req, res, next) => {
       const isDuplicate = existingEmails.has(u.email.toLowerCase());
       
       let error = null;
-      if (!deptId) error = "Invalid department code/name";
-      else if (isDuplicate) error = "Duplicate email";
+      if (!deptId) error = "Invalid department name";
+      else if (isDuplicate) error = "Email already exists";
       
       results.push({ ...u, error, valid: !error });
       
@@ -319,7 +319,7 @@ adminRouter.post("/internships/bulk", async (req, res, next) => {
     for (const row of inputList) {
       const studentId = userMap.get(row.studentEmail.toLowerCase());
       let error = null;
-      if (!studentId) error = "Student not found for email";
+      if (!studentId) error = "No student found with this email";
       
       results.push({ ...row, error, valid: !error });
       
@@ -507,7 +507,7 @@ adminRouter.post("/keys", requireStepUp, async (req, res, next) => {
   try {
     const body = registerKeySchema.parse(req.body);
     const existing = await db.query.signingKeys.findFirst({ where: eq(signingKeys.kid, body.kid) });
-    if (existing) throw new ApiError(409, "KID_TAKEN", "A key with this kid already exists.");
+    if (existing) throw new ApiError(409, "KID_TAKEN", "A key with this ID already exists.");
     const [row] = await db.insert(signingKeys).values({ kid: body.kid, publicKey: body.publicKey, status: "active" }).returning();
     await appendAudit({ actorId: req.user!.sub, action: "key.register", targetType: "signing_key",
       targetId: body.kid, metadata: { kid: body.kid } });
@@ -519,7 +519,7 @@ adminRouter.post("/keys/:kid/retire", requireStepUp, async (req, res, next) => {
   try {
     const row = await db.query.signingKeys.findFirst({ where: eq(signingKeys.kid, req.params.kid) });
     if (!row) throw new ApiError(404, "NOT_FOUND", "Key not found");
-    if (row.status !== "active") throw new ApiError(400, "INVALID", `Key is already ${row.status}`);
+    if (row.status !== "active") throw new ApiError(400, "INVALID", `This key is already ${row.status}.`);
     await db.update(signingKeys).set({ status: "retired", retiredAt: new Date() }).where(eq(signingKeys.kid, req.params.kid));
     await appendAudit({ actorId: req.user!.sub, action: "key.retire", targetType: "signing_key",
       targetId: req.params.kid });

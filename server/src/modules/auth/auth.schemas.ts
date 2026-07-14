@@ -8,7 +8,7 @@ export const registerSchema = z.object({
   password,
   programme: z.string().min(2).max(120).optional(),
   studentRef: z.string().min(2).max(60).optional(),
-  consent: z.literal(true, { errorMap: () => [{ message: "Consent is required" }] as never }), // FR-AUTH-03
+  consent: z.literal(true, { errorMap: () => [{ message: "You must consent to data processing to create an account." }] as never }), // FR-AUTH-03
 });
 
 export const loginSchema = z.object({ email: z.string().email().toLowerCase(), password: z.string().min(1) });

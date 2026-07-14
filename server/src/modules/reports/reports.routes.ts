@@ -19,7 +19,7 @@ reportsRouter.use(requireAuth, requireRole("student", "admin"));
 
 async function collect(internshipId: string) {
   const internship = await db.query.internships.findFirst({ where: eq(internships.id, internshipId) });
-  if (!internship) throw new ApiError(404, "NOT_FOUND", "Internship not found");
+  if (!internship) throw new ApiError(404, "NOT_FOUND", "We couldn't find an internship profile for your account.");
   const entries = await db.query.logEntries.findMany({
     where: and(eq(logEntries.internshipId, internshipId), eq(logEntries.state, "approved")),
     orderBy: [asc(logEntries.workDate), asc(logEntries.createdAt)],
@@ -41,10 +41,10 @@ reportsRouter.post("/", validate(z.object({ type: z.enum(["live", "sealed"]) }))
     const internship = u.role === "admin"
       ? null
       : await db.query.internships.findFirst({ where: eq(internships.studentId, u.sub) });
-    if (!internship) throw new ApiError(409, "NO_INTERNSHIP", "No internship found for your account.");
+    if (!internship) throw new ApiError(409, "NO_INTERNSHIP", "We couldn't find an internship profile for your account.");
     const { entries, sealRows, tokens, student, supervisor } = await collect(internship.id);
     if (req.body.type === "sealed" && entries.length === 0) {
-      throw new ApiError(409, "NO_APPROVED_ENTRIES", "A sealed report needs at least one approved entry.");
+      throw new ApiError(409, "NO_APPROVED_ENTRIES", "You need at least one approved entry before you can generate a sealed report.");
     }
     const sealBy = new Map(sealRows.map((s) => [s.entryId, s]));
     const tokenBy = new Map(tokens.filter((t) => !t.revokedAt).map((t) => [t.entryId, t.tokenUlid]));
@@ -56,9 +56,15 @@ reportsRouter.post("/", validate(z.object({ type: z.enum(["live", "sealed"]) }))
 
     let aggregateHash: string | undefined, aggregateSignature: string | undefined, reportToken: string | undefined;
     if (req.body.type === "sealed") {
-      if (!signingAvailable()) throw new ApiError(503, "SIGNING_UNAVAILABLE", "Signing service unavailable.");
+      if (!signingAvailable()) {
+        console.error("Signing service unavailable.");
+        throw new ApiError(503, "SIGNING_UNAVAILABLE", "We couldn't complete this right now. Please try again shortly, or contact your administrator if it continues.");
+      }
       const key = await db.query.signingKeys.findFirst({ where: and(eq(signingKeys.kid, env.ED25519_KID), eq(signingKeys.status, "active")) });
-      if (!key) throw new ApiError(503, "KEY_NOT_PUBLISHED", "Active signing key not published.");
+      if (!key) {
+        console.error("Active signing key not published.");
+        throw new ApiError(503, "KEY_NOT_PUBLISHED", "We couldn't complete this right now. Please try again shortly, or contact your administrator if it continues.");
+      }
       aggregateHash = sha256hex(reportEntries.map((e) => e.digest).join("")); // FR-INT-05 — ordered member seals
       aggregateSignature = signDigest(aggregateHash);
       reportToken = ulid();

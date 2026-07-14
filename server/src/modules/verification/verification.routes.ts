@@ -14,7 +14,7 @@ verificationRouter.use(rateLimit({ windowMs: 60_000, limit: 30, standardHeaders:
 
 const cannotVerify = () => ({
   status: "cannot_verify" as const,
-  message: "This token does not correspond to a verifiable record.",
+  message: "We couldn't find a record for this code. It may be invalid.",
   institution: env.INSTITUTION_NAME,
 });
 
@@ -29,7 +29,7 @@ verificationRouter.get("/:token", async (req, res, next) => {
     // ── report-scope verification (FR-QR-07 / FR-INT-05) ──
     if (vt.scope === "report" && vt.reportId) {
       if (vt.revokedAt) return res.json({ data: { status: "revoked", institution: env.INSTITUTION_NAME,
-        message: "This report's verification was revoked by the institution.", revokedAt: vt.revokedAt, reason: vt.revokeReason ?? undefined } });
+        message: "This report has been revoked by the institution, so we can no longer confirm it is authentic.", revokedAt: vt.revokedAt, reason: vt.revokeReason ?? undefined } });
       const report = await db.query.reports.findFirst({ where: eq(reports.id, vt.reportId) });
       if (!report || report.type !== "sealed" || !report.aggregateSha256) return res.json({ data: cannotVerify() });
       const internshipR = await db.query.internships.findFirst({ where: eq(internships.id, report.internshipId) });
@@ -40,7 +40,7 @@ verificationRouter.get("/:token", async (req, res, next) => {
       const sigOk = keyR ? verifyDigest(report.aggregateSha256, report.aggregateSignature!, keyR.publicKey) : false;
       if (!keyR || keyR.status === "revoked" || recomputed !== report.aggregateSha256 || !sigOk) {
         return res.json({ data: { status: "not_authentic", institution: env.INSTITUTION_NAME,
-          message: "Integrity check failed — this report does not match its cryptographic seal." } });
+          message: "This report failed its security check. Its contents do not match its digital fingerprint, meaning it may have been altered." } });
       }
       return res.json({ data: {
         status: "authentic", scope: "report", institution: env.INSTITUTION_NAME,
@@ -56,7 +56,7 @@ verificationRouter.get("/:token", async (req, res, next) => {
     if (vt.revokedAt) {
       return res.json({ data: {
         status: "revoked", institution: env.INSTITUTION_NAME,
-        message: "This record's verification was revoked by the institution. No authenticity claim is made.",
+        message: "This record has been revoked by the institution, so we can no longer confirm it is authentic.",
         revokedAt: vt.revokedAt, reason: vt.revokeReason ?? undefined,
       } });
     }
@@ -73,7 +73,7 @@ verificationRouter.get("/:token", async (req, res, next) => {
     if (student?.erasedAt) {
       return res.json({ data: {
         status: "erased", institution: env.INSTITUTION_NAME,
-        message: "This record existed and was authentic, but its personal content was erased at the data subject's request.",
+        message: "This record existed and was authentic, but its personal details were erased at the user's request.",
         sealedAt: seal.sealedAt, digest: seal.digestSha256, kid: seal.kid,
       } });
     }
@@ -88,8 +88,8 @@ verificationRouter.get("/:token", async (req, res, next) => {
       return res.json({ data: {
         status: "not_authentic", institution: env.INSTITUTION_NAME,
         message: keyRevoked
-          ? "The key that signed this record has been revoked by the institution."
-          : "Integrity check failed — this record does not match its cryptographic seal.",
+          ? "The security key used to seal this record has been revoked by the institution."
+          : "This record failed its security check. Its contents do not match its digital fingerprint, meaning it may have been altered.",
       } });
     }
 

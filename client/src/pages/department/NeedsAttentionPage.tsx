@@ -3,19 +3,14 @@ import { Card } from "../../components/ui";
 import { departmentApi } from "../../features/department/api";
 
 export function NeedsAttentionPage() {
-  // In a real implementation this would call a specific endpoint, 
-  // but for now we'll just filter the students list as a simplified version
   const { data: students, isLoading } = useQuery({
-    queryKey: ["department", "students"],
-    queryFn: departmentApi.students
+    queryKey: ["department", "needs-attention"],
+    queryFn: departmentApi.needsAttention
   });
 
   if (isLoading) return null;
 
-  // Simplified logic for "Needs Attention": < 50% complete (for demonstration)
-  const attentionNeeded = students?.filter(s => 
-    s.required_hours && (Number(s.completed_hours) / s.required_hours) < 0.5
-  ) || [];
+  const attentionNeeded = students || [];
 
   return (
     <div style={{ maxWidth: 800 }}>
