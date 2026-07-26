@@ -1,7 +1,7 @@
 /** Entry lifecycle + window rules (BR-01/02/03, FR-LOG-02..11). All times in institution TZ (BR-14). */
 import { and, desc, eq } from "drizzle-orm";
 import { db } from "../../db/client.js";
-import { internships, logEntries, notifications } from "../../db/schema/index.js";
+import { assignments, internships, logEntries, notifications } from "../../db/schema/index.js";
 import { ApiError } from "../../middleware/error.js";
 
 const DAY = 86_400_000;
@@ -87,9 +87,13 @@ export async function submitEntry(entry: Entry, tz: string) {
     state: "submitted", submittedAt: new Date(), rejectReason: null, updatedAt: new Date(),
   }).where(eq(logEntries.id, entry.id)).returning();
 
-  if (internship?.industrySupervisorId) {
+  // Notify the primary industry supervisor via the assignments table (no direct FK on internships)
+  const supervisorAssignment = await db.query.assignments.findFirst({
+    where: and(eq(assignments.internshipId, entry.internshipId), eq(assignments.isPrimaryApprover, true)),
+  });
+  if (supervisorAssignment) {
     await db.insert(notifications).values({
-      recipientId: internship.industrySupervisorId,
+      recipientId: supervisorAssignment.supervisorId,
       type: "entry.submitted",
       payload: { entryId: entry.id, workDate: entry.workDate }
     });
