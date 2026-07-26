@@ -6,7 +6,7 @@ import { ApiClientError } from "../../lib/api";
 
 function InviteSupervisor({ internshipId }: { internshipId: string }) {
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState("industry_supervisor");
+  const role = "industry_supervisor";
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -41,13 +41,6 @@ function InviteSupervisor({ internshipId }: { internshipId: string }) {
         <div style={{ display: "flex", gap: 12, alignItems: "flex-end" }}>
           <div style={{ flex: 1 }}>
             <Field label="Supervisor Email" name="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="supervisor@nestle.com" />
-          </div>
-          <div style={{ width: 160 }}>
-            <label className="field-label" style={{ display: "block", marginBottom: 6, fontSize: ".85rem", fontWeight: 500 }}>Role</label>
-            <select value={role} onChange={(e) => setRole(e.target.value)} style={{ width: "100%", padding: "10px 12px", border: "1px solid var(--border)", borderRadius: 6, background: "rgba(255,255,255,0.05)", color: "inherit" }}>
-              <option value="industry_supervisor">Industry</option>
-              <option value="faculty_supervisor">Faculty</option>
-            </select>
           </div>
         </div>
         <Button disabled={invite.isPending || !email}>{invite.isPending ? "Sending..." : "Send Invitation"}</Button>

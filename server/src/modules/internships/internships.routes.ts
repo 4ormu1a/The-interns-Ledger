@@ -72,7 +72,8 @@ const inviteSchema = z.object({
 internshipsRouter.post("/:id/invite-supervisor", loadOwnedInternship, validate(inviteSchema), async (req, res, next) => {
   try {
     const internship = (req as never as { internship: { id: string; company: string } }).internship;
-    const { email, role } = req.body;
+    const { email } = req.body;
+    const role = "industry_supervisor"; // Force students to only invite industry supervisors
     
     // Check if the user is already assigned
     const user = await db.query.users.findFirst({ where: eq(users.email, email) });

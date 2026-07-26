@@ -9,6 +9,30 @@ const ROLE_LABELS: Record<string, string> = {
   department_supervisor: "Department Supervisor", faculty_supervisor: "Faculty Supervisor", admin: "Administrator",
 };
 
+const CourseDropdown = ({ value, onChange, label }: { value: string, onChange: (v: string) => void, label: string }) => (
+  <div>
+    <label className="field-label" style={{ display: "block", marginBottom: 6, fontSize: ".85rem", fontWeight: 500 }}>{label}</label>
+    <select value={value} onChange={(e) => onChange(e.target.value)} style={{ width: "100%", padding: "10px 12px", border: "1px solid var(--border)", borderRadius: 6, background: "rgba(255,255,255,0.05)", color: "inherit" }}>
+      <option value="" disabled>Select course...</option>
+      <optgroup label="Undergraduate Degree">
+        <option value="BSc Mechanical Engineering">BSc Mechanical Engineering</option>
+        <option value="BSc Electrical and Electronic Engineering">BSc Electrical and Electronic Engineering</option>
+        <option value="BSc Computer Science and Engineering">BSc Computer Science and Engineering</option>
+        <option value="BSc Data Science and Analytics Engineering">BSc Data Science and Analytics Engineering</option>
+        <option value="BSc Geomatic Engineering">BSc Geomatic Engineering</option>
+        <option value="BSc Geological Engineering">BSc Geological Engineering</option>
+        <option value="BSc Environmental and Safety Engineering">BSc Environmental and Safety Engineering</option>
+        <option value="BSc Mathematics">BSc Mathematics</option>
+        <option value="BSc Civil Engineering">BSc Civil Engineering</option>
+      </optgroup>
+      <optgroup label="Diploma">
+        <option value="Diploma in Plant and Maintenance Engineering">Diploma in Plant and Maintenance Engineering</option>
+        <option value="Diploma in Electrical and Electronic Engineering">Diploma in Electrical and Electronic Engineering</option>
+      </optgroup>
+    </select>
+  </div>
+);
+
 export function DepartmentsPage() {
   const qc = useQueryClient();
   const [showAdd, setShowAdd] = useState(false);
@@ -21,7 +45,7 @@ export function DepartmentsPage() {
   const { data: depts = [], isLoading } = useQuery({ queryKey: ["admin-departments"], queryFn: getDepartments });
   const { data: users = [] } = useQuery({ queryKey: ["admin-users", "", ""], queryFn: () => getUsers("") });
 
-  const supervisors = (users as any[]).filter(u => !u.erasedAt && (u.role === "department_supervisor" || u.role === "faculty_supervisor" || u.role === "admin"));
+  const supervisors = (users as any[]).filter(u => !u.erasedAt && u.role === "department_supervisor");
 
   const createMut = useMutation({
     mutationFn: createDepartment,
@@ -75,7 +99,7 @@ export function DepartmentsPage() {
         <div className="glass-card no-hover">
           <h2 style={{ marginTop: 0, marginBottom: 16 }}>Create new department</h2>
           <div style={{ display: "grid", gap: 16, maxWidth: 400 }}>
-            <Field label="Department name" value={form.name} onChange={(e) => setForm({ name: e.target.value })} placeholder="e.g. Computer Science" />
+            <CourseDropdown label="Department name" value={form.name} onChange={(val) => setForm({ name: val })} />
             {err && !editId && <p style={{ color: "var(--danger)", margin: 0, fontSize: "0.88rem" }}>{err}</p>}
             <div style={{ display: "flex", gap: 12 }}>
               <Button variant={1} onClick={() => createMut.mutate(form)} disabled={createMut.isPending || !form.name.trim()}>
@@ -96,7 +120,7 @@ export function DepartmentsPage() {
             <div key={d.id} className="glass-card no-hover" style={{ position: "relative", zIndex: assignDeptId === d.id ? 10 : 1 }}>
               {editId === d.id ? (
                 <div style={{ display: "grid", gap: 12 }}>
-                  <Field label="Department name" value={form.name} onChange={(e) => setForm({ name: e.target.value })} />
+                  <CourseDropdown label="Department name" value={form.name} onChange={(val) => setForm({ name: val })} />
                   {err && editId === d.id && <p style={{ color: "var(--danger)", margin: 0, fontSize: "0.88rem" }}>{err}</p>}
                   <div style={{ display: "flex", gap: 8 }}>
                     <Button variant={1} size="sm" onClick={() => updateMut.mutate({ id: d.id, d: form })} disabled={!form.name.trim() || updateMut.isPending}>Save</Button>

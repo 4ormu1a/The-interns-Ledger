@@ -2,7 +2,7 @@ import { and, eq, gt, isNull } from "drizzle-orm";
 import { hash, verify } from "@node-rs/argon2";
 import jwt from "jsonwebtoken";
 import { db } from "../../db/client.js";
-import { users, emailTokens, refreshTokens, loginAttempts, invitations, assignments, notifications } from "../../db/schema/index.js";
+import { users, emailTokens, refreshTokens, loginAttempts, invitations, assignments, notifications, departments } from "../../db/schema/index.js";
 import { env } from "../../config/env.js";
 import { ApiError } from "../../middleware/error.js";
 import { newOpaqueToken, sha256hex } from "../../lib/tokens.js";
@@ -14,7 +14,7 @@ const LOCK_MINUTES = 15;
 
 const domainOf = (email: string) => email.split("@")[1] ?? "";
 
-export async function register(input: { fullName: string; email: string; password: string; consent: true }) {
+export async function register(input: { fullName: string; email: string; password: string; consent: true; programme?: string; studentRef?: string }) {
   // FR-AUTH-01 — institution domain gate
   if (domainOf(input.email) !== env.INSTITUTION_EMAIL_DOMAIN) {
     throw new ApiError(422, "DOMAIN_NOT_ALLOWED",
@@ -23,12 +23,24 @@ export async function register(input: { fullName: string; email: string; passwor
   const existing = await db.query.users.findFirst({ where: eq(users.email, input.email) });
   if (existing) throw new ApiError(409, "EMAIL_TAKEN", "This email is already registered. Try signing in instead.");
 
+  let departmentId: string | undefined;
+  if (input.programme) {
+    let dept = await db.query.departments.findFirst({ where: eq(departments.name, input.programme) });
+    if (!dept) {
+      const [newDept] = await db.insert(departments).values({ name: input.programme }).returning();
+      dept = newDept;
+    }
+    departmentId = dept.id;
+  }
+
   const passwordHash = await hash(input.password, ARGON);
   const [user] = await db.insert(users).values({
     role: "student",
     email: input.email,
     passwordHash,
     fullName: input.fullName,
+    indexNumber: input.studentRef,
+    departmentId,
     status: "pending",
     consentAt: new Date(), // FR-AUTH-03
   }).returning();

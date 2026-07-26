@@ -6,7 +6,7 @@ import type { SelectOption } from "../../components/ui";
 import { getUsers, provisionUser, patchUser, importUsers } from "../../features/admin/api";
 import { ApiClientError } from "../../lib/api";
 
-const ROLES = ["industry_supervisor", "faculty_supervisor", "admin"];
+const ROLES = ["industry_supervisor", "department_supervisor", "admin"];
 const ROLE_LABELS: Record<string, string> = {
   student: "Student", industry_supervisor: "Industry supervisor",
   faculty_supervisor: "Faculty supervisor", department_supervisor: "Department supervisor", admin: "Administrator",

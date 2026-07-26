@@ -10,6 +10,7 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
   fullName: text("full_name").notNull(),
+  indexNumber: text("index_number"),
   status: userStatus("status").notNull().default("pending"),
   emailVerifiedAt: timestamp("email_verified_at", { withTimezone: true }),
   consentAt: timestamp("consent_at", { withTimezone: true }), // FR-AUTH-03

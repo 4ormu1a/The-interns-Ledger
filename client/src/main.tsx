@@ -86,6 +86,7 @@ createRoot(document.getElementById("root")!).render(
               <Route path="notifications" element={<NotificationsPage />} />
               <Route path="submissions/:id" element={<SubmissionReviewPage />} />
               <Route path="needs-attention" element={<NeedsAttentionPage />} />
+              <Route path="students" element={<DepartmentStudentsPage />} />
             </Route>
             <Route path="/admin" element={<AdminShell />}>
               <Route index element={<AdminDashboard />} />

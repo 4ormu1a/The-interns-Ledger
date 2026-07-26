@@ -1,7 +1,7 @@
 /** Entry lifecycle + window rules (BR-01/02/03, FR-LOG-02..11). All times in institution TZ (BR-14). */
 import { and, desc, eq } from "drizzle-orm";
 import { db } from "../../db/client.js";
-import { internships, logEntries } from "../../db/schema/index.js";
+import { internships, logEntries, notifications } from "../../db/schema/index.js";
 import { ApiError } from "../../middleware/error.js";
 
 const DAY = 86_400_000;
@@ -15,7 +15,7 @@ export function todayInTz(tz: string): Date {
 export function assertWorkDateAllowed(workDate: string, tz: string) {
   const today = todayInTz(tz).getTime();
   const wd = new Date(workDate + "T00:00:00Z").getTime();
-  if (wd > today) throw new ApiError(422, "FUTURE_DATE", "You can't log hours for a date in the future.");
+  if (wd > today) throw new ApiError(422, "FUTURE_DATE", "Oops! You cannot log hours for a date that hasn't happened yet. Please select a valid date.");
   if (today - wd > 7 * DAY) throw new ApiError(422, "BACKDATE_LIMIT", "You can only log entries for the past 7 days.");
 }
 
@@ -86,6 +86,15 @@ export async function submitEntry(entry: Entry, tz: string) {
   const [row] = await db.update(logEntries).set({
     state: "submitted", submittedAt: new Date(), rejectReason: null, updatedAt: new Date(),
   }).where(eq(logEntries.id, entry.id)).returning();
+
+  if (internship?.industrySupervisorId) {
+    await db.insert(notifications).values({
+      recipientId: internship.industrySupervisorId,
+      type: "entry.submitted",
+      payload: { entryId: entry.id, workDate: entry.workDate }
+    });
+  }
+
   return row;
 }
 
