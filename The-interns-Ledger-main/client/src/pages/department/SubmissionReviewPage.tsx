@@ -59,7 +59,7 @@ export function SubmissionReviewPage() {
           </div>
           <div>
             <div style={{ color: "var(--muted-2)", fontSize: "0.85rem", marginBottom: 4 }}>Progress</div>
-            <div style={{ fontWeight: 500 }}>{Number(submission.completed_hours).toFixed(1)} / {submission.required_hours} hours</div>
+            <div style={{ fontWeight: 500 }}>{Number(submission.completed_hours || 0).toFixed(1)} / {submission.required_hours} hours</div>
           </div>
         </div>
 
@@ -109,17 +109,15 @@ export function SubmissionReviewPage() {
         )}
       </Card>
 
-      <h3>Log Entries ({logs.length})</h3>
-      <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 16 }}>
-        {logs.map((log: any) => (
-          <Card key={log.id} style={{ padding: 16 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-              <div style={{ fontWeight: 600 }}>{log.workDate}</div>
-              <div style={{ color: "var(--muted)" }}>{Number(log.hours).toFixed(1)}h</div>
-            </div>
-            <p style={{ margin: 0, fontSize: "0.95rem" }}>{log.activity}</p>
-          </Card>
-        ))}
+      <div style={{ marginTop: 24, padding: 24, background: "rgba(8,203,0,0.05)", borderRadius: 8, border: "1px solid rgba(8,203,0,0.1)", display: "flex", alignItems: "flex-start", gap: 16 }}>
+        <div style={{ fontSize: "2rem" }}>✅</div>
+        <div>
+          <h3 style={{ margin: "0 0 4px 0", color: "var(--green-900)" }}>Verified by Industry Supervisor</h3>
+          <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.95rem", lineHeight: 1.5 }}>
+            This student has completed <b>{logs.length}</b> activities, totaling <b>{Number(submission.completed_hours || 0).toFixed(1)} hours</b>. 
+            Everything has already been reviewed and securely approved by their Industry Supervisor, so you just need to give the final sign-off here!
+          </p>
+        </div>
       </div>
     </div>
   );

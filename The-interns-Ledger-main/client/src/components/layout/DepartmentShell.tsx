@@ -83,7 +83,7 @@ export function DepartmentShell() {
                   {n.label}
                   {!!count && count > 0 && (
                     <span style={{
-                      background: "rgba(255,255,255,0.15)",
+                      background: "var(--green-900)",
                       color: "#fff",
                       fontSize: "0.75rem",
                       padding: "2px 6px",
