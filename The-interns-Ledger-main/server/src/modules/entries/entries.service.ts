@@ -15,7 +15,7 @@ export function todayInTz(tz: string): Date {
 export function assertWorkDateAllowed(workDate: string, tz: string) {
   const today = todayInTz(tz).getTime();
   const wd = new Date(workDate + "T00:00:00Z").getTime();
-  if (wd > today) throw new ApiError(422, "FUTURE_DATE", "You can't log hours for a date in the future.");
+  if (wd > today) throw new ApiError(422, "FUTURE_DATE", "Oops! You cannot log hours for a date that hasn't happened yet. Please select a valid date.");
   if (today - wd > 7 * DAY) throw new ApiError(422, "BACKDATE_LIMIT", "You can only log entries for the past 7 days.");
 }
 

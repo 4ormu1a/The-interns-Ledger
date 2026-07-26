@@ -71,6 +71,7 @@ export function EntryEditorPage() {
           {error && <p className="formerr" role="alert">{error}</p>}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 200px), 1fr))", gap: 14 }}>
             <Field label="Work date" name="workDate" type="date" required value={form.workDate}
+              max={new Date().toISOString().split('T')[0]}
               onChange={(e) => setForm({ ...form, workDate: e.target.value })} hint="Up to 7 days back" />
             <Field label="Hours" name="hours" type="number" min={0.5} max={24} step={0.5} required value={form.hours}
               onChange={(e) => setForm({ ...form, hours: Number(e.target.value) })} />
