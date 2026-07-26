@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Log in — The Interns Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/main.css">
+<style>
+  .shell{min-height:100vh;display:grid;grid-template-columns:1fr 1.1fr;position:relative;z-index:1}
+
+  /* ─── left brand panel ─── */
+  .panel{background:var(--green-900);color:#fff;padding:44px 48px;display:flex;
+    flex-direction:column;position:relative;overflow:hidden}
+  .panel::after{content:"";position:absolute;right:-120px;bottom:-120px;width:340px;height:340px;
+    border-radius:50%;background:radial-gradient(circle,rgba(8,203,0,.25),transparent 70%)}
+  .panel .brand .name b,.panel .brand .name span{color:#fff}
+  .panel .brand .name span{color:rgba(255,255,255,.65)}
+  .p-mid{margin:auto 0;position:relative;z-index:1}
+  .p-mid h2{color:#fff;font-size:clamp(1.5rem,2.6vw,2rem);margin-bottom:14px;max-width:18ch}
+  .p-mid p{color:rgba(255,255,255,.75);font-size:.95rem;max-width:42ch;line-height:1.65}
+  .p-feats{display:flex;flex-direction:column;gap:11px;margin-top:26px}
+  .p-feat{display:flex;gap:10px;align-items:center;font-size:.88rem;color:rgba(255,255,255,.85)}
+  .p-feat svg{color:var(--green-bright);flex:none}
+  .p-foot{font-size:.78rem;color:rgba(255,255,255,.5);position:relative;z-index:1}
+
+  /* ─── right form side ─── */
+  .side{display:flex;flex-direction:column;padding:28px 24px}
+  .side-top{display:flex;justify-content:flex-end;align-items:center;gap:10px;font-size:.88rem;color:var(--muted)}
+  .side-top a{font-weight:700;color:var(--green-700)}
+  .side-top a:hover{color:var(--green-bright)}
+  .formwrap{margin:auto;width:100%;max-width:440px;padding:24px 0}
+  .formwrap h1{font-size:clamp(1.5rem,3vw,1.9rem);margin-bottom:6px}
+  .formwrap .sub{color:var(--muted);font-size:.95rem;margin-bottom:24px}
+
+  /* role picker */
+  .roles{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:22px}
+  .rolebtn{display:flex;align-items:center;gap:10px;padding:12px 13px;border-radius:13px;
+    border:1.5px solid var(--line);background:var(--white);cursor:pointer;font-family:inherit;
+    text-align:left;transition:border-color .18s,background .18s,box-shadow .18s}
+  .rolebtn:hover{border-color:rgba(8,203,0,.45)}
+  .rolebtn[aria-pressed="true"]{border-color:var(--green-bright);background:rgba(8,203,0,.07);
+    box-shadow:0 0 0 3px rgba(8,203,0,.14)}
+  .rolebtn .ic{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;flex:none;
+    background:rgba(13,83,14,.08);color:var(--green-700);transition:background .18s,color .18s}
+  .rolebtn[aria-pressed="true"] .ic{background:var(--green-900);color:#fff}
+  .rolebtn b{display:block;font-size:.84rem;color:var(--green-900);line-height:1.2}
+  .rolebtn span{font-size:.7rem;color:var(--muted-2)}
+
+  .field{margin-bottom:16px}
+  .field label{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+  .field label a{font-size:.8rem;font-weight:600;color:var(--green-700)}
+  .field label a:hover{color:var(--green-bright)}
+  .input-wrap{position:relative}
+  .toggle-eye{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;
+    border:0;cursor:pointer;color:var(--muted-2);padding:4px;display:grid;place-items:center}
+  .toggle-eye:hover{color:var(--green-700)}
+
+  .remember{display:flex;align-items:center;gap:9px;margin-bottom:20px;font-size:.88rem;color:var(--muted)}
+  .remember input{width:17px;height:17px;accent-color:var(--green-900);padding:0}
+
+  .btn-full{width:100%;justify-content:center}
+  .divider{display:flex;align-items:center;gap:12px;color:var(--muted-2);font-size:.78rem;
+    font-weight:600;margin:20px 0}
+  .divider::before,.divider::after{content:"";height:1px;background:var(--line);flex:1}
+  .alt{text-align:center;font-size:.9rem;color:var(--muted)}
+  .alt a{font-weight:700;color:var(--green-700)}
+  .alt a:hover{color:var(--green-bright)}
+  .note{display:flex;gap:9px;align-items:flex-start;margin-top:22px;padding:12px 15px;
+    border-radius:12px;background:rgba(231,225,177,.45);border:1px solid var(--line);
+    font-size:.8rem;color:var(--muted)}
+  .note svg{flex:none;margin-top:1px;color:var(--green-700)}
+
+  @media(max-width:880px){
+    .shell{grid-template-columns:1fr}
+    .panel{display:none}
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<div class="shell">
+
+  <!-- ════════ BRAND PANEL ════════ -->
+  <aside class="panel" aria-hidden="true">
+    <a class="brand" href="index.html">
+      <svg class="mark" viewBox="0 0 48 48" fill="none">
+        <path d="M24 12c-4-3-9-3.5-13-2.5v25c4-1 9-.5 13 2.5 4-3 9-3.5 13-2.5v-25C33 8.5 28 9 24 12Z" stroke="#08CB00" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M24 12v25" stroke="#08CB00" stroke-width="2"/>
+        <path d="M14 17h6M14 21h6M28 17h6M28 21h6M14 25h6M28 25h6" stroke="#fff" stroke-width="1.3" stroke-linecap="round" opacity=".6"/>
+      </svg>
+      <span class="name"><b>THE INTERNS</b><span>LEDGER</span></span>
+    </a>
+    <div class="p-mid">
+      <h2>Pick up exactly where your internship left off.</h2>
+      <p>One login, four portals — students, supervisors, faculty, and admins each land in a workspace built for their job.</p>
+      <div class="p-feats">
+        <div class="p-feat"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Approved entries stay locked &amp; tamper-evident</div>
+        <div class="p-feat"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Remote reviews — no paper logbook chasing</div>
+        <div class="p-feat"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>QR-verifiable final reports</div>
+      </div>
+    </div>
+    <div class="p-foot">© 2026 The Interns Ledger</div>
+  </aside>
+
+  <!-- ════════ FORM SIDE ════════ -->
+  <main class="side" id="main">
+    <div class="side-top">
+      <span>New here?</span>
+      <a class="btn btn-3 btn-sm" href="register.html">Create an account</a>
+    </div>
+
+    <div class="formwrap">
+      <h1 id="page-title" tabindex="-1">Welcome back</h1>
+      <p class="sub">Choose your role and sign in to your portal.</p>
+
+      <form id="login-form" novalidate>
+        <div class="roles" role="group" aria-label="Select your role">
+          <button type="button" class="rolebtn" data-role="student" aria-pressed="true">
+            <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 9l9-5 9 5-9 5-9-5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M7 11v5c0 1 2.5 2.5 5 2.5s5-1.5 5-2.5v-5" stroke="currentColor" stroke-width="1.8"/></svg></span>
+            <span><b>Student</b><span>Logbook &amp; progress</span></span>
+          </button>
+          <button type="button" class="rolebtn" data-role="industry" aria-pressed="false">
+            <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 21V8l8-5 8 5v13" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 21v-6h6v6" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span>
+            <span><b>Industry supervisor</b><span>Review &amp; approve</span></span>
+          </button>
+          <button type="button" class="rolebtn" data-role="faculty" aria-pressed="false">
+            <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 19V5a2 2 0 012-2h13v18H6a2 2 0 01-2-2Zm0 0a2 2 0 012-2h13" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span>
+            <span><b>Faculty supervisor</b><span>Assess &amp; grade</span></span>
+          </button>
+          <button type="button" class="rolebtn" data-role="admin" aria-pressed="false">
+            <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3.2" stroke="currentColor" stroke-width="1.8"/><path d="M19 12a7 7 0 00-.14-1.4l2-1.55-2-3.46-2.35.95a7 7 0 00-2.42-1.4L13.7 2.7h-3.4l-.39 2.44a7 7 0 00-2.42 1.4l-2.35-.95-2 3.46 2 1.55A7 7 0 005 12c0 .48.05.94.14 1.4l-2 1.55 2 3.46 2.35-.95a7 7 0 002.42 1.4l.39 2.44h3.4l.39-2.44a7 7 0 002.42-1.4l2.35.95 2-3.46-2-1.55c.09-.46.14-.92.14-1.4Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></span>
+            <span><b>Administrator</b><span>Manage the system</span></span>
+          </button>
+        </div>
+
+        <div class="field">
+          <label for="email">Email address</label>
+          <input id="email" type="email" placeholder="you@example.com" autocomplete="email">
+        </div>
+        <div class="field">
+          <label for="pw">Password <a href="reset.html">Forgot password?</a></label>
+          <div class="input-wrap">
+            <input id="pw" type="password" placeholder="••••••••••" autocomplete="current-password">
+            <button type="button" class="toggle-eye" id="eye" aria-label="Show password">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="2.6" stroke="currentColor" stroke-width="1.7"/></svg>
+            </button>
+          </div>
+        </div>
+        <label class="remember"><input type="checkbox" checked> Keep me signed in on this device</label>
+
+        <button class="btn btn-1 btn-full" type="submit" id="login-btn">Log in to the Student portal</button>
+      </form>
+
+      <div class="divider">or</div>
+      <p class="alt">Just checking a report? <a href="verify.html">Verify without an account →</a></p>
+
+      <div class="note">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 11v5M12 8h.01" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+        <span><b style="color:var(--green-900)">Prototype notice:</b> authentication isn't wired up yet — logging in simply takes you to the selected portal.</span>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  const DEST={
+    student:{url:'../student-portal/dashboard.html',label:'Student'},
+    industry:{url:'../industry-supervisor-portal/dashboard.html',label:'Industry Supervisor'},
+    faculty:{url:'../faculty-supervisor-portal/dashboard.html',label:'Faculty Supervisor'},
+    admin:{url:'../admin-portal/dashboard.html',label:'Admin'}
+  };
+  const btns=[...document.querySelectorAll('.rolebtn')];
+  const loginBtn=document.getElementById('login-btn');
+  let role='student';
+
+  function setRole(r){
+    role=DEST[r]?r:'student';
+    btns.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.role===role)));
+    loginBtn.textContent='Log in to the '+DEST[role].label+' portal';
+  }
+  btns.forEach(b=>b.addEventListener('click',()=>setRole(b.dataset.role)));
+
+  // pre-select role from ?role= (landing page role cards / footer)
+  setRole(new URLSearchParams(location.search).get('role')||'student');
+
+  // UI-only auth: redirect to the selected portal
+  document.getElementById('login-form').addEventListener('submit',e=>{
+    e.preventDefault();
+    window.location.href=DEST[role].url;
+  });
+
+  // show/hide password
+  const pw=document.getElementById('pw'),eye=document.getElementById('eye');
+  eye.addEventListener('click',()=>{
+    pw.type=pw.type==='password'?'text':'password';
+    eye.setAttribute('aria-label',pw.type==='password'?'Show password':'Hide password');
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assessment History — The Interns Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/main.css">
+<style>
+  .pagehead{margin-bottom:22px}
+  .pagehead h1{font-size:clamp(1.7rem,3.4vw,2.1rem);margin-bottom:4px}
+  .pagehead p{color:var(--muted);font-size:.98rem;max-width:64ch}
+
+  .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+  .stat{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:14px 16px;
+    box-shadow:var(--shadow-sm)}
+  .stat .sk{font-size:.72rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted-2)}
+  .stat .sv{font-size:1.3rem;font-weight:800;color:var(--green-900);margin-top:2px;letter-spacing:-.03em;line-height:1}
+  .stat .sv small{font-size:.78rem;font-weight:500;color:var(--muted);letter-spacing:0}
+  .stat .sd{font-size:.78rem;color:var(--muted);margin-top:4px}
+  .stat .sd.good{color:var(--green-700);font-weight:600}
+  .stat .sd.warn{color:var(--amber);font-weight:600}
+
+  .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:18px}
+  .tabs{display:flex;gap:6px;background:rgba(231,225,177,.5);border:1px solid var(--line);
+    padding:4px;border-radius:999px}
+  .tab{font-family:inherit;font-size:.85rem;font-weight:600;color:var(--muted);background:transparent;
+    border:0;padding:.5rem 1rem;border-radius:999px;cursor:pointer;transition:background .18s,color .18s}
+  .tab[aria-selected="true"]{background:var(--green-900);color:#fff}
+  .tab:hover:not([aria-selected="true"]){color:var(--green-900)}
+  .selectwrap{position:relative;margin-left:auto}
+  select{appearance:none;font-family:inherit;font-size:.86rem;font-weight:600;color:var(--green-900);
+    background:var(--white);border:1px solid var(--line);border-radius:11px;padding:.6rem 2.2rem .6rem .9rem;
+    cursor:pointer;width:auto}
+  select:hover{border-color:rgba(8,203,0,.4)}
+  .selectwrap::after{content:"";position:absolute;right:12px;top:50%;width:8px;height:8px;
+    border-right:1.8px solid var(--green-700);border-bottom:1.8px solid var(--green-700);
+    transform:translateY(-70%) rotate(45deg);pointer-events:none}
+
+  /* rows */
+  .a-row{display:flex;gap:14px;padding:18px 22px;border-bottom:1px solid var(--line);align-items:flex-start}
+  .a-row:last-child{border-bottom:0}
+  .gradebox{width:54px;height:54px;border-radius:14px;background:rgba(8,203,0,.12);color:var(--green-900);
+    display:grid;place-items:center;font-weight:800;font-size:1.15rem;flex:none;letter-spacing:-.02em}
+  .gradebox.mid{background:var(--violet-bg);color:var(--violet)}
+  .a-body{min-width:0;flex:1}
+  .a-title{font-size:.94rem;color:var(--ink)}
+  .a-title b{color:var(--green-900);font-weight:700}
+  .a-type{display:inline-flex;font-size:.68rem;font-weight:700;padding:2px 9px;border-radius:999px;
+    margin-left:6px;vertical-align:1px}
+  .ty-mid{background:var(--violet-bg);color:var(--violet)}
+  .ty-final{background:rgba(8,203,0,.14);color:var(--green-700)}
+  .a-meta{font-size:.78rem;color:var(--muted-2);margin-top:3px;display:flex;gap:10px;flex-wrap:wrap}
+  .a-meta b{color:var(--green-900);font-weight:600}
+  .crits{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+  .crit-pill{font-size:.7rem;font-weight:600;color:var(--muted);background:rgba(231,225,177,.5);
+    border:1px solid var(--line);padding:3px 9px;border-radius:999px}
+  .crit-pill b{color:var(--green-900)}
+  .a-comment{margin-top:9px;font-size:.84rem;color:var(--muted);background:rgba(231,225,177,.4);
+    border:1px solid var(--line);border-left:3px solid rgba(83,74,183,.45);border-radius:0 10px 10px 0;
+    padding:9px 13px;font-style:italic}
+  .a-act{flex:none;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+  .lock-line{font-size:.7rem;color:var(--muted-2);display:flex;gap:5px;align-items:center}
+  .lock-line svg{color:var(--green-700)}
+
+  .empty{display:none;padding:54px 24px;text-align:center}
+  .empty .e-ic{width:64px;height:64px;border-radius:18px;background:rgba(8,203,0,.1);color:var(--green-700);
+    display:grid;place-items:center;margin:0 auto 16px}
+  .empty h3{font-size:1.05rem;margin-bottom:4px}
+  .empty p{font-size:.88rem;color:var(--muted)}
+
+  @media(max-width:860px){.stats-row{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:680px){
+    .selectwrap{margin-left:0;width:100%}
+    .selectwrap select{width:100%}
+    .tabs{width:100%;justify-content:space-between}
+    .a-row{flex-wrap:wrap}
+    .a-act{flex-direction:row;width:100%;justify-content:space-between;align-items:center}
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<!-- ─── TOP BAR ─── -->
+<header class="topbar">
+  <div class="tb-inner">
+    <a class="brand" href="dashboard.html" aria-label="The Interns Ledger — dashboard">
+      <svg class="mark" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+        <path d="M24 12c-4-3-9-3.5-13-2.5v25c4-1 9-.5 13 2.5 4-3 9-3.5 13-2.5v-25C33 8.5 28 9 24 12Z" stroke="#0D530E" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M24 12v25" stroke="#0D530E" stroke-width="2"/>
+        <path d="M14 17h6M14 21h6M28 17h6M28 21h6M14 25h6M28 25h6" stroke="#306D29" stroke-width="1.3" stroke-linecap="round"/>
+      </svg>
+      <span class="name"><b>THE INTERNS</b><span>LEDGER</span></span>
+    </a>
+    <div class="tb-right">
+      <a class="iconbtn" href="notifications.html" aria-label="Notifications — 3 unread">
+        <span class="dot"></span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 9a6 6 0 1112 0c0 5 2 6 2 6H4s2-1 2-6Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M10 20a2 2 0 004 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </a>
+      <div class="user">
+        <div class="avatar" aria-hidden="true">ED</div>
+        <div class="u-meta"><b>Dr. Esi Dankwa</b><span class="role">Faculty supervisor</span></div>
+      </div>
+      <a class="iconbtn" href="../public/login.html" aria-label="Log out" title="Log out">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M15 12H5M9 8l-4 4 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 4h7a1 1 0 011 1v14a1 1 0 01-1 1h-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+  </div>
+</header>
+
+<!-- ─── MAIN ─── -->
+<main id="main" class="wrap">
+  <nav class="crumbs" aria-label="Breadcrumb">
+    <a href="dashboard.html">Dashboard</a>
+    <span class="sep">/</span><span>Assessment history</span>
+  </nav>
+
+  <div class="pagehead">
+    <h1 id="page-title" tabindex="-1">Assessment history</h1>
+    <p>Every assessment you've recorded this term — timestamped, grounded in the verified record, and never overwritten. Corrections appear as follow-up notes.</p>
+  </div>
+
+  <!-- stats -->
+  <div class="stats-row">
+    <div class="stat">
+      <div class="sk">Recorded this term</div>
+      <div class="sv">5 <small>of 8</small></div>
+      <div class="sd warn">1 due 15 Jun · 2 upcoming</div>
+    </div>
+    <div class="stat">
+      <div class="sk">Median grade</div>
+      <div class="sv">B+</div>
+      <div class="sd">range B − A−</div>
+    </div>
+    <div class="stat">
+      <div class="sk">On-time rate</div>
+      <div class="sv">100<small>%</small></div>
+      <div class="sd good">All before deadline</div>
+    </div>
+    <div class="stat">
+      <div class="sk">Follow-up notes</div>
+      <div class="sv">1</div>
+      <div class="sd">Yaw Boateng · 02 Jun</div>
+    </div>
+  </div>
+
+  <!-- toolbar -->
+  <div class="toolbar">
+    <div class="tabs" role="tablist" aria-label="Filter assessments">
+      <button class="tab" role="tab" aria-selected="true" data-filter="all">All</button>
+      <button class="tab" role="tab" aria-selected="false" data-filter="mid">Mid-term</button>
+      <button class="tab" role="tab" aria-selected="false" data-filter="final">Final</button>
+    </div>
+    <div class="selectwrap">
+      <label for="stu-filter" style="position:absolute;left:-9999px">Filter by student</label>
+      <select id="stu-filter">
+        <option value="all">All students (4)</option>
+        <option value="am">Ama Mensah</option>
+        <option value="yb">Yaw Boateng</option>
+        <option value="ao">Abena Owusu</option>
+        <option value="ka">Kojo Antwi</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- history -->
+  <div class="card" style="overflow:hidden">
+
+    <div class="a-row" data-t="mid" data-stu="ao">
+      <div class="gradebox mid" aria-hidden="true">A−</div>
+      <div class="a-body">
+        <div class="a-title"><b>Abena Owusu</b> — mid-term assessment <span class="a-type ty-mid">Mid-term</span></div>
+        <div class="a-meta"><span>Recorded 02 Jun 2026, 14:05</span><span>·</span><span>evidence: <b>231 verified hrs</b>, 29 sealed entries</span></div>
+        <div class="crits">
+          <span class="crit-pill">Technical <b>5/5</b></span><span class="crit-pill">Professionalism <b>4/5</b></span>
+          <span class="crit-pill">Communication <b>5/5</b></span><span class="crit-pill">Initiative <b>4/5</b></span>
+        </div>
+        <div class="a-comment">"Exceptional analytical work on the claims-model validation. Entries are consistently specific and reflective. Push further on owning stakeholder presentations in the second half."</div>
+      </div>
+      <div class="a-act">
+        <a class="btn btn-3 btn-sm" href="student-progress.html">Student</a>
+        <span class="lock-line"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><rect x="5" y="10" width="14" height="10" rx="2.5" stroke="currentColor" stroke-width="2.4"/><path d="M8 10V8a4 4 0 018 0v2" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>recorded</span>
+      </div>
+    </div>
+
+    <div class="a-row" data-t="mid" data-stu="yb">
+      <div class="gradebox mid" aria-hidden="true">B+</div>
+      <div class="a-body">
+        <div class="a-title"><b>Yaw Boateng</b> — mid-term assessment <span class="a-type ty-mid">Mid-term</span></div>
+        <div class="a-meta"><span>Recorded 30 May 2026, 10:42</span><span>·</span><span>evidence: <b>268 verified hrs</b>, 33 sealed entries</span><span>·</span><span><b>1 follow-up note</b> (02 Jun)</span></div>
+        <div class="crits">
+          <span class="crit-pill">Technical <b>4/5</b></span><span class="crit-pill">Professionalism <b>3/5</b></span>
+          <span class="crit-pill">Communication <b>4/5</b></span><span class="crit-pill">Initiative <b>4/5</b></span>
+        </div>
+        <div class="a-comment">"Strong infrastructure work, but logging consistency dipped in weeks 10–12 and pace is now ~1.5 weeks behind. Agreed a catch-up plan: minimum 38 h/week through June. Will re-check at final."</div>
+      </div>
+      <div class="a-act">
+        <a class="btn btn-3 btn-sm" href="student-progress.html">Student</a>
+        <span class="lock-line"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><rect x="5" y="10" width="14" height="10" rx="2.5" stroke="currentColor" stroke-width="2.4"/><path d="M8 10V8a4 4 0 018 0v2" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>recorded</span>
+      </div>
+    </div>
+
+    <div class="a-row" data-t="mid" data-stu="ka">
+      <div class="gradebox mid" aria-hidden="true">A−</div>
+      <div class="a-body">
+        <div class="a-title"><b>Kojo Antwi</b> — mid-term assessment <span class="a-type ty-mid">Mid-term</span></div>
+        <div class="a-meta"><span>Recorded 26 May 2026, 16:18</span><span>·</span><span>evidence: <b>282 verified hrs</b>, 35 sealed entries</span></div>
+        <div class="crits">
+          <span class="crit-pill">Technical <b>5/5</b></span><span class="crit-pill">Professionalism <b>4/5</b></span>
+          <span class="crit-pill">Communication <b>4/5</b></span><span class="crit-pill">Initiative <b>5/5</b></span>
+        </div>
+        <div class="a-comment">"Self-directed and rigorous — the anomaly-detection spike he proposed is now on the product roadmap. Entries could quantify outcomes more often; raised in our check-in."</div>
+      </div>
+      <div class="a-act">
+        <a class="btn btn-3 btn-sm" href="student-progress.html">Student</a>
+        <span class="lock-line"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><rect x="5" y="10" width="14" height="10" rx="2.5" stroke="currentColor" stroke-width="2.4"/><path d="M8 10V8a4 4 0 018 0v2" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>recorded</span>
+      </div>
+    </div>
+
+    <div class="a-row" data-t="final" data-stu="yb">
+      <div class="gradebox" aria-hidden="true">A−</div>
+      <div class="a-body">
+        <div class="a-title"><b>Yaw Boateng</b> — final assessment (previous placement) <span class="a-type ty-final">Final</span></div>
+        <div class="a-meta"><span>Recorded 12 Dec 2025, 11:30</span><span>·</span><span>evidence: <b>200 verified hrs</b>, 26 sealed entries · GhanaPost DTD pilot</span></div>
+        <div class="crits">
+          <span class="crit-pill">Technical <b>4/5</b></span><span class="crit-pill">Professionalism <b>5/5</b></span>
+          <span class="crit-pill">Communication <b>4/5</b></span><span class="crit-pill">Initiative <b>4/5</b></span>
+        </div>
+        <div class="a-comment">"Completed the short placement ahead of schedule with a fully documented handover. Verified record was exemplary — zero returned entries."</div>
+      </div>
+      <div class="a-act">
+        <a class="btn btn-3 btn-sm" href="student-progress.html">Student</a>
+        <span class="lock-line"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><rect x="5" y="10" width="14" height="10" rx="2.5" stroke="currentColor" stroke-width="2.4"/><path d="M8 10V8a4 4 0 018 0v2" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>recorded</span>
+      </div>
+    </div>
+
+    <div class="a-row" data-t="final" data-stu="ao">
+      <div class="gradebox" aria-hidden="true">B+</div>
+      <div class="a-body">
+        <div class="a-title"><b>Abena Owusu</b> — final assessment (previous placement) <span class="a-type ty-final">Final</span></div>
+        <div class="a-meta"><span>Recorded 05 Dec 2025, 09:55</span><span>·</span><span>evidence: <b>180 verified hrs</b>, 22 sealed entries · VoltaBank internship</span></div>
+        <div class="crits">
+          <span class="crit-pill">Technical <b>4/5</b></span><span class="crit-pill">Professionalism <b>4/5</b></span>
+          <span class="crit-pill">Communication <b>3/5</b></span><span class="crit-pill">Initiative <b>4/5</b></span>
+        </div>
+        <div class="a-comment">"Reliable delivery throughout. Communication in entries improved markedly after the mid-term feedback — carry that into the new placement."</div>
+      </div>
+      <div class="a-act">
+        <a class="btn btn-3 btn-sm" href="student-progress.html">Student</a>
+        <span class="lock-line"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><rect x="5" y="10" width="14" height="10" rx="2.5" stroke="currentColor" stroke-width="2.4"/><path d="M8 10V8a4 4 0 018 0v2" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>recorded</span>
+      </div>
+    </div>
+
+    <!-- empty state -->
+    <div class="empty" id="empty">
+      <div class="e-ic" aria-hidden="true">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none"><path d="M5 4h11l3 3v13H5V4Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8 12l2.5 2.5L16 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h3>No assessments match this filter</h3>
+      <p>Try another tab or pick a different student.</p>
+    </div>
+  </div>
+
+  <p style="font-size:.78rem;color:var(--muted-2);margin-top:10px">Upcoming: Ama Mensah mid-term (due 15 Jun) · Kojo Antwi final (due 20 Jul) · Abena Owusu final (due 24 Jul). <a href="assessment.html" style="color:var(--green-700);font-weight:700">Start the next one →</a></p>
+
+</main>
+
+<script>
+  const rows=[...document.querySelectorAll('.a-row')];
+  const tabs=[...document.querySelectorAll('.tab')];
+  const sel=document.getElementById('stu-filter');
+  const empty=document.getElementById('empty');
+  let mode='all';
+  function apply(){
+    let visible=0;
+    rows.forEach(r=>{
+      const ok=(mode==='all'||r.dataset.t===mode)&&(sel.value==='all'||r.dataset.stu===sel.value);
+      r.style.display=ok?'':'none';if(ok)visible++;
+    });
+    empty.style.display=visible?'none':'block';
+  }
+  tabs.forEach(t=>t.addEventListener('click',()=>{
+    tabs.forEach(x=>x.setAttribute('aria-selected','false'));
+    t.setAttribute('aria-selected','true');
+    mode=t.dataset.filter;apply();
+  }));
+  sel.addEventListener('change',apply);
+</script>
+</body>
+</html>

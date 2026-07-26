@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notifications — The Interns Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/main.css">
+<style>
+  .page-title{font-size:clamp(1.7rem,3.4vw,2.1rem);margin-bottom:4px}
+  .page-title:focus{outline:none}
+  .page-sub{color:var(--muted);font-size:1rem;margin-bottom:26px}
+
+  .layout{display:grid;grid-template-columns:236px 1fr;gap:30px;align-items:start}
+  .rail{position:sticky;top:88px;display:flex;flex-direction:column;gap:6px;background:var(--white);
+    border:1px solid var(--line);border-radius:var(--radius);padding:12px;box-shadow:var(--shadow-sm)}
+  .rail .lbl{font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2);padding:8px 10px 4px}
+  .railbtn{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:11px;font-size:.92rem;
+    font-weight:500;color:var(--ink);background:none;border:0;cursor:pointer;font-family:inherit;
+    text-align:left;transition:background .18s,color .18s}
+  .railbtn:hover{background:rgba(8,203,0,.08)}
+  .railbtn[aria-pressed="true"]{background:var(--green-900);color:#fff;font-weight:600}
+  .railbtn .count{margin-left:auto;font-size:.78rem;color:var(--muted-2);font-weight:600}
+  .railbtn[aria-pressed="true"] .count{color:rgba(255,255,255,.75)}
+  .full{width:100%}
+
+  .status{display:none;gap:9px;align-items:center;border-radius:11px;padding:11px 14px;
+    font-size:.9rem;font-weight:500;margin-bottom:16px}
+  .status.show{display:flex}
+  .status.ok{background:rgba(8,203,0,.1);border:1px solid rgba(8,203,0,.3);color:var(--green-700)}
+  .status svg{flex:none}
+  .list-top{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:6px;flex-wrap:wrap}
+  .list-top .ct{font-size:.94rem;color:var(--muted)}
+  .list-top .ct b{color:var(--green-900);font-weight:700}
+
+  .ngroup-h{font-size:.74rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2);margin:18px 4px 10px}
+  .nfeed{display:flex;flex-direction:column;gap:10px;list-style:none}
+  .nitem{position:relative;display:flex;gap:14px;padding:16px 18px;border:1px solid var(--line);
+    border-radius:14px;background:var(--white);transition:box-shadow .2s,border-color .2s,background .2s}
+  .nitem:hover{box-shadow:var(--shadow-md)}
+  .nitem.unread{background:rgba(8,203,0,.045);border-color:rgba(8,203,0,.28)}
+  .nitem.unread::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;
+    border-radius:0 3px 3px 0;background:var(--green-bright)}
+  .nicon{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;flex:none}
+  .na-request{background:var(--danger-bg);color:var(--danger)}
+  .na-key{background:var(--amber-bg);color:var(--amber)}
+  .na-account{background:rgba(8,203,0,.13);color:var(--green-700)}
+  .na-system{background:rgba(13,83,14,.08);color:var(--green-700)}
+  .nbody{min-width:0;flex:1}
+  .ntop{display:flex;align-items:center;gap:9px}
+  .ntitle{font-size:.98rem;font-weight:600;color:var(--green-900)}
+  .nitem.unread .ntitle{font-weight:700}
+  .ndot{width:8px;height:8px;border-radius:50%;background:var(--green-bright);flex:none}
+  .ntext{font-size:.9rem;color:var(--muted);line-height:1.55;margin-top:3px}
+  .ntext b{color:var(--green-900)}
+  .nfoot{display:flex;align-items:center;gap:14px;margin-top:11px;flex-wrap:wrap}
+  .ntime{font-size:.8rem;color:var(--muted-2)}
+  .nlink{font-size:.85rem;font-weight:700;color:var(--green-700);display:inline-flex;align-items:center;gap:5px}
+  .nlink:hover{color:var(--green-bright)}
+  .nread{font-size:.82rem;font-weight:600;color:var(--muted-2);background:none;border:0;cursor:pointer;
+    font-family:inherit;padding:0;margin-left:auto}
+  .nread:hover{color:var(--green-700);text-decoration:underline}
+
+  .empty{text-align:center;padding:54px 20px;color:var(--muted)}
+  .empty .ec{width:62px;height:62px;border-radius:50%;background:rgba(8,203,0,.12);color:var(--green-700);
+    display:grid;place-items:center;margin:0 auto 16px}
+  .empty h3{font-size:1.1rem;margin-bottom:6px}
+  .empty p{font-size:.92rem}
+
+  @media(max-width:860px){
+    .layout{grid-template-columns:1fr;gap:16px}
+    .rail{position:static}
+    .rail-row{display:flex;overflow-x:auto;gap:6px}
+    .rail .lbl{display:none}
+    .railbtn{white-space:nowrap}
+    .nread{margin-left:0}
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <div class="tb-inner">
+    <a class="brand" href="dashboard.html" aria-label="The Interns Ledger — admin dashboard">
+      <svg class="mark" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+        <path d="M24 12c-4-3-9-3.5-13-2.5v25c4-1 9-.5 13 2.5 4-3 9-3.5 13-2.5v-25C33 8.5 28 9 24 12Z" stroke="#0D530E" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M24 12v25" stroke="#0D530E" stroke-width="2"/>
+        <path d="M14 17h6M14 21h6M28 17h6M28 21h6M14 25h6M28 25h6" stroke="#306D29" stroke-width="1.3" stroke-linecap="round"/>
+      </svg>
+      <span class="name"><b>THE INTERNS</b><span>LEDGER</span></span>
+    </a>
+    <div class="tb-right">
+      <button class="iconbtn" id="bell" aria-label="Notifications" style="border-color:rgba(8,203,0,.5);background:rgba(8,203,0,.08)">
+        <span class="dot" id="bell-dot"></span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 9a6 6 0 1112 0c0 5 2 6 2 6H4s2-1 2-6Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M10 20a2 2 0 004 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+      <div class="user"><div class="avatar" aria-hidden="true">SA</div><div class="u-meta"><b>Selorm Adjei</b><span class="role">Administrator</span></div></div>
+      <a class="iconbtn" href="../public/login.html" aria-label="Log out" title="Log out">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M15 12H5M9 8l-4 4 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 4h7a1 1 0 011 1v14a1 1 0 01-1 1h-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+  </div>
+</header>
+
+<main id="main" class="wrap">
+  <nav class="crumbs" aria-label="Breadcrumb"><a href="dashboard.html">Dashboard</a><span class="sep">›</span><span>Notifications</span></nav>
+  <h1 class="page-title" id="page-title" tabindex="-1">Notifications</h1>
+  <p class="page-sub">Data-protection requests, key reminders, account events, and system checks — newest first.</p>
+
+  <div class="layout">
+    <aside class="rail" aria-label="Notification filters">
+      <button class="btn btn-3 full" id="mark-all">Mark all as read</button>
+      <span class="lbl">Show</span>
+      <div class="rail-row" id="filters" role="group" aria-label="Filter notifications"></div>
+    </aside>
+
+    <section class="content">
+      <div class="status ok" id="msg" role="status" aria-live="polite"></div>
+      <div class="list-top"><p class="ct" id="count-line"></p></div>
+      <div id="feed" aria-live="polite"></div>
+      <div class="empty" id="empty" hidden>
+        <div class="ec"><svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <h3>You&rsquo;re all caught up</h3>
+        <p>No notifications to show here.</p>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script>
+  const NOTIFS=[
+    {id:1,type:"request",unread:true,group:"today",time:"4 hours ago",
+      title:"New data-erasure request",
+      text:'<b>Kwame Asiedu</b> (graduated 2025, Highlands Tech) requested account erasure. Statutory response window ends <b>06 Jul 2026</b>. 1 other request is already pending.',
+      action:{label:"Process requests",href:"reports.html"}},
+    {id:2,type:"system",unread:true,group:"today",time:"6 hours ago",
+      title:"Nightly chain verification passed",
+      text:'All <b>12,418 sealed entries</b> verified intact at 06:00 — 0 anomalies. Next scheduled check: tomorrow, 06:00.',
+      action:{label:"View audit event",href:"audit-trail.html"}},
+    {id:3,type:"key",unread:true,group:"today",time:"7 hours ago",
+      title:"Key rotation due in 21 days",
+      text:'Active signing key <b>TIL-K3</b> reaches its 180-day rotation point on <b>01 Jul 2026</b>. Generate the successor key in advance to avoid a signing gap.',
+      action:{label:"Manage keys",href:"verification-keys.html"}},
+    {id:4,type:"account",unread:true,group:"yesterday",time:"Yesterday, 16:30",
+      title:"3 students still unlinked",
+      text:'Placements at <b>Harbour Logistics</b> (2) and <b>MediServe Labs</b> (1) have no supervisor link — their entries are blocked from submission.',
+      action:{label:"Link supervisors",href:"supervisor-links.html"}},
+    {id:5,type:"system",unread:true,group:"yesterday",time:"Yesterday, 18:47",
+      title:"Revoked token rejected twice",
+      text:'The public verifier rejected token <b>TIL-77AB-19QX-D3</b> (revoked 09 Jun) on 2 attempts from the same requester — expected behaviour, logged for visibility.',
+      action:{label:"View tokens",href:"verification-keys.html"}},
+    {id:6,type:"account",unread:false,group:"week",time:"Mon, 08 Jun",
+      title:"Student account suspended",
+      text:'<b>K. Owusu-Bempah</b> suspended <b>kweku.addo@coastline.edu.gh</b> (registry hold). The student\'s sealed record is unaffected.',
+      action:{label:"View users",href:"users.html"}},
+    {id:7,type:"system",unread:false,group:"week",time:"Mon, 08 Jun",
+      title:"14 entries flagged as stale",
+      text:'14 entries unreviewed for over 14 days across 6 industry supervisors. Faculty supervisors were auto-notified per policy.',
+      action:{label:"View internships",href:"internships.html"}},
+    {id:8,type:"key",unread:false,group:"week",time:"Fri, 05 Jun",
+      title:"Verification volume report",
+      text:'<b>96 verifications</b> in the last 7 days (↑12). 4 failed — all against revoked tokens. No suspicious patterns detected.',
+      action:{label:"Generate full report",href:"reports.html"}},
+  ];
+
+  const TYPES=[
+    {key:"all",label:"All"},
+    {key:"request",label:"Requests"},
+    {key:"key",label:"Keys & tokens"},
+    {key:"account",label:"Accounts"},
+    {key:"system",label:"System"},
+  ];
+  const GROUPS={today:"Today",yesterday:"Yesterday",week:"Earlier this week"};
+  const ICONS={
+    request:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 10v6M14 10v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    key:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="8.5" cy="13.5" r="4.5" stroke="currentColor" stroke-width="1.8"/><path d="M12 12l8-8M17 7l2.5 2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+    account:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M5 20a7 7 0 0114 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+    system:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6l7-3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  };
+
+  let filter="all";
+  const feed=document.getElementById('feed');
+  const filtersEl=document.getElementById('filters');
+  const countLine=document.getElementById('count-line');
+  const emptyEl=document.getElementById('empty');
+  const msg=document.getElementById('msg');
+
+  function counts(){
+    const c={all:NOTIFS.length};
+    TYPES.slice(1).forEach(t=>c[t.key]=NOTIFS.filter(n=>n.type===t.key).length);
+    return c;
+  }
+  function renderFilters(){
+    const c=counts();
+    filtersEl.innerHTML=TYPES.map(t=>
+      `<button class="railbtn" aria-pressed="${filter===t.key}" data-k="${t.key}">${t.label}<span class="count">${c[t.key]}</span></button>`
+    ).join('');
+    filtersEl.querySelectorAll('.railbtn').forEach(b=>b.addEventListener('click',()=>{filter=b.dataset.k;render()}));
+  }
+  function render(){
+    renderFilters();
+    const items=NOTIFS.filter(n=>filter==='all'||n.type===filter);
+    const unread=NOTIFS.filter(n=>n.unread).length;
+    countLine.innerHTML=`<b>${unread} unread</b> · ${items.length} shown`;
+    document.getElementById('bell-dot').style.display=unread?'':'none';
+    if(!items.length){feed.innerHTML='';emptyEl.hidden=false;return}
+    emptyEl.hidden=true;
+    let html='';
+    Object.keys(GROUPS).forEach(g=>{
+      const gi=items.filter(n=>n.group===g);
+      if(!gi.length)return;
+      html+=`<div class="ngroup-h">${GROUPS[g]}</div><ul class="nfeed">`;
+      gi.forEach(n=>{
+        html+=`<li class="nitem ${n.unread?'unread':''}">
+          <div class="nicon na-${n.type}" aria-hidden="true">${ICONS[n.type]}</div>
+          <div class="nbody">
+            <div class="ntop"><span class="ntitle">${n.title}</span>${n.unread?'<span class="ndot" aria-label="unread"></span>':''}</div>
+            <p class="ntext">${n.text}</p>
+            <div class="nfoot">
+              <span class="ntime">${n.time}</span>
+              ${n.action?`<a class="nlink" href="${n.action.href}">${n.action.label} →</a>`:''}
+              ${n.unread?'<button class="nread" data-read="'+n.id+'">Mark as read</button>':''}
+            </div>
+          </div>
+        </li>`;
+      });
+      html+='</ul>';
+    });
+    feed.innerHTML=html;
+    feed.querySelectorAll('[data-read]').forEach(b=>b.addEventListener('click',()=>{
+      const n=NOTIFS.find(x=>x.id==b.dataset.read);if(n)n.unread=false;render();
+    }));
+  }
+  document.getElementById('mark-all').addEventListener('click',()=>{
+    NOTIFS.forEach(n=>n.unread=false);render();
+    msg.classList.add('show');
+    msg.innerHTML='<svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> All notifications marked as read.';
+    setTimeout(()=>msg.classList.remove('show'),3500);
+  });
+  render();
+</script>
+</body>
+</html>

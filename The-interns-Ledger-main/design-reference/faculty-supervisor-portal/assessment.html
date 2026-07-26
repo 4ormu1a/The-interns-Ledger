@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assessment — Ama Mensah — The Interns Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/main.css">
+<style>
+  .pagehead{display:flex;align-items:center;gap:14px;margin-bottom:20px;flex-wrap:wrap}
+  .pagehead h1{font-size:clamp(1.5rem,3vw,1.9rem)}
+  .due{display:inline-flex;align-items:center;gap:5px;font-size:.74rem;font-weight:700;
+    padding:4px 11px;border-radius:999px;background:var(--amber-bg);color:var(--amber)}
+
+  .grid{display:grid;grid-template-columns:1fr 340px;gap:18px;align-items:start}
+
+  /* form card */
+  .f-head{padding:20px 24px;border-bottom:1px solid var(--line);display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+  .q-avatar{width:44px;height:44px;border-radius:50%;background:rgba(13,83,14,.1);
+    color:var(--green-900);display:grid;place-items:center;font-weight:700;font-size:.84rem;flex:none}
+  .f-who b{display:block;font-size:1rem;color:var(--green-900)}
+  .f-who span{font-size:.8rem;color:var(--muted-2)}
+  .f-type{margin-left:auto;font-size:.8rem;color:var(--muted-2);text-align:right}
+  .f-type b{display:block;color:var(--green-900);font-size:.92rem}
+  .f-body{padding:22px 24px}
+  .f-label{font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--muted-2);margin-bottom:10px}
+
+  /* grade picker */
+  .grades{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:8px}
+  .gradebtn{font-family:inherit;font-size:1.05rem;font-weight:800;color:var(--green-900);
+    background:var(--white);border:1.5px solid var(--line);border-radius:12px;padding:.85rem 0;
+    cursor:pointer;transition:border-color .18s,background .18s,box-shadow .18s}
+  .gradebtn:hover{border-color:rgba(8,203,0,.45)}
+  .gradebtn[aria-pressed="true"]{background:var(--green-900);color:#fff;border-color:var(--green-900);
+    box-shadow:0 6px 16px rgba(13,83,14,.25)}
+  .grade-hint{font-size:.8rem;color:var(--muted-2);margin-bottom:22px;min-height:1.2em}
+
+  /* rubric */
+  .crit{padding:14px 0;border-bottom:1px solid var(--line)}
+  .crit:first-of-type{padding-top:4px}
+  .crit:last-of-type{border-bottom:0;padding-bottom:4px}
+  .crit-top{display:flex;align-items:baseline;gap:10px;margin-bottom:8px}
+  .crit-top b{font-size:.92rem;color:var(--green-900)}
+  .crit-top span{font-size:.78rem;color:var(--muted-2)}
+  .crit-top .val{margin-left:auto;font-size:.82rem;font-weight:700;color:var(--green-700)}
+  .dots{display:flex;gap:8px}
+  .dot-btn{width:34px;height:34px;border-radius:50%;border:1.6px solid var(--line);background:var(--white);
+    font-family:inherit;font-size:.8rem;font-weight:700;color:var(--muted-2);cursor:pointer;
+    transition:all .15s;display:grid;place-items:center}
+  .dot-btn:hover{border-color:rgba(8,203,0,.5);color:var(--green-700)}
+  .dot-btn.on{background:var(--green-bright);border-color:var(--green-bright);color:#fff}
+
+  textarea{min-height:130px;resize:vertical}
+  .charct{font-size:.76rem;color:var(--muted-2);text-align:right;margin-top:5px}
+  .declare{display:flex;gap:10px;align-items:flex-start;margin:18px 0;font-size:.84rem;color:var(--muted)}
+  .declare input{width:17px;height:17px;accent-color:var(--green-900);padding:0;margin-top:2px;flex:none}
+  .f-actions{display:flex;gap:10px;flex-wrap:wrap}
+
+  /* evidence panel */
+  .panel{position:sticky;top:84px}
+  .p-head{padding:18px 22px;border-bottom:1px solid var(--line)}
+  .p-head h2{font-size:1.02rem}
+  .p-head p{font-size:.8rem;color:var(--muted);margin-top:3px}
+  .p-body{padding:16px 22px}
+  .ev{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line);
+    font-size:.84rem;color:var(--muted)}
+  .ev:first-child{padding-top:0}
+  .ev:last-child{border-bottom:0;padding-bottom:0}
+  .ev svg{flex:none;margin-top:2px;color:var(--green-700)}
+  .ev b{color:var(--green-900)}
+  .p-links{display:flex;flex-direction:column;gap:8px;padding:0 22px 20px}
+  .p-links .btn{width:100%;justify-content:center}
+  .p-note{margin:0 22px 20px;display:flex;gap:8px;align-items:flex-start;font-size:.76rem;color:var(--muted);
+    padding:11px 13px;background:rgba(231,225,177,.4);border-radius:10px;border:1px solid var(--line)}
+  .p-note svg{flex:none;margin-top:1px;color:var(--green-700)}
+
+  /* success state */
+  .done{display:none;text-align:center;padding:46px 24px}
+  .done.show{display:block;animation:rise .4s cubic-bezier(.2,.7,.2,1)}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .done .ic{width:74px;height:74px;border-radius:22px;background:rgba(8,203,0,.14);color:var(--green-700);
+    display:grid;place-items:center;margin:0 auto 18px}
+  .done h2{font-size:1.3rem;margin-bottom:6px}
+  .done p{color:var(--muted);font-size:.92rem;max-width:46ch;margin:0 auto 22px}
+  .done .acts{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+
+  /* modal */
+  .overlay{position:fixed;inset:0;background:rgba(3,3,2,.45);z-index:60;display:none;
+    align-items:center;justify-content:center;padding:20px}
+  .overlay.open{display:flex}
+  .modal{background:var(--white);border-radius:18px;max-width:440px;width:100%;padding:26px;box-shadow:var(--shadow-md)}
+  .modal h3{font-size:1.1rem;margin-bottom:8px}
+  .modal p{font-size:.88rem;color:var(--muted);margin-bottom:8px}
+  .modal .sum{font-size:.92rem;color:var(--green-900);font-weight:700;background:rgba(8,203,0,.08);
+    border:1px solid rgba(8,203,0,.25);border-radius:11px;padding:10px 14px;margin:12px 0 18px}
+  .modal .m-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+
+  @media(max-width:920px){
+    .grid{grid-template-columns:1fr}
+    .panel{position:static}
+  }
+  @media(max-width:560px){
+    .grades{grid-template-columns:repeat(3,1fr)}
+    .f-type{margin-left:0;text-align:left;width:100%}
+    .f-actions .btn{flex:1;justify-content:center}
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<!-- ─── TOP BAR ─── -->
+<header class="topbar">
+  <div class="tb-inner">
+    <a class="brand" href="dashboard.html" aria-label="The Interns Ledger — dashboard">
+      <svg class="mark" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+        <path d="M24 12c-4-3-9-3.5-13-2.5v25c4-1 9-.5 13 2.5 4-3 9-3.5 13-2.5v-25C33 8.5 28 9 24 12Z" stroke="#0D530E" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M24 12v25" stroke="#0D530E" stroke-width="2"/>
+        <path d="M14 17h6M14 21h6M28 17h6M28 21h6M14 25h6M28 25h6" stroke="#306D29" stroke-width="1.3" stroke-linecap="round"/>
+      </svg>
+      <span class="name"><b>THE INTERNS</b><span>LEDGER</span></span>
+    </a>
+    <div class="tb-right">
+      <a class="iconbtn" href="notifications.html" aria-label="Notifications — 3 unread">
+        <span class="dot"></span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 9a6 6 0 1112 0c0 5 2 6 2 6H4s2-1 2-6Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M10 20a2 2 0 004 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </a>
+      <div class="user">
+        <div class="avatar" aria-hidden="true">ED</div>
+        <div class="u-meta"><b>Dr. Esi Dankwa</b><span class="role">Faculty supervisor</span></div>
+      </div>
+      <a class="iconbtn" href="../public/login.html" aria-label="Log out" title="Log out">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M15 12H5M9 8l-4 4 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 4h7a1 1 0 011 1v14a1 1 0 01-1 1h-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+  </div>
+</header>
+
+<!-- ─── MAIN ─── -->
+<main id="main" class="wrap">
+  <nav class="crumbs" aria-label="Breadcrumb">
+    <a href="dashboard.html">Dashboard</a>
+    <span class="sep">/</span>
+    <a href="students.html">Assigned students</a>
+    <span class="sep">/</span><span>Assessment — Ama Mensah</span>
+  </nav>
+
+  <div class="pagehead">
+    <h1 id="page-title" tabindex="-1">Mid-term assessment</h1>
+    <span class="due">Due 15 Jun 2026</span>
+  </div>
+
+  <div class="grid">
+
+    <!-- ════════ LEFT: ASSESSMENT FORM ════════ -->
+    <div class="card" style="overflow:hidden">
+      <div id="form-wrap">
+        <div class="f-head">
+          <div class="q-avatar" aria-hidden="true">AM</div>
+          <div class="f-who">
+            <b>Ama Mensah</b>
+            <span>BSc Computer Science · Nimbus Software Ltd. · week 14 of 18</span>
+          </div>
+          <div class="f-type"><b>Mid-term</b>weight 30% of internship grade</div>
+        </div>
+
+        <form class="f-body" id="as-form" novalidate>
+          <div class="f-label">Overall grade <span style="color:var(--danger)">*</span></div>
+          <div class="grades" role="group" aria-label="Select overall grade">
+            <button type="button" class="gradebtn" data-g="A">A</button>
+            <button type="button" class="gradebtn" data-g="A−">A−</button>
+            <button type="button" class="gradebtn" data-g="B+">B+</button>
+            <button type="button" class="gradebtn" data-g="B">B</button>
+            <button type="button" class="gradebtn" data-g="C+">C+</button>
+            <button type="button" class="gradebtn" data-g="C">C</button>
+          </div>
+          <p class="grade-hint" id="grade-hint">Select a grade — descriptors appear here.</p>
+
+          <div class="f-label">Criteria (1 = developing · 5 = outstanding)</div>
+          <div class="crit" data-c="Technical competence">
+            <div class="crit-top"><b>Technical competence</b><span>quality &amp; depth of work in sealed entries</span><span class="val">—</span></div>
+            <div class="dots" role="group" aria-label="Technical competence score"></div>
+          </div>
+          <div class="crit" data-c="Professionalism">
+            <div class="crit-top"><b>Professionalism</b><span>consistency, punctual logging, response to feedback</span><span class="val">—</span></div>
+            <div class="dots" role="group" aria-label="Professionalism score"></div>
+          </div>
+          <div class="crit" data-c="Communication">
+            <div class="crit-top"><b>Communication</b><span>clarity of entries, documentation, demos</span><span class="val">—</span></div>
+            <div class="dots" role="group" aria-label="Communication score"></div>
+          </div>
+          <div class="crit" data-c="Initiative">
+            <div class="crit-top"><b>Initiative</b><span>ownership, problem-solving beyond assigned tasks</span><span class="val">—</span></div>
+            <div class="dots" role="group" aria-label="Initiative score"></div>
+          </div>
+
+          <div style="margin-top:20px">
+            <label for="comments" style="display:block;margin-bottom:7px">Comments to student &amp; record <span style="color:var(--danger)">*</span></label>
+            <textarea id="comments" maxlength="1200" placeholder="Ground your comments in the verified record — e.g. the CSV export work in weeks 13–14, the single returned entry, the 7.8 h/day pace…"></textarea>
+            <div class="charct"><span id="ct">0</span>/1200</div>
+          </div>
+
+          <label class="declare">
+            <input type="checkbox" id="declare">
+            <span>I confirm this assessment is based on the student's <b style="color:var(--green-900)">verified record</b> (372.5 sealed hours, 47 entries, hash chain intact as of today) and my academic judgement.</span>
+          </label>
+
+          <div class="f-actions">
+            <button class="btn btn-1" type="submit">Submit assessment</button>
+            <button class="btn btn-3" type="button" id="draft-btn">Save draft</button>
+          </div>
+          <p class="hint" id="form-err" style="color:var(--danger);margin-top:10px;display:none"></p>
+        </form>
+      </div>
+
+      <!-- success -->
+      <div class="done" id="done">
+        <div class="ic" aria-hidden="true">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h2>Assessment recorded</h2>
+        <p id="done-sum">Your mid-term assessment for Ama Mensah has been recorded, timestamped, and added to her internship record. She and her industry supervisor have been notified.</p>
+        <div class="acts">
+          <a class="btn btn-1" href="assessment-history.html">View in history</a>
+          <a class="btn btn-3" href="students.html">Back to students</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════ RIGHT: EVIDENCE PANEL ════════ -->
+    <div class="card panel">
+      <div class="p-head">
+        <h2>Evidence snapshot</h2>
+        <p>Verified record as of Wed, 10 Jun 2026.</p>
+      </div>
+      <div class="p-body">
+        <div class="ev">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="5" y="10" width="14" height="10" rx="2.5" stroke="currentColor" stroke-width="1.8"/><path d="M8 10V8a4 4 0 018 0v2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <span><b>372.5 verified hours</b> · 47 sealed entries · hash chain intact</span>
+        </div>
+        <div class="ev">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 19V5M4 19h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M8 14l3-4 3 2 4-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span><b>7.8 h/day pace</b> · 78% complete in week 14 of 18 · projected finish 09 Jul</span>
+        </div>
+        <div class="ev">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <span><b>Top skills:</b> Node.js (19), SQL (15), Testing (12), Documentation (9)</span>
+        </div>
+        <div class="ev">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M9 14l-5-5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 9h10a6 6 0 016 6v1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <span><b>1 returned entry</b> all term — resubmitted within a day with corrections</span>
+        </div>
+      </div>
+      <div class="p-links">
+        <a class="btn btn-3 btn-sm" href="logbook-view.html">Open sealed logbook</a>
+        <a class="btn btn-3 btn-sm" href="student-progress.html">Open progress view</a>
+      </div>
+      <div class="p-note">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 11v5M12 8h.01" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+        <span>Once submitted, the assessment is timestamped into the record. Corrections require a follow-up note — the original is never overwritten.</span>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ─── CONFIRM MODAL ─── -->
+<div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="m-title">
+  <div class="modal">
+    <h3 id="m-title">Submit this assessment?</h3>
+    <p>This records the grade and comments permanently against Ama Mensah's internship record.</p>
+    <div class="sum" id="m-sum">Mid-term · Grade A− · criteria 4/5/4/4</div>
+    <div class="m-actions">
+      <button class="btn btn-3 btn-sm" id="m-cancel">Go back</button>
+      <button class="btn btn-1 btn-sm" id="m-confirm">Submit &amp; record</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* grade picker */
+  const DESC={'A':'Outstanding — consistently exceeds expectations across the record.',
+    'A−':'Excellent — strong verified output with minor gaps.',
+    'B+':'Very good — solid work, some areas to develop.',
+    'B':'Good — meets expectations with room to grow.',
+    'C+':'Fair — passable but inconsistent evidence.',
+    'C':'Adequate — minimum expectations met.'};
+  let grade=null;
+  const gbtns=[...document.querySelectorAll('.gradebtn')];
+  gbtns.forEach(b=>b.addEventListener('click',()=>{
+    grade=b.dataset.g;
+    gbtns.forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+    document.getElementById('grade-hint').textContent=DESC[grade];
+  }));
+
+  /* rubric dots */
+  const scores={};
+  document.querySelectorAll('.crit').forEach(c=>{
+    const name=c.dataset.c,dots=c.querySelector('.dots'),val=c.querySelector('.val');
+    for(let i=1;i<=5;i++){
+      const b=document.createElement('button');
+      b.type='button';b.className='dot-btn';b.textContent=i;
+      b.setAttribute('aria-label',name+' — '+i+' of 5');
+      b.addEventListener('click',()=>{
+        scores[name]=i;val.textContent=i+'/5';
+        [...dots.children].forEach((d,j)=>d.classList.toggle('on',j<i));
+      });
+      dots.appendChild(b);
+    }
+  });
+
+  /* char count */
+  const comments=document.getElementById('comments'),ct=document.getElementById('ct');
+  comments.addEventListener('input',()=>ct.textContent=comments.value.length);
+
+  /* draft + submit */
+  const err=document.getElementById('form-err');
+  document.getElementById('draft-btn').addEventListener('click',()=>{
+    err.style.display='block';err.style.color='var(--green-700)';
+    err.textContent='Draft saved — you can finish before 15 Jun.';
+  });
+  const overlay=document.getElementById('overlay');
+  document.getElementById('as-form').addEventListener('submit',e=>{
+    e.preventDefault();
+    err.style.color='var(--danger)';
+    if(!grade){err.style.display='block';err.textContent='Select an overall grade.';return}
+    if(Object.keys(scores).length<4){err.style.display='block';err.textContent='Score all four criteria.';return}
+    if(!comments.value.trim()){err.style.display='block';err.textContent='Comments are required — they accompany the grade in the record.';return}
+    if(!document.getElementById('declare').checked){err.style.display='block';err.textContent='Please confirm the declaration.';return}
+    err.style.display='none';
+    document.getElementById('m-sum').textContent=
+      'Mid-term · Grade '+grade+' · criteria '+['Technical competence','Professionalism','Communication','Initiative'].map(k=>scores[k]).join('/');
+    overlay.classList.add('open');
+  });
+  document.getElementById('m-cancel').addEventListener('click',()=>overlay.classList.remove('open'));
+  overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.classList.remove('open')});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')overlay.classList.remove('open')});
+  document.getElementById('m-confirm').addEventListener('click',()=>{
+    overlay.classList.remove('open');
+    document.getElementById('form-wrap').style.display='none';
+    document.getElementById('done').classList.add('show');
+    document.getElementById('done-sum').textContent=
+      'Your mid-term assessment ('+grade+') for Ama Mensah has been recorded, timestamped, and added to her internship record. She and her industry supervisor have been notified.';
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Interns Ledger — Tamper-evident digital internship logbooks</title>
+<meta name="description" content="Students log daily internship activities, supervisors approve remotely, and every approved entry is locked and verifiable with a QR-coded report.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/main.css">
+<style>
+  /* ─── public topbar ─── */
+  .tb-nav{display:flex;align-items:center;gap:26px}
+  .tb-nav a{font-size:.92rem;font-weight:600;color:var(--muted);transition:color .18s}
+  .tb-nav a:hover{color:var(--green-900)}
+  .tb-cta{display:flex;align-items:center;gap:10px}
+  .hamburger{display:none;width:42px;height:42px;border-radius:11px;border:1px solid var(--line);
+    background:var(--white);cursor:pointer;color:var(--green-900);place-items:center}
+  .m-nav{display:none;flex-direction:column;gap:4px;padding:12px 24px 18px;border-bottom:1px solid var(--line);
+    background:rgba(251,245,221,.97)}
+  .m-nav a{padding:11px 12px;border-radius:11px;font-weight:600;color:var(--green-900)}
+  .m-nav a:hover{background:rgba(8,203,0,.08)}
+  .m-nav.open{display:flex}
+
+  /* ─── hero ─── */
+  .hero{max-width:1080px;margin:0 auto;padding:72px 24px 30px;display:grid;
+    grid-template-columns:1.05fr .95fr;gap:48px;align-items:center;position:relative;z-index:1}
+  .kicker{display:inline-flex;align-items:center;gap:8px;font-size:.78rem;font-weight:700;
+    letter-spacing:.06em;text-transform:uppercase;color:var(--green-700);
+    background:rgba(8,203,0,.1);border:1px solid rgba(8,203,0,.25);padding:6px 14px;
+    border-radius:999px;margin-bottom:20px}
+  .kicker .pulse{width:8px;height:8px;border-radius:50%;background:var(--green-bright);
+    animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(8,203,0,.5)}50%{box-shadow:0 0 0 6px rgba(8,203,0,0)}}
+  .hero h1{font-size:clamp(2.2rem,5vw,3.4rem);font-weight:800;margin-bottom:18px}
+  .hero h1 em{font-style:normal;color:var(--green-bright)}
+  .hero .lead{font-size:1.08rem;color:var(--muted);max-width:52ch;margin-bottom:28px;line-height:1.65}
+  .hero-cta{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:34px}
+  .trust{display:flex;gap:28px;flex-wrap:wrap}
+  .trust .t{display:flex;flex-direction:column}
+  .trust .t b{font-size:1.35rem;font-weight:800;color:var(--green-900);letter-spacing:-.03em}
+  .trust .t span{font-size:.8rem;color:var(--muted-2)}
+
+  /* hero visual — ledger mock */
+  .mock{position:relative}
+  .mock .card{padding:22px;border-radius:20px;box-shadow:var(--shadow-md)}
+  .mock .mk-head{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+  .mock .mk-av{width:36px;height:36px;border-radius:50%;background:rgba(13,83,14,.1);
+    color:var(--green-900);display:grid;place-items:center;font-weight:700;font-size:.76rem}
+  .mock .mk-head b{font-size:.9rem;color:var(--green-900)}
+  .mock .mk-head span{display:block;font-size:.74rem;color:var(--muted-2)}
+  .mk-row{display:flex;align-items:center;gap:10px;padding:11px 12px;border:1px solid var(--line);
+    border-radius:12px;margin-bottom:9px;background:var(--white)}
+  .mk-row .d{font-size:.74rem;font-weight:700;color:var(--green-900);width:46px;flex:none}
+  .mk-row .tx{flex:1;min-width:0;font-size:.78rem;color:var(--muted);
+    overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+  .seal{position:absolute;right:-14px;bottom:-16px;background:var(--green-900);color:#fff;
+    border-radius:16px;padding:14px 16px;display:flex;gap:11px;align-items:center;
+    box-shadow:var(--shadow-md)}
+  .seal svg{flex:none}
+  .seal b{display:block;font-size:.8rem}
+  .seal span{font-size:.68rem;opacity:.75;font-family:ui-monospace,Menlo,monospace}
+
+  /* ─── sections ─── */
+  section{max-width:1080px;margin:0 auto;padding:64px 24px;position:relative;z-index:1}
+  .sec-kicker{font-size:.74rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--green-700);margin-bottom:10px}
+  .sec-title{font-size:clamp(1.5rem,3vw,2rem);margin-bottom:10px}
+  .sec-sub{color:var(--muted);font-size:1rem;max-width:60ch;margin-bottom:36px}
+
+  /* how it works */
+  .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;counter-reset:step}
+  .step{background:var(--white);border:1px solid var(--line);border-radius:var(--radius);
+    padding:22px;position:relative;transition:transform .2s,box-shadow .2s}
+  .step:hover{transform:translateY(-3px);box-shadow:var(--shadow-md)}
+  .step::before{counter-increment:step;content:"0" counter(step);font-size:.76rem;font-weight:800;
+    color:var(--green-bright);letter-spacing:.08em}
+  .step .ic{width:44px;height:44px;border-radius:12px;background:rgba(8,203,0,.12);
+    color:var(--green-900);display:grid;place-items:center;margin:12px 0 14px}
+  .step h3{font-size:1rem;margin-bottom:6px}
+  .step p{font-size:.85rem;color:var(--muted);line-height:1.5}
+
+  /* roles */
+  .roles{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .role{display:flex;flex-direction:column;background:var(--white);border:1px solid var(--line);
+    border-radius:var(--radius);padding:22px;transition:transform .2s,box-shadow .2s,border-color .2s}
+  .role:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);border-color:rgba(8,203,0,.4)}
+  .role .ic{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;margin-bottom:14px}
+  .ri-green{background:rgba(8,203,0,.12);color:var(--green-900)}
+  .ri-deep{background:rgba(13,83,14,.1);color:var(--green-700)}
+  .ri-violet{background:var(--violet-bg);color:var(--violet)}
+  .ri-amber{background:var(--amber-bg);color:var(--amber)}
+  .role h3{font-size:1rem;margin-bottom:6px}
+  .role p{font-size:.85rem;color:var(--muted);line-height:1.5;flex:1;margin-bottom:16px}
+  .role .go{font-size:.86rem;font-weight:700;color:var(--green-700);display:inline-flex;gap:6px;align-items:center}
+  .role:hover .go{color:var(--green-bright)}
+
+  /* security */
+  .sec-band{background:var(--green-900);border-radius:24px;padding:48px 44px;color:#fff;
+    display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center}
+  .sec-band h2{color:#fff;font-size:clamp(1.4rem,2.8vw,1.9rem);margin-bottom:12px}
+  .sec-band .p{color:rgba(255,255,255,.78);font-size:.95rem;line-height:1.65;margin-bottom:22px}
+  .sec-feats{display:flex;flex-direction:column;gap:14px}
+  .sf{display:flex;gap:13px;align-items:flex-start;background:rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:14px 16px}
+  .sf svg{flex:none;color:var(--green-bright);margin-top:2px}
+  .sf b{display:block;font-size:.92rem;margin-bottom:2px}
+  .sf span{font-size:.82rem;color:rgba(255,255,255,.7);line-height:1.5}
+
+  /* verify CTA */
+  .verify-cta{background:var(--white);border:1px solid var(--line);border-radius:24px;
+    box-shadow:var(--shadow-sm);padding:44px;text-align:center}
+  .verify-cta .qr{width:74px;height:74px;border-radius:18px;background:rgba(8,203,0,.1);
+    display:grid;place-items:center;margin:0 auto 18px;color:var(--green-900)}
+  .verify-cta h2{font-size:clamp(1.4rem,2.8vw,1.8rem);margin-bottom:8px}
+  .verify-cta p{color:var(--muted);max-width:52ch;margin:0 auto 24px}
+  .v-form{display:flex;gap:10px;max-width:480px;margin:0 auto}
+  .v-form input{flex:1}
+
+  /* footer */
+  footer{border-top:1px solid var(--line);background:rgba(231,225,177,.3);position:relative;z-index:1}
+  .ft{max-width:1080px;margin:0 auto;padding:44px 24px 30px;display:grid;
+    grid-template-columns:1.4fr 1fr 1fr 1fr;gap:30px}
+  .ft .blurb{font-size:.85rem;color:var(--muted);max-width:30ch;margin-top:12px;line-height:1.6}
+  .ft h4{font-size:.78rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--muted-2);margin-bottom:14px}
+  .ft ul{list-style:none;display:flex;flex-direction:column;gap:9px}
+  .ft ul a{font-size:.9rem;color:var(--muted);font-weight:500}
+  .ft ul a:hover{color:var(--green-900)}
+  .ft-base{max-width:1080px;margin:0 auto;padding:18px 24px;border-top:1px solid var(--line);
+    display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;
+    font-size:.8rem;color:var(--muted-2)}
+
+  @media(max-width:920px){
+    .hero{grid-template-columns:1fr;padding-top:48px;gap:40px}
+    .mock{max-width:460px}
+    .steps,.roles{grid-template-columns:1fr 1fr}
+    .sec-band{grid-template-columns:1fr;padding:36px 28px}
+    .ft{grid-template-columns:1fr 1fr}
+  }
+  @media(max-width:680px){
+    .tb-nav{display:none}
+    .tb-cta .btn-3{display:none}
+    .hamburger{display:grid}
+  }
+  @media(max-width:560px){
+    .steps,.roles{grid-template-columns:1fr}
+    .v-form{flex-direction:column}
+    .seal{right:0}
+    .ft{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<!-- ─── TOP BAR (public) ─── -->
+<header class="topbar">
+  <div class="tb-inner">
+    <a class="brand" href="index.html" aria-label="The Interns Ledger — home">
+      <svg class="mark" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+        <path d="M24 12c-4-3-9-3.5-13-2.5v25c4-1 9-.5 13 2.5 4-3 9-3.5 13-2.5v-25C33 8.5 28 9 24 12Z" stroke="#0D530E" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M24 12v25" stroke="#0D530E" stroke-width="2"/>
+        <path d="M14 17h6M14 21h6M28 17h6M28 21h6M14 25h6M28 25h6" stroke="#306D29" stroke-width="1.3" stroke-linecap="round"/>
+      </svg>
+      <span class="name"><b>THE INTERNS</b><span>LEDGER</span></span>
+    </a>
+    <nav class="tb-nav" aria-label="Primary">
+      <a href="#how">How it works</a>
+      <a href="#roles">Who it's for</a>
+      <a href="#security">Security</a>
+      <a href="verify.html">Verify a report</a>
+    </nav>
+    <div class="tb-cta">
+      <a class="btn btn-3 btn-sm" href="login.html">Log in</a>
+      <a class="btn btn-1 btn-sm" href="register.html">Get started</a>
+      <button class="hamburger" id="ham" aria-label="Open menu" aria-expanded="false" aria-controls="m-nav">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+  </div>
+  <nav class="m-nav" id="m-nav" aria-label="Mobile">
+    <a href="#how">How it works</a>
+    <a href="#roles">Who it's for</a>
+    <a href="#security">Security</a>
+    <a href="verify.html">Verify a report</a>
+    <a href="login.html"><b>Log in</b></a>
+  </nav>
+</header>
+
+<main id="main">
+
+  <!-- ════════ HERO ════════ -->
+  <div class="hero">
+    <div>
+      <span class="kicker"><span class="pulse" aria-hidden="true"></span>Tamper-evident internship records</span>
+      <h1>An internship logbook your university can <em>actually trust</em></h1>
+      <p class="lead">Students record daily activities online. Supervisors review and approve remotely. Every approved entry is locked, cryptographically fingerprinted, and bundled into a QR-coded report anyone can verify in seconds.</p>
+      <div class="hero-cta">
+        <a class="btn btn-1" href="register.html">Create your logbook — free</a>
+        <a class="btn btn-3" href="verify.html">Verify a report</a>
+      </div>
+      <div class="trust" role="list" aria-label="Key numbers">
+        <div class="t" role="listitem"><b>12,400+</b><span>entries sealed</span></div>
+        <div class="t" role="listitem"><b>96%</b><span>reviewed in &lt; 3 days</span></div>
+        <div class="t" role="listitem"><b>40+</b><span>partner institutions</span></div>
+      </div>
+    </div>
+
+    <div class="mock" aria-hidden="true">
+      <div class="card">
+        <div class="mk-head">
+          <div class="mk-av">AM</div>
+          <div><b>Ama Mensah</b><span>Week 14 · Nimbus Software Ltd.</span></div>
+          <span class="st st-approved" style="margin-left:auto">78% complete</span>
+        </div>
+        <div class="mk-row"><span class="d">05 Jun</span><span class="tx">Implemented the CSV export endpoint and added keyset pagination…</span><span class="st st-submitted">Pending</span></div>
+        <div class="mk-row"><span class="d">04 Jun</span><span class="tx">Paired on the rate limiter middleware, shipped behind a flag…</span><span class="st st-approved">Approved</span></div>
+        <div class="mk-row"><span class="d">02 Jun</span><span class="tx">Wrote the migration plan for partitioned audit tables…</span><span class="st st-approved">Approved</span></div>
+        <div class="mk-row" style="margin-bottom:0"><span class="d">01 Jun</span><span class="tx">Set up monitoring dashboards for the export service…</span><span class="st st-approved">Approved</span></div>
+      </div>
+      <div class="seal">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6l7-3Z" stroke="#08CB00" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke="#08CB00" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div><b>Sealed &amp; verifiable</b><span>sha256: 7f3a…c91e</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ HOW IT WORKS ════════ -->
+  <section id="how" aria-labelledby="how-title">
+    <div class="sec-kicker">How it works</div>
+    <h2 class="sec-title" id="how-title">From daily log to verified record in four steps</h2>
+    <p class="sec-sub">Built around one rule: once an entry is approved, nobody — not the student, not the supervisor, not even us — can quietly change it.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="6" y="3" width="12" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M9 8h6M9 12h6M9 16h3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+        <h3>Students log daily</h3>
+        <p>Activities, hours, and skills recorded online from anywhere — drafts save automatically until submitted.</p>
+      </div>
+      <div class="step">
+        <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M17 16l2 2 3-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <h3>Supervisors review remotely</h3>
+        <p>Industry supervisors approve entries or return them with comments — no paper logbook to chase or sign.</p>
+      </div>
+      <div class="step">
+        <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="5" y="10" width="14" height="10" rx="2.5" stroke="currentColor" stroke-width="1.8"/><path d="M8 10V8a4 4 0 018 0v2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+        <h3>Entries lock on approval</h3>
+        <p>Approved entries are sealed with a cryptographic hash. Any tampering afterwards is immediately detectable.</p>
+      </div>
+      <div class="step">
+        <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13" y="4" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="4" y="13" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><path d="M13 13h3v3h-3zM17 17h3v3h-3z" stroke="currentColor" stroke-width="1.8"/></svg></div>
+        <h3>Reports verify with a QR</h3>
+        <p>Final reports generate automatically with a QR code — universities and employers verify authenticity instantly.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ ROLES ════════ -->
+  <section id="roles" aria-labelledby="roles-title">
+    <div class="sec-kicker">Who it's for</div>
+    <h2 class="sec-title" id="roles-title">One ledger, four portals</h2>
+    <p class="sec-sub">Each role gets a focused workspace. Log in and you'll land in the right place.</p>
+    <div class="roles">
+      <a class="role" href="login.html?role=student">
+        <div class="ic ri-green"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 9l9-5 9 5-9 5-9-5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M7 11v5c0 1 2.5 2.5 5 2.5s5-1.5 5-2.5v-5" stroke="currentColor" stroke-width="1.8"/></svg></div>
+        <h3>Students</h3>
+        <p>Keep a daily logbook, track approved hours against your target, and generate verifiable reports for your university.</p>
+        <span class="go">Student portal <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      </a>
+      <a class="role" href="login.html?role=industry">
+        <div class="ic ri-deep"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 21V8l8-5 8 5v13" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 21v-6h6v6" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></div>
+        <h3>Industry supervisors</h3>
+        <p>Review submissions from your interns, approve or return with comments, and keep a clean decision trail.</p>
+        <span class="go">Supervisor portal <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      </a>
+      <a class="role" href="login.html?role=faculty">
+        <div class="ic ri-violet"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 19V5a2 2 0 012-2h13v18H6a2 2 0 01-2-2Zm0 0a2 2 0 012-2h13" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></div>
+        <h3>Faculty supervisors</h3>
+        <p>Monitor your students' progress read-only, grade with full context, and record assessments against verified hours.</p>
+        <span class="go">Faculty portal <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      </a>
+      <a class="role" href="login.html?role=admin">
+        <div class="ic ri-amber"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3.2" stroke="currentColor" stroke-width="1.8"/><path d="M19 12a7 7 0 00-.14-1.4l2-1.55-2-3.46-2.35.95a7 7 0 00-2.42-1.4L13.7 2.7h-3.4l-.39 2.44a7 7 0 00-2.42 1.4l-2.35-.95-2 3.46 2 1.55A7 7 0 005 12c0 .48.05.94.14 1.4l-2 1.55 2 3.46 2.35-.95a7 7 0 002.42 1.4l.39 2.44h3.4l.39-2.44a7 7 0 002.42-1.4l2.35.95 2-3.46-2-1.55c.09-.46.14-.92.14-1.4Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></div>
+        <h3>Administrators</h3>
+        <p>Manage placements, users, and supervisor links; audit system activity and oversee every internship in one place.</p>
+        <span class="go">Admin portal <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      </a>
+    </div>
+  </section>
+
+  <!-- ════════ SECURITY ════════ -->
+  <section id="security" aria-labelledby="sec-title">
+    <div class="sec-band">
+      <div>
+        <div class="sec-kicker" style="color:var(--green-bright)">Integrity by design</div>
+        <h2 id="sec-title">Paper logbooks can be rewritten. This one can't.</h2>
+        <p class="p">The Interns Ledger treats every approved entry like a sealed envelope: its contents are hashed at approval, chained into the student's record, and exposed for public verification — so a forged or edited logbook simply doesn't check out.</p>
+        <a class="btn btn-2" href="verify.html">Try the verifier</a>
+      </div>
+      <div class="sec-feats">
+        <div class="sf">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="5" y="10" width="14" height="10" rx="2.5" stroke="currentColor" stroke-width="1.8"/><path d="M8 10V8a4 4 0 018 0v2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <div><b>Locked approvals</b><span>Approved entries become read-only for everyone — including supervisors and admins.</span></div>
+        </div>
+        <div class="sf">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6l7-3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <div><b>Cryptographic fingerprints</b><span>Each entry is hashed (SHA-256) at approval; any change to the record breaks the chain visibly.</span></div>
+        </div>
+        <div class="sf">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13" y="4" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="4" y="13" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><path d="M13 13h3v3h-3zM17 17h3v3h-3z" stroke="currentColor" stroke-width="1.8"/></svg>
+          <div><b>QR-coded reports</b><span>Reports carry a verification token — scan or type it to confirm authenticity, no account needed.</span></div>
+        </div>
+        <div class="sf">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 21a9 9 0 10-9-9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M3 8V12h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 8v4l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <div><b>Full audit trail</b><span>Every submission, return, and approval is timestamped and attributed — disputes resolve with facts.</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ VERIFY CTA ════════ -->
+  <section id="verify-cta" aria-labelledby="vc-title" style="padding-top:0">
+    <div class="verify-cta">
+      <div class="qr" aria-hidden="true">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13" y="4" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="4" y="13" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><path d="M13 13h3v3h-3zM17 17h3v3h-3z" stroke="currentColor" stroke-width="1.8"/></svg>
+      </div>
+      <h2 id="vc-title">Holding a report? Check it now.</h2>
+      <p>Enter the verification token printed under the QR code on any Interns Ledger report. You'll see instantly whether it's authentic and unmodified.</p>
+      <form class="v-form" action="verify.html" method="get">
+        <label for="vtoken" style="position:absolute;left:-9999px">Verification token</label>
+        <input id="vtoken" name="token" placeholder="e.g. TIL-9F3A-72KQ-X1" autocomplete="off">
+        <button class="btn btn-1" type="submit">Verify report</button>
+      </form>
+    </div>
+  </section>
+</main>
+
+<!-- ════════ FOOTER ════════ -->
+<footer>
+  <div class="ft">
+    <div>
+      <a class="brand" href="index.html" aria-label="The Interns Ledger — home">
+        <svg class="mark" viewBox="0 0 48 48" fill="none" aria-hidden="true" style="width:30px;height:30px">
+          <path d="M24 12c-4-3-9-3.5-13-2.5v25c4-1 9-.5 13 2.5 4-3 9-3.5 13-2.5v-25C33 8.5 28 9 24 12Z" stroke="#0D530E" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M24 12v25" stroke="#0D530E" stroke-width="2"/>
+          <path d="M14 17h6M14 21h6M28 17h6M28 21h6M14 25h6M28 25h6" stroke="#306D29" stroke-width="1.3" stroke-linecap="round"/>
+        </svg>
+        <span class="name"><b>THE INTERNS</b><span>LEDGER</span></span>
+      </a>
+      <p class="blurb">Secure digital internship logbooks with locked approvals, cryptographic integrity, and instantly verifiable reports.</p>
+    </div>
+    <div>
+      <h4>Product</h4>
+      <ul>
+        <li><a href="#how">How it works</a></li>
+        <li><a href="#roles">Who it's for</a></li>
+        <li><a href="#security">Security</a></li>
+        <li><a href="verify.html">Verify a report</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Get started</h4>
+      <ul>
+        <li><a href="register.html">Create an account</a></li>
+        <li><a href="login.html">Log in</a></li>
+        <li><a href="reset.html">Reset password</a></li>
+        <li><a href="verify-email.html">Verify your email</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Portals</h4>
+      <ul>
+        <li><a href="login.html?role=student">Student</a></li>
+        <li><a href="login.html?role=industry">Industry supervisor</a></li>
+        <li><a href="login.html?role=faculty">Faculty supervisor</a></li>
+        <li><a href="login.html?role=admin">Administrator</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="ft-base">
+    <span>© 2026 The Interns Ledger. All rights reserved.</span>
+    <span>Built for credible internships.</span>
+  </div>
+</footer>
+
+<script>
+  const ham=document.getElementById('ham'),mnav=document.getElementById('m-nav');
+  ham.addEventListener('click',()=>{
+    const open=mnav.classList.toggle('open');
+    ham.setAttribute('aria-expanded',open);
+    ham.setAttribute('aria-label',open?'Close menu':'Open menu');
+  });
+  mnav.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>mnav.classList.remove('open')));
+</script>
+</body>
+</html>

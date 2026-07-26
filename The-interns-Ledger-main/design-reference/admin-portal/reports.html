@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reports &amp; Data Export — The Interns Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/main.css">
+<style>
+  .pagehead{margin-bottom:22px}
+  .pagehead h1{font-size:clamp(1.7rem,3.4vw,2.1rem);margin-bottom:4px}
+  .pagehead p{color:var(--muted);font-size:.96rem;max-width:64ch}
+  .sec-head{display:flex;align-items:baseline;gap:10px;margin:26px 0 14px}
+  .sec-head h2{font-size:1.1rem}
+  .sec-head .pill{font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:999px}
+  .p-warn{background:var(--danger-bg);color:var(--danger)}
+
+  .status{display:none;gap:9px;align-items:center;border-radius:11px;padding:11px 14px;
+    font-size:.9rem;font-weight:500;margin-bottom:16px}
+  .status.show{display:flex}
+  .status.ok{background:rgba(8,203,0,.1);border:1px solid rgba(8,203,0,.3);color:var(--green-700)}
+  .status svg{flex:none}
+
+  /* erasure requests */
+  .er-row{display:flex;gap:14px;padding:16px 22px;border-bottom:1px solid var(--line);align-items:center;flex-wrap:wrap}
+  .er-row:last-child{border-bottom:0}
+  .er-row.done{background:rgba(8,203,0,.05)}
+  .q-avatar{width:40px;height:40px;border-radius:50%;background:rgba(13,83,14,.1);
+    color:var(--green-900);display:grid;place-items:center;font-weight:700;font-size:.78rem;flex:none}
+  .er-body{min-width:0;flex:1}
+  .er-name{font-size:.92rem;font-weight:700;color:var(--green-900)}
+  .er-name span{font-weight:400;color:var(--muted-2);font-size:.78rem}
+  .er-sub{font-size:.78rem;color:var(--muted-2)}
+  .er-sub b{color:var(--amber)}
+  .er-act{flex:none;display:flex;gap:8px;align-items:center}
+  .done-tag{display:none;align-items:center;gap:6px;font-size:.78rem;font-weight:700;color:var(--green-700)}
+  .er-row.done .er-act .btn{display:none}
+  .er-row.done .done-tag{display:inline-flex}
+
+  /* report cards */
+  .rep-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .rep{display:flex;flex-direction:column;padding:20px;border-radius:14px;border:1px solid var(--line);
+    background:var(--white);box-shadow:var(--shadow-sm)}
+  .rep .ic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;margin-bottom:12px;
+    background:rgba(8,203,0,.12);color:var(--green-900)}
+  .rep h3{font-size:.98rem;margin-bottom:4px}
+  .rep p{font-size:.82rem;color:var(--muted);line-height:1.5;flex:1;margin-bottom:14px}
+  .rep .foot{display:flex;align-items:center;gap:10px}
+  .rep .last{font-size:.72rem;color:var(--muted-2);margin-left:auto}
+
+  /* export builder */
+  .builder{display:grid;grid-template-columns:1.2fr 1fr 1fr auto;gap:12px;align-items:end;padding:22px}
+  .field{display:flex;flex-direction:column}
+  .field label{margin-bottom:7px}
+  .selectwrap{position:relative}
+  select{appearance:none;font-family:inherit;font-size:.9rem;font-weight:600;color:var(--green-900);
+    background:var(--white);border:1.5px solid var(--line);border-radius:11px;
+    padding:.74rem 2.2rem .74rem .9rem;cursor:pointer;width:100%}
+  select:hover{border-color:rgba(8,203,0,.4)}
+  .selectwrap::after{content:"";position:absolute;right:13px;top:50%;width:8px;height:8px;
+    border-right:1.8px solid var(--green-700);border-bottom:1.8px solid var(--green-700);
+    transform:translateY(-70%) rotate(45deg);pointer-events:none}
+
+  /* export history */
+  .x-row{display:flex;gap:12px;padding:13px 22px;border-bottom:1px solid var(--line);align-items:center}
+  .x-row:last-child{border-bottom:0}
+  .x-ic{width:34px;height:34px;border-radius:10px;background:rgba(13,83,14,.08);color:var(--green-700);
+    display:grid;place-items:center;flex:none}
+  .x-body{min-width:0;flex:1;font-size:.85rem}
+  .x-body b{color:var(--green-900)}
+  .x-meta{font-size:.72rem;color:var(--muted-2);margin-top:1px}
+  .x-act{flex:none}
+
+  .note{display:flex;gap:10px;align-items:flex-start;margin-top:16px;padding:14px 18px;border-radius:13px;
+    background:rgba(231,225,177,.45);border:1px solid var(--line);font-size:.84rem;color:var(--muted)}
+  .note svg{flex:none;margin-top:2px;color:var(--green-700)}
+  .note b{color:var(--green-900)}
+
+  /* modal */
+  .overlay{position:fixed;inset:0;background:rgba(3,3,2,.45);z-index:60;display:none;
+    align-items:center;justify-content:center;padding:20px}
+  .overlay.open{display:flex}
+  .modal{background:var(--white);border-radius:18px;max-width:470px;width:100%;padding:26px;box-shadow:var(--shadow-md)}
+  .modal h3{font-size:1.1rem;margin-bottom:8px}
+  .modal p{font-size:.88rem;color:var(--muted);margin-bottom:12px}
+  .modal ul{margin:0 0 18px 18px;font-size:.84rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+  .modal ul b{color:var(--green-900)}
+  .modal .m-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+
+  @media(max-width:880px){
+    .rep-grid{grid-template-columns:1fr}
+    .builder{grid-template-columns:1fr 1fr}
+  }
+  @media(max-width:560px){
+    .builder{grid-template-columns:1fr}
+    .er-act{width:100%}
+    .er-act .btn{flex:1;justify-content:center}
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<!-- ─── TOP BAR ─── -->
+<header class="topbar">
+  <div class="tb-inner">
+    <a class="brand" href="dashboard.html" aria-label="The Interns Ledger — admin dashboard">
+      <svg class="mark" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+        <path d="M24 12c-4-3-9-3.5-13-2.5v25c4-1 9-.5 13 2.5 4-3 9-3.5 13-2.5v-25C33 8.5 28 9 24 12Z" stroke="#0D530E" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M24 12v25" stroke="#0D530E" stroke-width="2"/>
+        <path d="M14 17h6M14 21h6M28 17h6M28 21h6M14 25h6M28 25h6" stroke="#306D29" stroke-width="1.3" stroke-linecap="round"/>
+      </svg>
+      <span class="name"><b>THE INTERNS</b><span>LEDGER</span></span>
+    </a>
+    <div class="tb-right">
+      <a class="iconbtn" href="notifications.html" aria-label="Notifications — 5 unread">
+        <span class="dot"></span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 9a6 6 0 1112 0c0 5 2 6 2 6H4s2-1 2-6Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M10 20a2 2 0 004 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </a>
+      <div class="user">
+        <div class="avatar" aria-hidden="true">SA</div>
+        <div class="u-meta"><b>Selorm Adjei</b><span class="role">Administrator</span></div>
+      </div>
+      <a class="iconbtn" href="../public/login.html" aria-label="Log out" title="Log out">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M15 12H5M9 8l-4 4 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 4h7a1 1 0 011 1v14a1 1 0 01-1 1h-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+  </div>
+</header>
+
+<!-- ─── MAIN ─── -->
+<main id="main" class="wrap">
+  <nav class="crumbs" aria-label="Breadcrumb">
+    <a href="dashboard.html">Dashboard</a>
+    <span class="sep">/</span><span>Reports &amp; data export</span>
+  </nav>
+
+  <div class="pagehead">
+    <h1 id="page-title" tabindex="-1">Reports &amp; data export</h1>
+    <p>Generate system reports, export datasets for the registry, and process data-protection requests.</p>
+  </div>
+
+  <div class="status ok" id="msg" role="status" aria-live="polite"></div>
+
+  <!-- ════════ ERASURE REQUESTS ════════ -->
+  <div class="sec-head">
+    <h2>Data-erasure requests</h2>
+    <span class="pill p-warn" id="er-pill">2 pending</span>
+  </div>
+  <div class="card" style="overflow:hidden">
+
+    <div class="er-row" data-name="F. Mensimah">
+      <div class="q-avatar" aria-hidden="true">FM</div>
+      <div class="er-body">
+        <div class="er-name">Faustina Mensimah <span>· graduated 2025 · Coastline University</span></div>
+        <div class="er-sub">Filed 03 Jun 2026 · <b>respond by 03 Jul</b> · record: 1 completed internship, 196 sealed entries</div>
+      </div>
+      <div class="er-act">
+        <button class="btn btn-3 btn-sm" data-review="Faustina Mensimah">Review</button>
+        <button class="btn btn-1 btn-sm" data-anon="Faustina Mensimah">Anonymise</button>
+        <span class="done-tag"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Anonymised</span>
+      </div>
+    </div>
+
+    <div class="er-row" data-name="K. Asiedu">
+      <div class="q-avatar" aria-hidden="true">KA</div>
+      <div class="er-body">
+        <div class="er-name">Kwame Asiedu <span>· graduated 2025 · Highlands Tech Institute</span></div>
+        <div class="er-sub">Filed 06 Jun 2026 · <b>respond by 06 Jul</b> · record: 2 completed internships, 341 sealed entries</div>
+      </div>
+      <div class="er-act">
+        <button class="btn btn-3 btn-sm" data-review="Kwame Asiedu">Review</button>
+        <button class="btn btn-1 btn-sm" data-anon="Kwame Asiedu">Anonymise</button>
+        <span class="done-tag"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Anonymised</span>
+      </div>
+    </div>
+
+  </div>
+  <div class="note">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="5" y="10" width="14" height="10" rx="2.5" stroke="currentColor" stroke-width="1.8"/><path d="M8 10V8a4 4 0 018 0v2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    <span><b>Erasure anonymises — it never breaks the chain.</b> Personal identifiers are replaced with irreversible pseudonyms; sealed hashes and institutional statistics remain valid. Verification tokens for the record are revoked automatically.</span>
+  </div>
+
+  <!-- ════════ SYSTEM REPORTS ════════ -->
+  <div class="sec-head"><h2>System reports</h2></div>
+  <div class="rep-grid">
+
+    <div class="rep">
+      <div class="ic" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 19V5M4 19h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M8 14l3-4 3 2 4-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <h3>Monthly activity report</h3>
+      <p>Entries logged, sealed, and returned; verification volume; active users by role — May 2026.</p>
+      <div class="foot">
+        <button class="btn btn-1 btn-sm" data-gen="Monthly activity report (May 2026)">Generate PDF</button>
+        <span class="last">last run 01 Jun</span>
+      </div>
+    </div>
+
+    <div class="rep">
+      <div class="ic" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 9l9-5 9 5-9 5-9-5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M7 11v5c0 1 2.5 2.5 5 2.5s5-1.5 5-2.5v-5" stroke="currentColor" stroke-width="1.8"/></svg></div>
+      <h3>Cohort completion report</h3>
+      <p>Hours progress and projected finishes for all 318 active internships, grouped by institution and programme.</p>
+      <div class="foot">
+        <button class="btn btn-1 btn-sm" data-gen="Cohort completion report">Generate PDF</button>
+        <span class="last">last run 08 Jun</span>
+      </div>
+    </div>
+
+    <div class="rep">
+      <div class="ic" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 8v5l3 2" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg></div>
+      <h3>Supervisor responsiveness</h3>
+      <p>Average review times per industry supervisor; entries pending &gt;5 and &gt;14 days; return rates.</p>
+      <div class="foot">
+        <button class="btn btn-1 btn-sm" data-gen="Supervisor responsiveness report">Generate PDF</button>
+        <span class="last">last run 08 Jun</span>
+      </div>
+    </div>
+
+    <div class="rep">
+      <div class="ic" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6l7-3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <h3>Integrity &amp; verification report</h3>
+      <p>Hash-chain check results, key usage, verification attempts (incl. failures), and revocations — auditor-ready.</p>
+      <div class="foot">
+        <button class="btn btn-1 btn-sm" data-gen="Integrity & verification report">Generate PDF</button>
+        <span class="last">last run 01 Jun</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ════════ DATA EXPORT ════════ -->
+  <div class="sec-head"><h2>Data export</h2></div>
+  <div class="card" style="overflow:hidden">
+    <div class="builder">
+      <div class="field">
+        <label for="ds">Dataset</label>
+        <div class="selectwrap">
+          <select id="ds">
+            <option selected>Sealed entries (metadata only)</option>
+            <option>Internships &amp; placements</option>
+            <option>Users &amp; roles</option>
+            <option>Audit trail</option>
+            <option>Assessments</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="fmt">Format</label>
+        <div class="selectwrap">
+          <select id="fmt"><option selected>CSV</option><option>JSON</option><option>XLSX</option></select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="rng">Period</label>
+        <div class="selectwrap">
+          <select id="rng"><option>Last 30 days</option><option selected>This term (Jan–Jun 2026)</option><option>All time</option></select>
+        </div>
+      </div>
+      <button class="btn btn-1" id="export-btn">Export</button>
+    </div>
+
+    <div class="x-row">
+      <div class="x-ic" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 4h11l3 3v13H5V4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 11h8M8 15h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+      <div class="x-body"><b>internships_2026H1.csv</b><div class="x-meta">Internships &amp; placements · Jan–Jun 2026 · by K. Owusu-Bempah · 08 Jun, 15:40 · 318 rows</div></div>
+      <div class="x-act"><button class="btn btn-3 btn-sm" data-dl="internships_2026H1.csv">Download</button></div>
+    </div>
+    <div class="x-row">
+      <div class="x-ic" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 4h11l3 3v13H5V4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 11h8M8 15h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+      <div class="x-body"><b>audit_trail_may2026.json</b><div class="x-meta">Audit trail · May 2026 · by you · 01 Jun, 09:12 · 1,963 events</div></div>
+      <div class="x-act"><button class="btn btn-3 btn-sm" data-dl="audit_trail_may2026.json">Download</button></div>
+    </div>
+    <div class="x-row">
+      <div class="x-ic" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 4h11l3 3v13H5V4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 11h8M8 15h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+      <div class="x-body"><b>sealed_entries_meta_term.csv</b><div class="x-meta">Sealed entries (metadata) · Jan–Jun 2026 · by you · 28 May, 11:03 · 11,892 rows</div></div>
+      <div class="x-act"><button class="btn btn-3 btn-sm" data-dl="sealed_entries_meta_term.csv">Download</button></div>
+    </div>
+  </div>
+  <div class="note">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 11v5M12 8h.01" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+    <span><b>Exports exclude entry content by default.</b> Logbook text stays inside the system; exports carry metadata (dates, hours, statuses, hashes) unless a content export is specifically authorised. Every export is audit-logged with your identity.</span>
+  </div>
+
+</main>
+
+<!-- ─── ANONYMISE MODAL ─── -->
+<div class="overlay" id="an-overlay" role="dialog" aria-modal="true" aria-labelledby="an-title">
+  <div class="modal">
+    <h3 id="an-title">Anonymise this record?</h3>
+    <p>For <strong id="an-name">…</strong>, this will:</p>
+    <ul>
+      <li>Replace name, email, student ID with <b>irreversible pseudonyms</b></li>
+      <li><b>Revoke</b> all active verification tokens for the record</li>
+      <li>Keep sealed hashes &amp; institutional statistics <b>intact</b></li>
+      <li>Record the action in the <b>audit trail</b></li>
+    </ul>
+    <div class="m-actions">
+      <button class="btn btn-3 btn-sm" id="an-cancel">Cancel</button>
+      <button class="btn btn-1 btn-sm" id="an-confirm">Anonymise record</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const msg=document.getElementById('msg');
+  function flash(text){
+    msg.innerHTML='<svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> '+text;
+    msg.classList.add('show');setTimeout(()=>msg.classList.remove('show'),4000);
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  /* erasure */
+  const anO=document.getElementById('an-overlay');
+  let anRow=null,pending=2;
+  const pill=document.getElementById('er-pill');
+  document.querySelectorAll('[data-anon]').forEach(b=>b.addEventListener('click',()=>{
+    anRow=b.closest('.er-row');
+    document.getElementById('an-name').textContent=b.dataset.anon;
+    anO.classList.add('open');
+  }));
+  document.getElementById('an-cancel').addEventListener('click',()=>anO.classList.remove('open'));
+  anO.addEventListener('click',e=>{if(e.target===anO)anO.classList.remove('open')});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')anO.classList.remove('open')});
+  document.getElementById('an-confirm').addEventListener('click',()=>{
+    anO.classList.remove('open');
+    if(anRow)anRow.classList.add('done');
+    pending--;pill.textContent=pending?pending+' pending':'All processed';
+    flash('Record anonymised and tokens revoked — recorded in the audit trail.');
+  });
+  document.querySelectorAll('[data-review]').forEach(b=>b.addEventListener('click',()=>{
+    flash('Full request details for '+b.dataset.review+' would open here. (Demo)');
+  }));
+
+  /* reports + exports */
+  document.querySelectorAll('[data-gen]').forEach(b=>b.addEventListener('click',()=>{
+    flash(b.dataset.gen+' queued — you\'ll be notified when it\'s ready. (Demo)');
+  }));
+  document.getElementById('export-btn').addEventListener('click',()=>{
+    const ds=document.getElementById('ds').value,fmt=document.getElementById('fmt').value;
+    flash(ds+' export ('+fmt+') queued and audit-logged. (Demo)');
+  });
+  document.querySelectorAll('[data-dl]').forEach(b=>b.addEventListener('click',()=>{
+    flash(b.dataset.dl+' download would start here. (Demo)');
+  }));
+</script>
+</body>
+</html>
