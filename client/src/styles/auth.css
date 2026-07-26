@@ -42,10 +42,10 @@ select{appearance:none;cursor:pointer}
 .meter{height:6px;border-radius:999px;background:rgba(13,83,14,.1);margin-top:8px;overflow:hidden}
 .meter span{display:block;height:100%;width:0;border-radius:999px;background:var(--danger);transition:width .3s,background .3s}
 .consent{display:flex;gap:10px;align-items:flex-start;margin:8px 0 18px;font-size:.84rem;color:var(--muted)}
-.consent input{width:17px;height:17px;accent-color:var(--green-900);padding:0;margin-top:2px;flex:none}
+.consent input{width:17px;height:17px;accent-color:var(--green-900);padding:0;margin-top:2px;flex:none;appearance:auto;-webkit-appearance:auto}
 .consent a{font-weight:700;color:var(--green-700)}
 .remember{display:flex;align-items:center;gap:9px;margin-bottom:20px;font-size:.88rem;color:var(--muted)}
-.remember input{width:17px;height:17px;accent-color:var(--green-900);padding:0}
+.remember input{width:17px;height:17px;accent-color:var(--green-900);padding:0;appearance:auto;-webkit-appearance:auto}
 .btn-full{width:100%;justify-content:center}
 .divider{display:flex;align-items:center;gap:12px;color:var(--muted-2);font-size:.78rem;font-weight:600;margin:20px 0}
 .divider::before,.divider::after{content:"";height:1px;background:var(--line);flex:1}

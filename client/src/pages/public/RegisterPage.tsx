@@ -22,6 +22,16 @@ export function RegisterPage() {
     e.preventDefault();
     setError("");
     if (!consent) { setError("You must consent to data processing to register."); return; }
+    
+    if (studentRef && !/^[A-Z]{3}\.\d{2}\.\d{3}\.\d{3}\.\d{2}$/i.test(studentRef)) {
+      setError("Index Number must follow the format: SRI.41.000.000.00");
+      return;
+    }
+    if (!programme) {
+      setError("Please select a programme.");
+      return;
+    }
+
     setBusy(true);
     try {
       await authApi.register({
@@ -60,12 +70,31 @@ export function RegisterPage() {
           </div>
           <div className="grid2">
             <div className="field">
-              <label htmlFor="sid">Student ID</label>
-              <input id="sid" placeholder="e.g. CE-MS-6822" value={studentRef} onChange={(e) => setStudentRef(e.target.value)} />
+              <label htmlFor="sid">Index Number</label>
+              <input id="sid" placeholder="e.g. SRI.41.000.000.00" value={studentRef} onChange={(e) => setStudentRef(e.target.value)} />
             </div>
             <div className="field">
               <label htmlFor="prog">Programme</label>
-              <input id="prog" placeholder="e.g. Computer Science & Engineering" value={programme} onChange={(e) => setProgramme(e.target.value)} />
+              <div className="selectwrap">
+                <select id="prog" required value={programme} onChange={(e) => setProgramme(e.target.value)}>
+                  <option value="" disabled>Select your course...</option>
+                  <optgroup label="Undergraduate Degree">
+                    <option value="BSc Mechanical Engineering">BSc Mechanical Engineering</option>
+                    <option value="BSc Electrical and Electronic Engineering">BSc Electrical and Electronic Engineering</option>
+                    <option value="BSc Computer Science and Engineering">BSc Computer Science and Engineering</option>
+                    <option value="BSc Data Science and Analytics Engineering">BSc Data Science and Analytics Engineering</option>
+                    <option value="BSc Geomatic Engineering">BSc Geomatic Engineering</option>
+                    <option value="BSc Geological Engineering">BSc Geological Engineering</option>
+                    <option value="BSc Environmental and Safety Engineering">BSc Environmental and Safety Engineering</option>
+                    <option value="BSc Mathematics">BSc Mathematics</option>
+                    <option value="BSc Civil Engineering">BSc Civil Engineering</option>
+                  </optgroup>
+                  <optgroup label="Diploma">
+                    <option value="Diploma in Plant and Maintenance Engineering">Diploma in Plant and Maintenance Engineering</option>
+                    <option value="Diploma in Electrical and Electronic Engineering">Diploma in Electrical and Electronic Engineering</option>
+                  </optgroup>
+                </select>
+              </div>
             </div>
           </div>
           <div className="field">
