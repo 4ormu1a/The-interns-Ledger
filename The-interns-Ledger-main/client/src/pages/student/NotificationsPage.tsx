@@ -5,10 +5,10 @@ import { notificationsApi } from "../../features/entries/api";
 import { useAuth } from "../../features/auth/AuthContext";
 
 const LABEL: Record<string, string> = {
-  "entry.approved": "Entry approved & sealed",
-  "entry.rejected": "Entry returned with feedback",
-  "supervisor.accepted": "Supervisor accepted your invitation",
-  "entry.submitted": "New logbook entry submitted for review",
+  "entry.approved": "Your work activity was approved! ✅",
+  "entry.rejected": "Your supervisor left feedback on your activity 💬",
+  "supervisor.accepted": "Your supervisor has joined! 🎉",
+  "entry.submitted": "A new daily activity was submitted for your review 📝",
 };
 
 function getRelativeTime(dateString: string) {

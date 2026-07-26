@@ -78,8 +78,7 @@ export function DashboardPage() {
             <Link className="btn btn-3 btn-sm" to="/student/logbook">Open activities</Link>
             {pct >= 100 && internship && (
               <button 
-                className="btn btn-sm" 
-                style={{ background: "var(--brand)", color: "#fff", border: "none", cursor: "pointer", borderRadius: 4, padding: "8px 16px", fontWeight: 500 }}
+                className="btn btn-1 btn-sm" 
                 onClick={async () => {
                   try {
                     await internshipsApi.submitForReview(internship.id);
