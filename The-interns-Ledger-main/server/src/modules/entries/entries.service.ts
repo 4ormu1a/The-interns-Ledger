@@ -1,7 +1,7 @@
 /** Entry lifecycle + window rules (BR-01/02/03, FR-LOG-02..11). All times in institution TZ (BR-14). */
 import { and, desc, eq } from "drizzle-orm";
 import { db } from "../../db/client.js";
-import { internships, logEntries } from "../../db/schema/index.js";
+import { internships, logEntries, notifications } from "../../db/schema/index.js";
 import { ApiError } from "../../middleware/error.js";
 
 const DAY = 86_400_000;
@@ -86,6 +86,15 @@ export async function submitEntry(entry: Entry, tz: string) {
   const [row] = await db.update(logEntries).set({
     state: "submitted", submittedAt: new Date(), rejectReason: null, updatedAt: new Date(),
   }).where(eq(logEntries.id, entry.id)).returning();
+
+  if (internship?.industrySupervisorId) {
+    await db.insert(notifications).values({
+      recipientId: internship.industrySupervisorId,
+      type: "entry.submitted",
+      payload: { entryId: entry.id, workDate: entry.workDate }
+    });
+  }
+
   return row;
 }
 

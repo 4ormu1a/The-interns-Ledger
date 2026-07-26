@@ -16,10 +16,10 @@ export function LogbookPage() {
   return (
     <>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
-        <h1>Logbook</h1>
-        <Link className="btn btn-1 btn-sm" to="/student/logbook/new">New entry</Link>
+        <h1>My Activities</h1>
+        <Link className="btn btn-1 btn-sm" to="/student/logbook/new">Record Activity</Link>
       </div>
-      <div style={{ display: "flex", gap: 4, marginBottom: 20, flexWrap: "nowrap", overflowX: "auto", overflowY: "hidden", WebkitOverflowScrolling: "touch", padding: "4px", paddingBottom: "8px", borderRadius: 8, width: "100%", maxWidth: "100%" }} role="tablist" aria-label="Filter entries by state">
+      <div style={{ display: "flex", gap: 4, marginBottom: 20, flexWrap: "nowrap", overflowX: "auto", overflowY: "hidden", WebkitOverflowScrolling: "touch", padding: "4px", paddingBottom: "8px", borderRadius: 8, width: "100%", maxWidth: "100%" }} role="tablist" aria-label="Filter activities by state">
         {TABS.map((t) => (
           <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)}
             className={"btn btn-sm premium-nav-item " + (tab === t ? "active" : "")} style={{ border: "none", flexShrink: 0 }}>
@@ -32,7 +32,7 @@ export function LogbookPage() {
           : !data?.length ? (
             <div className="premium-empty-state">
               <div className="premium-empty-icon">📁</div>
-              <p className="premium-empty-text">No {tab === "all" ? "" : tab + " "}entries found.</p>
+              <p className="premium-empty-text">No {tab === "all" ? "" : tab + " "}activities found.</p>
               {tab === "all" && <Link className="btn btn-1 btn-sm" to="/student/logbook/new" style={{ marginTop: 16 }}>Log your first day</Link>}
             </div>
           )
@@ -46,7 +46,7 @@ export function LogbookPage() {
                 <span style={{ color: "var(--muted)", fontSize: ".9rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, minWidth: 0 }}>{e.activity}</span>
               </span>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                {e.state === 'approved' && <span title="Cryptographically Sealed" style={{ color: "var(--green-bright)", fontSize: "1rem" }}>🔒</span>}
+                {e.state === 'approved' && <span title="Secured Activity" style={{ color: "var(--green-bright)", fontSize: "1rem" }}>🔒</span>}
                 <StatusPill state={e.state} />
               </div>
             </Link>

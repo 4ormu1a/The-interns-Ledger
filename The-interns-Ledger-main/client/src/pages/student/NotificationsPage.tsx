@@ -8,6 +8,7 @@ const LABEL: Record<string, string> = {
   "entry.approved": "Entry approved & sealed",
   "entry.rejected": "Entry returned with feedback",
   "supervisor.accepted": "Supervisor accepted your invitation",
+  "entry.submitted": "New logbook entry submitted for review",
 };
 
 function getRelativeTime(dateString: string) {
@@ -26,6 +27,7 @@ function NotificationIcon({ type }: { type: string }) {
   if (type === "entry.approved") return <div className="notification-icon approved">🔒</div>;
   if (type === "entry.rejected") return <div className="notification-icon rejected">⚠️</div>;
   if (type === "supervisor.accepted") return <div className="notification-icon supervisor">👤</div>;
+  if (type === "entry.submitted") return <div className="notification-icon">📝</div>;
   return <div className="notification-icon">🔔</div>;
 }
 

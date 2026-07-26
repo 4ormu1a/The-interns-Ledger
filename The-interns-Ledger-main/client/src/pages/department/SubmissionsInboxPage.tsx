@@ -15,7 +15,7 @@ export function SubmissionsInboxPage() {
     <div style={{ maxWidth: 800 }}>
       <h1 style={{ marginBottom: 24 }}>Final submissions inbox</h1>
       <p style={{ color: "var(--muted)", marginBottom: 32 }}>
-        Students who have completed their required hours and submitted their logbooks for final department approval.
+        Students who have successfully completed their internship and submitted their final report for department approval.
       </p>
 
       {!submissions?.length ? (

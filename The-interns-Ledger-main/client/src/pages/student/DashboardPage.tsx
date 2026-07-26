@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Card, StatusPill } from "../../components/ui";
@@ -21,10 +22,27 @@ export function DashboardPage() {
   const radius = 36;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (pct / 100) * circumference;
+  const greeting = useMemo(() => {
+    const name = user?.name.split(" ")[0] || "there";
+    if (recent.length === 0) return `Welcome to your Ledger, ${name}! 👋`;
+    
+    const GREETINGS = [
+      `What's new today, ${name}?`,
+      `Ready to make an impact, ${name}?`,
+      `Let's log some great work, ${name}!`,
+      `Another day of progress, ${name}!`,
+      `Ready to crush it today, ${name}?`,
+      `What did you learn today, ${name}?`
+    ];
+    
+    // Use the current day of the year so the greeting stays stable for the whole day
+    const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
+    return GREETINGS[dayOfYear % GREETINGS.length];
+  }, [user?.name, recent.length]);
 
   return (
     <>
-      <h1 style={{ marginBottom: 4 }}>Welcome back, {user?.name.split(" ")[0]}</h1>
+      <h1 style={{ marginBottom: 4 }}>{greeting}</h1>
       <p style={{ color: "var(--muted)", marginBottom: 22 }}>
         {internship ? `${internship.roleTitle} · ${internship.company}` : "Set up your internship to start logging."}
       </p>
@@ -37,7 +55,7 @@ export function DashboardPage() {
                 <p style={{ fontSize: ".9rem", color: "var(--muted)", marginBottom: 4 }}>
                   <b style={{ color: "var(--green-900)", fontSize: "1.2rem" }}>{progress.data?.approvedHours ?? 0}h</b> / {internship.requiredHours}h
                 </p>
-                <p style={{ fontSize: "0.8rem", color: "var(--muted-2)" }}>Cryptographically secured logs</p>
+                <p style={{ fontSize: "0.8rem", color: "var(--muted-2)" }}>Approved by your supervisor</p>
               </>
             ) : <Link className="btn btn-1 btn-sm" to="/student/internship">Create internship profile</Link>}
           </div>
@@ -56,8 +74,8 @@ export function DashboardPage() {
         <Card className="premium-card" style={{ padding: 22, display: "flex", flexDirection: "column", justifyContent: "center" }}>
           <h3 style={{ marginBottom: 16 }}>Quick actions</h3>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <Link className="btn btn-1 btn-sm" to="/student/logbook/new">New entry</Link>
-            <Link className="btn btn-3 btn-sm" to="/student/logbook">Open logbook</Link>
+            <Link className="btn btn-1 btn-sm" to="/student/logbook/new">Record Activity</Link>
+            <Link className="btn btn-3 btn-sm" to="/student/logbook">Open activities</Link>
             {pct >= 100 && internship && (
               <button 
                 className="btn btn-sm" 
@@ -78,11 +96,11 @@ export function DashboardPage() {
         </Card>
       </div>
       <Card className="premium-card" style={{ padding: "6px 22px" }}>
-        <h3 style={{ margin: "16px 0 12px" }}>Recent entries</h3>
+        <h3 style={{ margin: "16px 0 12px" }}>Recent activities</h3>
         {recent.length === 0 ? (
           <div className="premium-empty-state">
             <div className="premium-empty-icon">📝</div>
-            <p className="premium-empty-text">No entries yet. Start logging your daily activities!</p>
+            <p className="premium-empty-text">No activities yet. Ready to record your first day?</p>
             <Link className="btn btn-1 btn-sm" to="/student/logbook/new" style={{ marginTop: 16 }}>Log your first day</Link>
           </div>
         ) : recent.map((e) => (

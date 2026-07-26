@@ -8,7 +8,7 @@ import "../../styles/supervisor.css";
 
 const NAV = [
   { to: "/department", label: "Inbox", end: true, key: "inbox" },
-  { to: "/department/attention", label: "Needs attention", key: "attention" },
+  { to: "/department/needs-attention", label: "Needs attention", key: "attention" },
   { to: "/department/students", label: "Students" },
 ];
 
