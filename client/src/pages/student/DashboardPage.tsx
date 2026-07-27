@@ -10,7 +10,7 @@ import { ApiClientError } from "../../lib/api";
 export function DashboardPage() {
   const { user } = useAuth();
   const internships = useQuery({ queryKey: ["internships"], queryFn: internshipsApi.list });
-  const internship = internships.data?.[0];
+  const internship = internships.data?.find(i => i.status === "active") || internships.data?.[0];
   const progress = useQuery({
     queryKey: ["progress", internship?.id], enabled: !!internship,
     queryFn: () => internshipsApi.progress(internship!.id),

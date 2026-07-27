@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
-import { eq, and } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { db } from "../../db/client.js";
 import { internships, logEntries, users, assignments } from "../../db/schema/index.js";
 import { requireAuth, requireRole } from "../../middleware/auth.js";
@@ -33,8 +33,8 @@ internshipsRouter.get("/", async (req, res, next) => {
   try {
     const u = req.user!;
     const rows = u.role === "admin"
-      ? await db.query.internships.findMany()
-      : await db.query.internships.findMany({ where: eq(internships.studentId, u.sub) });
+      ? await db.query.internships.findMany({ orderBy: [desc(internships.createdAt)] })
+      : await db.query.internships.findMany({ where: eq(internships.studentId, u.sub), orderBy: [desc(internships.createdAt)] });
     res.json({ data: rows });
   } catch (e) { next(e); }
 });
