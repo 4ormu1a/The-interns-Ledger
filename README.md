@@ -7,7 +7,6 @@ sealed records are publicly verifiable via QR codes. Faculty assess; admins mana
 ## Layout
 - `client/` — React 18 + Vite + TypeScript frontend
 - `server/` — Node + Express + Drizzle (PostgreSQL) API, deployable to Vercel serverless
-- `design-reference/` — the approved 38-page HTML/CSS prototype set (visual source of truth)
 - `docs/` — requirements analysis, architecture, API contract
 
 ## Quick start
