@@ -4,59 +4,79 @@ import { useQuery } from "@tanstack/react-query";
 import { BrandMark } from "../ui";
 import { useAuth, portalPath } from "../../features/auth/AuthContext";
 import { departmentApi } from "../../features/department/api";
+import { notificationsApi } from "../../features/entries/api";
 import "../../styles/supervisor.css";
 
 const NAV = [
-  { to: "/department", label: "Inbox", end: true, key: "inbox" },
-  { to: "/department/attention", label: "Needs attention", key: "attention" },
-  { to: "/department/students", label: "Students" },
+  { to: "/department",           label: "Dashboard",    end: true,  key: null },
+  { to: "/department/students",  label: "My Students",  end: false, key: null },
+  { to: "/department/reports",   label: "Reports Inbox",end: false, key: "inbox" },
+  { to: "/department/at-risk",   label: "At-Risk",      end: false, key: "attention" },
 ];
 
 export function DepartmentShell() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, ready, logout } = useAuth();
   const navigate = useNavigate();
-  
-  const stats = useQuery({ 
-    queryKey: ["department", "stats"], 
-    queryFn: departmentApi.stats, 
-    enabled: ready && !!user && user.role === "department_supervisor" 
+
+  const stats = useQuery({
+    queryKey: ["department", "stats"],
+    queryFn: departmentApi.stats,
+    enabled: ready && !!user && user.role === "department_supervisor",
   });
-  
+
+  const notifications = useQuery({
+    queryKey: ["notifications"],
+    queryFn: notificationsApi.list,
+    enabled: ready && !!user,
+  });
+  const unreadCount = notifications.data?.filter((n) => !n.readAt).length || 0;
+
   if (!ready) return null;
   if (!user) return <Navigate to="/login" replace />;
   if (user.role !== "department_supervisor") return <Navigate to={portalPath(user.role)} replace />;
-  
+
   const initials = user.name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
-  
+  const badgeFor = (key: string | null): number => {
+    if (!key || !stats.data) return 0;
+    return (stats.data as any)[key] ?? 0;
+  };
+
   return (
     <>
       <a className="skip" href="#main">Skip to content</a>
       <header className="topbar">
         <div className="tb-inner">
-          <button className="mobile-menu-btn" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="Toggle menu" style={{ background: "none", border: "none", color: "var(--green-900)", cursor: "pointer", padding: "8px 12px 8px 0" }}>
+          {/* Mobile burger */}
+          <button
+            className="mobile-menu-btn"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle menu"
+            style={{ background: "none", border: "none", color: "var(--green-900)", cursor: "pointer", padding: "8px 12px 8px 0" }}
+          >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               {mobileMenuOpen ? (
                 <>
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
                 </>
               ) : (
                 <>
-                  <line x1="3" y1="12" x2="21" y2="12"></line>
-                  <line x1="3" y1="6" x2="21" y2="6"></line>
-                  <line x1="3" y1="18" x2="21" y2="18"></line>
+                  <line x1="3" y1="12" x2="21" y2="12" />
+                  <line x1="3" y1="6" x2="21" y2="6" />
+                  <line x1="3" y1="18" x2="21" y2="18" />
                 </>
               )}
             </svg>
           </button>
-          
+
           <NavLink className="brand" to="/department">
             <BrandMark />
             <span className="name"><b>THE INTERNS</b><span>LEDGER</span></span>
           </NavLink>
-          
-          <nav className={`premium-nav ${mobileMenuOpen ? 'mobile-open' : ''}`} aria-label="Portal">
+
+          <nav className={`premium-nav ${mobileMenuOpen ? "mobile-open" : ""}`} aria-label="Portal">
+            {/* Mobile drawer header */}
             <div className="drawer-header mobile-only">
               <div className="drawer-profile">
                 <div className="brand" style={{ marginBottom: 16 }}>
@@ -71,25 +91,29 @@ export function DepartmentShell() {
               </div>
               <button className="drawer-close" onClick={() => setMobileMenuOpen(false)} aria-label="Close menu">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
               </button>
             </div>
+
             {NAV.map((n) => {
-              const count = n.key ? (stats.data as any)?.[n.key] : 0;
+              const count = badgeFor(n.key);
               return (
-                <NavLink key={n.to} to={n.to} end={n.end} className={({ isActive }) => "btn btn-sm premium-nav-item " + (isActive ? "active" : "")} style={{ borderColor: "transparent", display: "flex", alignItems: "center", gap: 6 }} onClick={() => setMobileMenuOpen(false)}>
+                <NavLink
+                  key={n.to}
+                  to={n.to}
+                  end={n.end}
+                  className={({ isActive }) => "btn btn-sm premium-nav-item " + (isActive ? "active" : "")}
+                  style={{ borderColor: "transparent", display: "flex", alignItems: "center", gap: 6 }}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
                   {n.label}
-                  {!!count && count > 0 && (
+                  {count > 0 && (
                     <span style={{
-                      background: "rgba(255,255,255,0.15)",
-                      color: "#fff",
-                      fontSize: "0.75rem",
-                      padding: "2px 6px",
-                      borderRadius: 12,
-                      fontWeight: 600,
-                      lineHeight: 1
+                      background: "var(--green-900)", color: "#fff",
+                      fontSize: "0.72rem", padding: "2px 7px", borderRadius: 12,
+                      fontWeight: 700, lineHeight: 1,
                     }}>
                       {count}
                     </span>
@@ -97,53 +121,57 @@ export function DepartmentShell() {
                 </NavLink>
               );
             })}
-            <button 
+
+            {/* Mobile logout */}
+            <button
               className="logout-btn mobile-only-logout"
-              onClick={async () => { await logout(); navigate("/login"); }} 
+              onClick={async () => { await logout(); navigate("/login"); }}
               style={{ background: "none", border: "none", color: "var(--danger)", fontSize: "0.95rem", cursor: "pointer", padding: "12px 16px", display: "flex", alignItems: "center", gap: 12, marginTop: "auto", borderTop: "1px solid var(--line)", width: "100%", justifyContent: "flex-start" }}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                <polyline points="16 17 21 12 16 7"></polyline>
-                <line x1="21" y1="12" x2="9" y2="12"></line>
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
               </svg>
               <span>Log out</span>
             </button>
           </nav>
-          
+
+          {/* Top-right: bell + avatar + logout */}
           <div className="tb-right" style={{ gap: 20, alignItems: "center" }}>
             <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
-              <NavLink to="/department/notifications" className={({ isActive }) => (isActive ? "active" : "")} style={{ color: "var(--green-900)", textDecoration: "none", display: "flex", alignItems: "center", position: "relative" }} title="Alerts">
+              <NavLink
+                to="/department/notifications"
+                style={{ color: "var(--green-900)", textDecoration: "none", display: "flex", alignItems: "center", position: "relative" }}
+                title="Notifications"
+              >
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path>
-                  <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path>
+                  <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+                  <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
                 </svg>
+                {unreadCount > 0 && (
+                  <span style={{ position: "absolute", top: -2, right: -2, background: "var(--danger)", color: "#fff", fontSize: "0.65rem", fontWeight: "bold", width: 14, height: 14, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", lineHeight: 1, border: "2px solid var(--cream)" }}>
+                    {unreadCount}
+                  </span>
+                )}
               </NavLink>
             </div>
             <div className="user" style={{ gap: 12 }}>
-              <span className="avatar">{initials}</span>
+              <span className="avatar" style={{ cursor: "pointer" }} onClick={() => navigate("/department/account")} title="Account Settings">{initials}</span>
               <span className="u-meta"><b>{user.name}</b><span className="role">Department Sup.</span></span>
             </div>
-            <button 
+            <button
               className="logout-btn desktop-only-logout"
-              onClick={async () => { await logout(); navigate("/login"); }} 
+              onClick={async () => { await logout(); navigate("/login"); }}
               style={{ background: "none", border: "none", color: "var(--muted)", fontSize: "0.85rem", cursor: "pointer", padding: "4px 8px", display: "flex", alignItems: "center", gap: 6 }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.color = "var(--danger)";
-                const icon = e.currentTarget.querySelector("svg");
-                if (icon) icon.style.transform = "translateX(3px)";
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.color = "var(--muted)";
-                const icon = e.currentTarget.querySelector("svg");
-                if (icon) icon.style.transform = "translateX(0)";
-              }}
+              onMouseOver={(e) => { e.currentTarget.style.color = "var(--danger)"; const icon = e.currentTarget.querySelector("svg"); if (icon) icon.style.transform = "translateX(3px)"; }}
+              onMouseOut={(e) => { e.currentTarget.style.color = "var(--muted)"; const icon = e.currentTarget.querySelector("svg"); if (icon) icon.style.transform = "translateX(0)"; }}
             >
               <span className="logout-text">Log out</span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transition: "transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)" }}>
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                <polyline points="16 17 21 12 16 7"></polyline>
-                <line x1="21" y1="12" x2="9" y2="12"></line>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transition: "transform 0.2s cubic-bezier(0.34,1.56,0.64,1)" }}>
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
               </svg>
             </button>
           </div>

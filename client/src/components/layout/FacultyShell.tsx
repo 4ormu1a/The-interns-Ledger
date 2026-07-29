@@ -23,7 +23,7 @@ export function FacultyShell() {
           {NAV.map((n) => <NavLink key={n.to} to={n.to} end={n.end} className={({ isActive }) => "btn btn-sm " + (isActive ? "btn-1" : "btn-3")} style={{ borderColor: "transparent" }}>{n.label}</NavLink>)}
         </nav>
         <div className="tb-right">
-          <div className="user"><span className="avatar">{initials}</span><span className="u-meta"><b>{user.name}</b><span className="role">Faculty supervisor</span></span></div>
+          <div className="user"><span className="avatar">{initials}</span><span className="u-meta"><b>{user.name}</b><span className="role">Department supervisor</span></span></div>
           <button className="btn btn-3 btn-sm" onClick={async () => { await logout(); navigate("/login"); }}>Log out</button>
         </div>
       </div></header>

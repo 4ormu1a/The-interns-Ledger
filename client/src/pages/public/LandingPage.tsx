@@ -15,7 +15,7 @@ const STEPS = [
 const ROLES = [
   { t: "Students", d: "Keep a daily logbook, track approved hours against your target, and generate official reports.", cta: "Student portal", role: "student" },
   { t: "Industry supervisors", d: "Review submissions from your interns, approve or return with comments, and keep a clear record of your feedback.", cta: "Supervisor portal", role: "industry" },
-  { t: "Faculty supervisors", d: "Monitor your students' verified progress and record assessments in one place.", cta: "Faculty portal", role: "faculty" },
+  { t: "Department supervisors", d: "Monitor your students' verified progress and record assessments in one place.", cta: "Department portal", role: "faculty" },
   { t: "Administrators", d: "Manage users, system access, and security settings for your institution.", cta: "Admin portal", role: "admin" },
 ];
 

@@ -7,7 +7,7 @@ import { ApiClientError } from "../../lib/api";
 const ROLES = [
   { key: "student", title: "Student", sub: "Log & track" },
   { key: "industry", title: "Industry supervisor", sub: "Review & approve" },
-  { key: "faculty", title: "Faculty supervisor", sub: "Assess progress" },
+  { key: "faculty", title: "Department supervisor", sub: "Assess progress" },
   { key: "admin", title: "Administrator", sub: "Manage system" },
 ] as const;
 

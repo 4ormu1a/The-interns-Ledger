@@ -14,7 +14,7 @@ const LOCK_MINUTES = 15;
 
 const domainOf = (email: string) => email.split("@")[1] ?? "";
 
-export async function register(input: { fullName: string; email: string; password: string; consent: true; programme?: string; studentRef?: string }) {
+export async function register(input: { fullName: string; email: string; password: string; consent: true; programme?: string; studentRef?: string; currentLevel?: number }) {
   // FR-AUTH-01 — institution domain gate
   if (domainOf(input.email) !== env.INSTITUTION_EMAIL_DOMAIN) {
     throw new ApiError(422, "DOMAIN_NOT_ALLOWED",
@@ -40,6 +40,7 @@ export async function register(input: { fullName: string; email: string; passwor
     passwordHash,
     fullName: input.fullName,
     indexNumber: input.studentRef,
+    currentLevel: input.currentLevel,
     departmentId,
     status: "pending",
     consentAt: new Date(), // FR-AUTH-03

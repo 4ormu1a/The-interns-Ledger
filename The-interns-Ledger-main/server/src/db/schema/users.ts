@@ -11,6 +11,7 @@ export const users = pgTable("users", {
   passwordHash: text("password_hash").notNull(),
   fullName: text("full_name").notNull(),
   indexNumber: text("index_number"),
+  currentLevel: integer("current_level"), // 100 | 200 | 300 | 400 — academic year level
   status: userStatus("status").notNull().default("pending"),
   emailVerifiedAt: timestamp("email_verified_at", { withTimezone: true }),
   consentAt: timestamp("consent_at", { withTimezone: true }), // FR-AUTH-03

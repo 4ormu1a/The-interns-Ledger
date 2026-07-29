@@ -4,7 +4,7 @@ export interface SessionUser { id: string; role: string; name: string }
 export interface LoginResponse { accessToken: string; user: SessionUser }
 
 export const authApi = {
-  register: (d: { fullName: string; email: string; password: string; programme?: string; studentRef?: string; consent: true }) =>
+  register: (d: { fullName: string; email: string; password: string; programme?: string; studentRef?: string; currentLevel?: number; consent: true }) =>
     post<{ id: string; email: string; message: string }>("/auth/register", d),
   verifyEmail: (token: string) => post<{ verified: boolean }>("/auth/verify-email", { token }),
   resendVerification: (email: string) => post<{ sent: boolean }>("/auth/resend-verification", { email }),

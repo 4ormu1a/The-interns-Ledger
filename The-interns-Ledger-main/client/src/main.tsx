@@ -20,10 +20,14 @@ import { AccountPage } from "./pages/student/AccountPage";
 import { ReportsPage } from "./pages/student/ReportsPage";
 import { NotificationsPage } from "./pages/student/NotificationsPage";
 import { DepartmentShell } from "./components/layout/DepartmentShell";
-import { SubmissionsInboxPage } from "./pages/department/SubmissionsInboxPage";
-import { SubmissionReviewPage } from "./pages/department/SubmissionReviewPage";
-import { NeedsAttentionPage } from "./pages/department/NeedsAttentionPage";
-import { DepartmentStudentsPage } from "./pages/department/DepartmentStudentsPage";
+import { DeptDashboardPage } from "./pages/department/DeptDashboardPage";
+import { DeptStudentsPage } from "./pages/department/DeptStudentsPage";
+import { DeptStudentProfilePage } from "./pages/department/DeptStudentProfilePage";
+import { DeptReportsInboxPage } from "./pages/department/DeptReportsInboxPage";
+import { DeptReportReviewPage } from "./pages/department/DeptReportReviewPage";
+import { DeptAtRiskPage } from "./pages/department/DeptAtRiskPage";
+import { DeptAssessmentPage } from "./pages/department/DeptAssessmentPage";
+import { DeptAccountPage } from "./pages/department/DeptAccountPage";
 import { SupervisorShell } from "./components/layout/SupervisorShell";
 import { SupervisorDashboard } from "./pages/industry/SupervisorDashboard";
 import { QueuePage } from "./pages/industry/QueuePage";
@@ -82,11 +86,15 @@ createRoot(document.getElementById("root")!).render(
               <Route path="history" element={<HistoryPage />} />
             </Route>
             <Route path="/department" element={<DepartmentShell />}>
-              <Route index element={<SubmissionsInboxPage />} />
+              <Route index element={<DeptDashboardPage />} />
+              <Route path="students" element={<DeptStudentsPage />} />
+              <Route path="students/:id" element={<DeptStudentProfilePage />} />
+              <Route path="students/:id/assessment" element={<DeptAssessmentPage />} />
+              <Route path="reports" element={<DeptReportsInboxPage />} />
+              <Route path="reports/:id" element={<DeptReportReviewPage />} />
+              <Route path="at-risk" element={<DeptAtRiskPage />} />
               <Route path="notifications" element={<NotificationsPage />} />
-              <Route path="submissions/:id" element={<SubmissionReviewPage />} />
-              <Route path="needs-attention" element={<NeedsAttentionPage />} />
-              <Route path="students" element={<DepartmentStudentsPage />} />
+              <Route path="account" element={<DeptAccountPage />} />
             </Route>
             <Route path="/admin" element={<AdminShell />}>
               <Route index element={<AdminDashboard />} />
