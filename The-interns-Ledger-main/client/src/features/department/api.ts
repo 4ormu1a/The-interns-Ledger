@@ -65,6 +65,7 @@ export interface DeptStudentProfile extends DeptStudent {
   sealedReportToken: string | null; // verification token for /verify/:token
   sealedReportId: string | null;
   assessments: Assessment[];
+  internshipHistory?: any[];
 }
 
 // ─── Final Reports Inbox ────────────────────────────────────────────────────────

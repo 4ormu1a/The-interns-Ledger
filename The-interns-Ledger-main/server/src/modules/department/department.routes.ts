@@ -64,7 +64,7 @@ departmentRouter.get("/dashboard", async (req, res, next) => {
 
     // Get all students and their internship data
     const studentsResult = await db.execute(sql`
-      SELECT
+      SELECT DISTINCT ON (u.id)
         u.id, u.full_name, u.index_number, u.current_level,
         i.id as internship_id, i.required_hours, i.start_date, i.end_date,
         sub.id as submission_id, sub.status as submission_status, sub.submitted_at,
@@ -80,10 +80,19 @@ departmentRouter.get("/dashboard", async (req, res, next) => {
         ) as last_entry_date
       FROM users u
       JOIN supervisor_departments sd ON sd.department_id = u.department_id
-      LEFT JOIN internships i ON i.student_id = u.id AND i.status = 'active'
+      LEFT JOIN internships i ON i.student_id = u.id
       LEFT JOIN internship_submissions sub ON sub.internship_id = i.id
       WHERE sd.supervisor_id = ${supervisorId}
         AND u.role = 'student'
+      ORDER BY
+        u.id,
+        CASE i.status WHEN 'active' THEN 0 WHEN 'window_closed' THEN 1 ELSE 2 END ASC,
+        COALESCE((
+          SELECT SUM(le2.hours::numeric)
+          FROM log_entries le2
+          WHERE le2.internship_id = i.id AND le2.state = 'approved'
+        ), 0) DESC,
+        i.start_date DESC NULLS LAST
     `);
 
     const now = new Date();
@@ -242,7 +251,7 @@ departmentRouter.get("/students", async (req, res, next) => {
     const { year } = req.query;
 
     const result = await db.execute(sql`
-      SELECT
+      SELECT DISTINCT ON (u.id)
         u.id, u.full_name, u.email, u.index_number, u.current_level,
         d.name as department_name,
         i.id as internship_id, i.company, i.location, i.role_title,
@@ -263,16 +272,27 @@ departmentRouter.get("/students", async (req, res, next) => {
       FROM users u
       JOIN supervisor_departments sd ON sd.department_id = u.department_id
       JOIN departments d ON d.id = u.department_id
-      LEFT JOIN internships i ON i.student_id = u.id AND i.status = 'active'
+      LEFT JOIN internships i ON i.student_id = u.id
       LEFT JOIN assignments a ON a.internship_id = i.id AND a.kind = 'industry'
       LEFT JOIN users isup ON isup.id = a.supervisor_id
       LEFT JOIN internship_submissions sub ON sub.internship_id = i.id
       WHERE sd.supervisor_id = ${supervisorId}
         AND u.role = 'student'
-      ORDER BY u.full_name ASC
+      ORDER BY
+        u.id,
+        CASE i.status WHEN 'active' THEN 0 WHEN 'window_closed' THEN 1 ELSE 2 END ASC,
+        COALESCE((
+          SELECT SUM(le2.hours::numeric)
+          FROM log_entries le2
+          WHERE le2.internship_id = i.id AND le2.state = 'approved'
+        ), 0) DESC,
+        i.start_date DESC NULLS LAST
     `);
 
-    let rows = result.rows as any[];
+    // DISTINCT ON returns rows sorted by u.id — re-sort by name for display
+    const rows = (result.rows as any[]).sort((a, b) =>
+      (a.full_name ?? "").localeCompare(b.full_name ?? "")
+    );
 
     // Map to front-end shape
     const mapped = rows.map((r) => {
@@ -320,9 +340,9 @@ departmentRouter.get("/students/:studentId", async (req, res, next) => {
     const supervisorId = req.user!.sub;
     const { studentId } = req.params;
 
-    // Scope check + base data
+    // Scope check + base data — pick the most relevant internship as the "primary"
     const result = await db.execute(sql`
-      SELECT
+      SELECT DISTINCT ON (u.id)
         u.id, u.full_name, u.email, u.index_number, u.current_level,
         d.name as department_name,
         i.id as internship_id, i.company, i.location, i.role_title,
@@ -333,7 +353,7 @@ departmentRouter.get("/students/:studentId", async (req, res, next) => {
       FROM users u
       JOIN supervisor_departments sd ON sd.department_id = u.department_id
       JOIN departments d ON d.id = u.department_id
-      LEFT JOIN internships i ON i.student_id = u.id AND i.status = 'active'
+      LEFT JOIN internships i ON i.student_id = u.id
       LEFT JOIN assignments a ON a.internship_id = i.id AND a.kind = 'industry'
       LEFT JOIN users isup ON isup.id = a.supervisor_id
       LEFT JOIN internship_submissions sub ON sub.internship_id = i.id
@@ -342,22 +362,45 @@ departmentRouter.get("/students/:studentId", async (req, res, next) => {
         AND vt.revoked_at IS NULL
       WHERE sd.supervisor_id = ${supervisorId}
         AND u.id = ${studentId}
-      LIMIT 1
+      ORDER BY
+        u.id,
+        CASE i.status WHEN 'active' THEN 0 WHEN 'window_closed' THEN 1 ELSE 2 END ASC,
+        i.start_date DESC NULLS LAST
     `);
 
     const row = result.rows[0] as any;
     if (!row) throw new ApiError(404, "NOT_FOUND", "Student not found or not in your department.");
 
-    // Entry stats
+    // Entry stats — aggregate across all internships for this student
     const statsResult = await db.execute(sql`
       SELECT
-        COUNT(*) FILTER (WHERE state IN ('submitted','approved','rejected')) as total_submitted,
-        COUNT(*) FILTER (WHERE state = 'approved') as total_approved,
-        COUNT(*) FILTER (WHERE state = 'rejected') as total_rejected,
-        COALESCE(SUM(hours::numeric) FILTER (WHERE state = 'approved'), 0) as completed_hours,
-        COALESCE(AVG(hours::numeric) FILTER (WHERE state = 'approved'), 0) as avg_hours
-      FROM log_entries
-      WHERE internship_id = ${row.internship_id ?? null}
+        COUNT(*) FILTER (WHERE le.state IN ('submitted','approved','rejected')) as total_submitted,
+        COUNT(*) FILTER (WHERE le.state = 'approved') as total_approved,
+        COUNT(*) FILTER (WHERE le.state = 'rejected') as total_rejected,
+        COALESCE(SUM(le.hours::numeric) FILTER (WHERE le.state = 'approved'), 0) as completed_hours,
+        COALESCE(AVG(le.hours::numeric) FILTER (WHERE le.state = 'approved'), 0) as avg_hours
+      FROM log_entries le
+      JOIN internships i ON i.id = le.internship_id
+      WHERE i.student_id = ${studentId}
+    `);
+
+    // All internships for history section on profile page
+    const historyResult = await db.execute(sql`
+      SELECT
+        i.id, i.company, i.location, i.role_title, i.required_hours,
+        i.start_date, i.end_date, i.status,
+        isup.full_name as industry_supervisor_name,
+        sub.status as report_status,
+        COALESCE((
+          SELECT SUM(le.hours::numeric) FROM log_entries le
+          WHERE le.internship_id = i.id AND le.state = 'approved'
+        ), 0) as completed_hours
+      FROM internships i
+      LEFT JOIN assignments a ON a.internship_id = i.id AND a.kind = 'industry'
+      LEFT JOIN users isup ON isup.id = a.supervisor_id
+      LEFT JOIN internship_submissions sub ON sub.internship_id = i.id
+      WHERE i.student_id = ${studentId}
+      ORDER BY i.start_date DESC
     `);
     const stats = statsResult.rows[0] as any;
 
@@ -410,6 +453,20 @@ departmentRouter.get("/students/:studentId", async (req, res, next) => {
       };
     });
 
+    const internshipHistory = (historyResult.rows as any[]).map(h => ({
+      id: h.id,
+      company: h.company,
+      location: h.location,
+      roleTitle: h.role_title,
+      requiredHours: h.required_hours,
+      completedHours: parseFloat(h.completed_hours || "0"),
+      startDate: h.start_date,
+      endDate: h.end_date,
+      status: h.status,
+      industrySupervisorName: h.industry_supervisor_name,
+      reportStatus: h.report_status ?? "none",
+    }));
+
     res.json({
       data: {
         id: row.id,
@@ -437,6 +494,7 @@ departmentRouter.get("/students/:studentId", async (req, res, next) => {
         daysRemainingInWindow: daysRemaining,
         sealedReportToken: row.sealed_report_token ?? null,
         sealedReportId: row.sealed_report_id ?? null,
+        internshipHistory,
         assessments,
       },
     });

@@ -199,6 +199,52 @@ export function DeptStudentProfilePage() {
             )}
           </Card>
 
+          {/* Internship History — only shown when student has multiple internships */}
+          {(profile.internshipHistory?.length ?? 0) > 1 && (
+            <Card className="premium-card" style={{ padding: 24 }}>
+              <h3 style={{ margin: "0 0 16px" }}>Internship History</h3>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {profile.internshipHistory!.map((h: any, idx: number) => {
+                  const hPct = h.requiredHours > 0 ? Math.min(100, Math.round((h.completedHours / h.requiredHours) * 100)) : 0;
+                  const isActive = h.status === "active";
+                  const statusLabel = isActive ? "Active" : h.status === "window_closed" ? "Window Closed" : "Archived";
+                  const statusColor = isActive ? "rgba(8,203,0,.15)" : "rgba(13,83,14,.06)";
+                  const statusText = isActive ? "#1a6e1f" : "var(--muted)";
+                  const fmt = (d: string) => new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+                  return (
+                    <div key={h.id} style={{ padding: 16, borderRadius: 12, border: "1px solid var(--line)", background: isActive ? "rgba(8,203,0,.03)" : "transparent" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 8 }}>
+                        <div>
+                          <div style={{ fontWeight: 700, color: "var(--green-900)" }}>{h.company}</div>
+                          <div style={{ fontSize: "0.82rem", color: "var(--muted)" }}>{h.roleTitle}</div>
+                          {h.startDate && (
+                            <div style={{ fontSize: "0.78rem", color: "var(--muted)", marginTop: 2 }}>
+                              {fmt(h.startDate)} – {h.endDate ? fmt(h.endDate) : "ongoing"}
+                            </div>
+                          )}
+                        </div>
+                        <span style={{ padding: "3px 10px", borderRadius: 999, fontSize: "0.73rem", fontWeight: 700, background: statusColor, color: statusText, whiteSpace: "nowrap" }}>
+                          {statusLabel}
+                        </span>
+                      </div>
+                      {h.requiredHours > 0 && (
+                        <div>
+                          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.78rem", color: "var(--muted)", marginBottom: 4 }}>
+                            <span>Progress</span>
+                            <span style={{ fontWeight: 700, color: "var(--green-900)" }}>{hPct}% — {h.completedHours}h / {h.requiredHours}h</span>
+                          </div>
+                          <div style={{ height: 6, borderRadius: 99, background: "rgba(13,83,14,.1)" }}>
+                            <div style={{ width: `${hPct}%`, height: "100%", borderRadius: 99, background: hPct >= 100 ? "var(--green-700)" : "var(--green-500)", transition: "width .4s" }} />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+          )}
+
           {/* Assessments history */}
           {profile.assessments?.length > 0 && (
             <Card className="premium-card" style={{ padding: 24 }}>
