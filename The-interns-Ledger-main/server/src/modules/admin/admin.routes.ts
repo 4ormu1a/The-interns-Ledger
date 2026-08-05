@@ -744,7 +744,7 @@ adminRouter.get("/analytics", async (req, res, next) => {
         SUM(COALESCE(e.hours, 0))::numeric as total_logged_hours
       FROM internships i
       LEFT JOIN (
-        SELECT internship_id, SUM(duration_minutes)/60.0 as hours 
+        SELECT internship_id, SUM(hours) as hours 
         FROM log_entries 
         WHERE state = 'approved' 
         GROUP BY internship_id
@@ -759,7 +759,7 @@ adminRouter.get("/analytics", async (req, res, next) => {
         SELECT 
           i.id,
           i.required_hours,
-          COALESCE(SUM(le.duration_minutes)/60.0, 0) as logged
+          COALESCE(SUM(le.hours), 0) as logged
         FROM internships i
         LEFT JOIN log_entries le ON i.id = le.internship_id AND le.state = 'approved'
         GROUP BY i.id

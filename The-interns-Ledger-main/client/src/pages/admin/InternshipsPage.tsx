@@ -299,16 +299,12 @@ export function InternshipsPage() {
                 <span className="filter-label">Supervisor</span>
                 <CustomSelect options={supervisorOptions} value={addForm.supervisorId} onChange={(v) => setAddForm({ ...addForm, supervisorId: v })} placeholder="Select supervisor…" searchable />
               </div>
-              <div className="filter-group">
-                <span className="filter-label">Kind</span>
-                <CustomSelect options={KIND_OPTIONS} value={addForm.kind} onChange={(v) => setAddForm({ ...addForm, kind: v })} />
-              </div>
-              <label style={{ display: "flex", gap: 10, alignItems: "center", cursor: "pointer", fontSize: "0.88rem" }}>
-                <input type="checkbox" checked={addForm.isPrimaryApprover} onChange={(e) => setAddForm({ ...addForm, isPrimaryApprover: e.target.checked })} />
-                Primary approver (submitted entries route to this supervisor)
-              </label>
               {err && <p style={{ color: "var(--danger)", margin: 0, fontSize: "0.88rem" }}>{err}</p>}
-              <Button variant={1} onClick={() => createAssignMut.mutate(addForm)} disabled={createAssignMut.isPending}>
+              <Button variant={1} onClick={() => {
+                const sup = supervisors.find(s => s.id === addForm.supervisorId);
+                const kind = sup?.role === "faculty_supervisor" ? "faculty" : "industry";
+                createAssignMut.mutate({ ...addForm, kind, isPrimaryApprover: kind === "industry" });
+              }} disabled={createAssignMut.isPending}>
                 {createAssignMut.isPending ? "Adding…" : "Add assignment"}
               </Button>
             </div>

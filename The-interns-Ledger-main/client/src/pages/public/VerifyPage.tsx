@@ -50,7 +50,7 @@ export function VerifyPage() {
       </div>
       <h1 style={{ marginBottom: 6 }}>Verify a record</h1>
       <p style={{ color: "var(--muted)", marginBottom: 18 }}>
-        Paste the verification code from a QR scan or report. Anyone can verify — no account needed.
+        Paste the verification code from a QR scan or report. Anyone can verify, no account needed.
       </p>
       <Card style={{ padding: 22, marginBottom: 20 }}>
         <form onSubmit={onSubmit} style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>

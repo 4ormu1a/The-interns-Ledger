@@ -34,6 +34,7 @@ export function assertSubmitWindow(workDate: string, tz: string) {
 export async function getOwnedActiveInternship(studentId: string) {
   const row = await db.query.internships.findFirst({
     where: and(eq(internships.studentId, studentId), eq(internships.status, "active")),
+    orderBy: [desc(internships.createdAt)],
   });
   if (!row) throw new ApiError(409, "NO_INTERNSHIP", "You need to set up your internship profile before you can log entries.");
   return row;

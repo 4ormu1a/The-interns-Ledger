@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Navigate, NavLink, Outlet, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { BrandMark } from "../ui";
 import { useAuth, portalPath } from "../../features/auth/AuthContext";
+import { notificationsApi } from "../../features/entries/api";
 import "../../styles/supervisor.css";
 
 const NAV = [
@@ -15,6 +17,14 @@ export function SupervisorShell() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, ready, logout } = useAuth();
   const navigate = useNavigate();
+
+  const notifications = useQuery({
+    queryKey: ["notifications"],
+    queryFn: notificationsApi.list,
+    enabled: ready && !!user,
+  });
+  const unreadCount = notifications.data?.filter((n) => !n.readAt).length || 0;
+
   if (!ready) return null;
   if (!user) return <Navigate to="/login" replace />;
   if (user.role !== "industry_supervisor") return <Navigate to={portalPath(user.role)} replace />;
@@ -90,6 +100,11 @@ export function SupervisorShell() {
                   <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path>
                   <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path>
                 </svg>
+                {unreadCount > 0 && (
+                  <span style={{ position: "absolute", top: -2, right: -2, background: "var(--danger)", color: "#fff", fontSize: "0.65rem", fontWeight: "bold", width: 14, height: 14, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", lineHeight: 1, border: "2px solid var(--cream)" }}>
+                    {unreadCount}
+                  </span>
+                )}
               </NavLink>
             </div>
             <div className="user" style={{ gap: 12 }}>

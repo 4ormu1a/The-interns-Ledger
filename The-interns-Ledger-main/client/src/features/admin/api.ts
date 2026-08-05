@@ -42,5 +42,5 @@ export const removeDepartmentSupervisor = (deptId: string, supervisorId: string)
 export const eraseUser = (d: any) => post<any>("/admin/erasure", d);
 export const exportUser = (userId: string) => post<any>("/admin/export", { userId });
 
-export const generateKey = () => post<any>("/admin/keys/generate", {});
+export const generateKey = () => post<any>("/admin/keys", {});
 export const createInternship = (d: any) => post<any>("/admin/internships", d);
