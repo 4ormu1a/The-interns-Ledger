@@ -404,7 +404,7 @@
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  font-size: 0.86rem;
+  font-size: 0.875rem;
 }
 .admin-table thead th {
   text-align: left;
@@ -653,7 +653,7 @@
   letter-spacing: -0.02em;
 }
 .stat-label {
-  font-size: 0.82rem;
+  font-size: 0.875rem;
   color: var(--muted);
   margin-top: 6px;
   font-weight: 500;

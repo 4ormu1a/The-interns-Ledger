@@ -114,7 +114,7 @@ export function RegisterPage() {
               </p>
             </div>
             <div className="field">
-              <label htmlFor="level">Current Level <span style={{ color: "var(--danger)", fontSize: "0.85em" }}>*</span></label>
+              <label htmlFor="level">Current Level</label>
               <div className="selectwrap">
                 <select
                   id="level"
@@ -134,7 +134,7 @@ export function RegisterPage() {
 
           {/* ── Programme ── */}
           <div className="field">
-            <label htmlFor="prog">Programme <span style={{ color: "var(--danger)", fontSize: "0.85em" }}>*</span></label>
+            <label htmlFor="prog">Programme</label>
             <div className="selectwrap">
               <select id="prog" required value={programme} onChange={(e) => setProgramme(e.target.value)}>
                 <option value="" disabled>Select your course...</option>

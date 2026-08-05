@@ -1,9 +1,51 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button, Field, StatusBadge, CopyButton, SkeletonCard } from "../../components/ui";
-import { getSettings, patchSettings, stepUpAuth, getKeys, registerKey, retireKey, revokeKey, generateKey } from "../../features/admin/api";
+import { getSettings, patchSettings, stepUpAuth, getKeys, registerKey, retireKey, revokeKey } from "../../features/admin/api";
 import { useAuth } from "../../features/auth/AuthContext";
 import { ApiClientError } from "../../lib/api";
+
+function arrayBufferToBase64(buffer: ArrayBuffer) {
+  let binary = '';
+  const bytes = new Uint8Array(buffer);
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return window.btoa(binary);
+}
+
+function wrapPem(base64: string, type: string) {
+  const match = base64.match(/.{1,64}/g);
+  return `-----BEGIN ${type}-----\n${match ? match.join('\n') : ''}\n-----END ${type}-----`;
+}
+
+async function generateClientKeyPair() {
+  const keyPair = await window.crypto.subtle.generateKey(
+    { name: "ECDSA", namedCurve: "P-256" },
+    true,
+    ["sign", "verify"]
+  );
+  
+  const pubBuffer = await window.crypto.subtle.exportKey("spki", keyPair.publicKey);
+  const privBuffer = await window.crypto.subtle.exportKey("pkcs8", keyPair.privateKey);
+  
+  const pubPem = wrapPem(arrayBufferToBase64(pubBuffer), "PUBLIC KEY");
+  const privPem = wrapPem(arrayBufferToBase64(privBuffer), "PRIVATE KEY");
+  
+  const kid = "KEY-" + Array.from(window.crypto.getRandomValues(new Uint8Array(4)))
+    .map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+    
+  return { kid, publicKey: pubPem, privateKey: privPem };
+}
+
+function downloadFile(filename: string, text: string) {
+  const blob = new Blob([text], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
 
 export function SettingsPage() {
   const { user } = useAuth();
@@ -11,17 +53,15 @@ export function SettingsPage() {
   const [password, setPassword] = useState("");
   const [stepUpErr, setStepUpErr] = useState("");
 
-  const { data: settings, error: settingsError, isLoading: settingsLoading, refetch: refetchSettings } = useQuery({ queryKey: ["admin-settings"], queryFn: getSettings, retry: false });
   const { data: keys = [], error: keysError, refetch: refetchKeys } = useQuery({ queryKey: ["admin-keys"], queryFn: getKeys, retry: false });
 
-  const needsStepUp = (settingsError as any)?.status === 403 || (keysError as any)?.status === 403;
+  const needsStepUp = (keysError as any)?.code === "STEP_UP_REQUIRED";
 
   const stepUpMut = useMutation({
     mutationFn: () => stepUpAuth({ email: (user as any).email ?? user!.name, password }),
     onSuccess: () => {
       setStepUpErr("");
       setPassword("");
-      refetchSettings();
       refetchKeys();
     },
     onError: (e: any) => setStepUpErr(e instanceof ApiClientError ? e.message : "Authentication failed"),
@@ -31,28 +71,35 @@ export function SettingsPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [settingsErr, setSettingsErr] = useState("");
 
-  const settingsMut = useMutation({
-    mutationFn: patchSettings,
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin-settings"] }); setIsEditing(false); setSettingsErr(""); },
-    onError: (e: any) => setSettingsErr(e instanceof ApiClientError ? e.message : "We couldn't connect right now. Check your internet connection and try again."),
-  });
-
   const [keyErr, setKeyErr] = useState("");
 
   const generateMut = useMutation({
-    mutationFn: generateKey,
+    mutationFn: registerKey,
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin-keys"] }); setKeyErr(""); },
-    onError: (e: any) => setKeyErr(e instanceof ApiClientError ? e.message : "We couldn't connect right now. Check your internet connection and try again."),
+    onError: (e: any) => {
+      if ((e as any)?.code === "STEP_UP_REQUIRED") qc.invalidateQueries({ queryKey: ["admin-keys"] });
+      setKeyErr(e instanceof ApiClientError ? e.message : "We couldn't connect right now. Check your internet connection and try again.");
+    },
   });
 
   const retireMut = useMutation({ mutationFn: retireKey, onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-keys"] }) });
   const revokeMut = useMutation({ mutationFn: (kid: string) => revokeKey(kid, "Admin revoked"), onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-keys"] }) });
 
-  if (settingsLoading && !needsStepUp) return (
+  const handleGenerateKey = async () => {
+    try {
+      setKeyErr("");
+      const { kid, publicKey, privateKey } = await generateClientKeyPair();
+      downloadFile(`${kid}-private.pem`, privateKey);
+      alert(`ATTENTION: A new private key (${kid}-private.pem) has been downloaded to your computer.\n\nKeep this file extremely safe. The server does NOT store it.`);
+      generateMut.mutate({ kid, publicKey });
+    } catch (e) {
+      setKeyErr("Failed to generate key pair in browser.");
+    }
+  };
+
+  if (keysError && !needsStepUp) return (
     <div className="page-enter" style={{ display: "grid", gap: 24 }}>
-      <div className="skeleton skeleton-text lg" />
-      <SkeletonCard />
-      <SkeletonCard />
+      <p style={{ color: "var(--danger)" }}>Failed to load keys.</p>
     </div>
   );
 
@@ -81,40 +128,11 @@ export function SettingsPage() {
     <div className="page-enter" style={{ display: "grid", gap: 28 }}>
       <h1 style={{ margin: 0 }}>Settings &amp; Keys</h1>
 
-      {/* ── Global defaults ── */}
-      <div className="glass-card no-hover">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-          <h2 style={{ margin: 0 }}>Global defaults</h2>
-          {!isEditing && <Button variant={3} size="sm" onClick={() => { setForm(settings); setIsEditing(true); }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
-            Edit
-          </Button>}
-        </div>
-
-        {isEditing ? (
-          <div style={{ display: "grid", gap: 16, maxWidth: 500 }}>
-            <Field label="'Needs Attention' threshold (days)" type="number" value={form.defaultNeedsAttentionThresholdDays} onChange={e => setForm({ ...form, defaultNeedsAttentionThresholdDays: parseInt(e.target.value) })} />
-            <Field label="Current term" value={form.currentTerm} onChange={e => setForm({ ...form, currentTerm: e.target.value })} />
-            <Field label="Current year" type="number" value={form.currentYear} onChange={e => setForm({ ...form, currentYear: parseInt(e.target.value) })} />
-            {settingsErr && <p style={{ color: "var(--danger)", margin: 0, fontSize: "0.88rem" }}>{settingsErr}</p>}
-            <div style={{ display: "flex", gap: 12 }}>
-              <Button variant={1} onClick={() => settingsMut.mutate(form)} disabled={settingsMut.isPending}>Save changes</Button>
-              <Button variant={3} onClick={() => { setIsEditing(false); setSettingsErr(""); }}>Cancel</Button>
-            </div>
-          </div>
-        ) : (
-          <div style={{ display: "grid", gap: 12, fontSize: "0.92rem" }}>
-            <div style={{ display: "flex", gap: 8 }}><span style={{ color: "var(--muted)", minWidth: 200 }}>Needs Attention Threshold</span><b>{settings?.defaultNeedsAttentionThresholdDays} days</b></div>
-            <div style={{ display: "flex", gap: 8 }}><span style={{ color: "var(--muted)", minWidth: 200 }}>Current Term</span><b>{settings?.currentTerm} {settings?.currentYear}</b></div>
-          </div>
-        )}
-      </div>
-
       {/* ── Signing keys ── */}
       <div>
         <div className="admin-page-header" style={{ marginBottom: 16 }}>
           <h2 style={{ margin: 0 }}>Signing keys</h2>
-          <Button variant={1} size="sm" onClick={() => generateMut.mutate()} disabled={generateMut.isPending}>
+          <Button variant={1} size="sm" onClick={handleGenerateKey} disabled={generateMut.isPending}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             {generateMut.isPending ? "Generating…" : "Generate new key pair"}
           </Button>

@@ -54,7 +54,7 @@ export function LoginPage() {
         <p className="sub">Choose your role and sign in to your portal.</p>
         <div className="roles" role="group" aria-label="Select your role">
           {ROLES.map((r) => (
-            <button key={r.key} type="button" role="radio" aria-checked={role === r.key} className="rolebtn" onClick={() => setRole(r.key)}>
+            <button key={r.key} type="button" role="radio" aria-checked={role === r.key} aria-pressed={role === r.key} className="rolebtn" onClick={() => setRole(r.key)}>
               <span className="ic">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d={ICONS[r.key]} stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </span>
@@ -91,3 +91,5 @@ export function LoginPage() {
     </AuthLayout>
   );
 }
+
+// Trigger redeploy
