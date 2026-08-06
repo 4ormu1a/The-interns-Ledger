@@ -20,6 +20,9 @@ export function EntryEditorPage() {
   const [skillsText, setSkillsText] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  
+  // Local state to hold files chosen BEFORE the draft is saved
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
 
   useEffect(() => {
     if (existing.data) {
@@ -31,26 +34,50 @@ export function EntryEditorPage() {
 
   const save = useMutation({
     mutationFn: async (thenSubmit: boolean) => {
+      setBusy(true);
       const payload = { ...form, skills: skillsText.split(",").map((s) => s.trim()).filter(Boolean), reflection: form.reflection || undefined };
+      
+      // 1. Save or create the draft
       const saved = id ? await entriesApi.update(id, payload) : await entriesApi.create(payload);
+      
+      // 2. Upload any pending files immediately
+      for (const file of pendingFiles) {
+        if (file.size > 4 * 1024 * 1024) throw new Error(`File ${file.name} is larger than 4 MB.`);
+        await entriesApi.addAttachment(saved.id, { filename: file.name, mime: file.type, dataBase64: await toB64(file) });
+      }
+      
+      // 3. Submit if requested
       if (thenSubmit) await entriesApi.submit(saved.id);
       return saved;
     },
     onSuccess: (saved) => { qc.invalidateQueries({ queryKey: ["entries"] }); qc.invalidateQueries({ queryKey: ["entry", saved.id] }); navigate(`/student/logbook/${saved.id}`); },
-    onError: (e) => setError(e instanceof ApiClientError ? e.message : "Could not save entry."),
+    onError: (e) => { setError(e instanceof ApiClientError || e instanceof Error ? e.message : "Could not save entry."); setBusy(false); },
   });
 
   async function onAttach(ev: React.ChangeEvent<HTMLInputElement>) {
     const file = ev.target.files?.[0];
-    if (!file || !id) return;
-    setError(""); setBusy(true);
-    try {
-      if (file.size > 4 * 1024 * 1024) throw new Error("Files must be 4 MB or less.");
-      await entriesApi.addAttachment(id, { filename: file.name, mime: file.type, dataBase64: await toB64(file) });
-      qc.invalidateQueries({ queryKey: ["entry", id] });
-    } catch (e) {
-      setError(e instanceof ApiClientError || e instanceof Error ? e.message : "Upload failed.");
-    } finally { setBusy(false); ev.target.value = ""; }
+    if (!file) return;
+    
+    if (file.size > 4 * 1024 * 1024) {
+      setError("Files must be 4 MB or less.");
+      ev.target.value = "";
+      return;
+    }
+
+    if (id) {
+      // Direct upload for existing drafts
+      setError(""); setBusy(true);
+      try {
+        await entriesApi.addAttachment(id, { filename: file.name, mime: file.type, dataBase64: await toB64(file) });
+        qc.invalidateQueries({ queryKey: ["entry", id] });
+      } catch (e) {
+        setError(e instanceof ApiClientError || e instanceof Error ? e.message : "Upload failed.");
+      } finally { setBusy(false); ev.target.value = ""; }
+    } else {
+      // Queue for later upload
+      setPendingFiles([...pendingFiles, file]);
+      ev.target.value = "";
+    }
   }
 
   const rejected = existing.data?.state === "rejected";
@@ -91,24 +118,31 @@ export function EntryEditorPage() {
               placeholder="What did you learn?" />
           </div>
 
-          {id && (
-            <div>
-              <label>Evidence attachments</label>
-              {existing.data?.attachments.map((a) => (
-                <div key={a.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid var(--line)" }}>
-                  <span style={{ fontSize: ".9rem" }}>{a.filename} <span className="hint">({Math.round(a.size / 1024)} KB)</span></span>
-                  <Button type="button" variant="danger" size="sm" onClick={async () => { await entriesApi.removeAttachment(id, a.id); qc.invalidateQueries({ queryKey: ["entry", id] }); }}>Remove</Button>
-                </div>
-              ))}
-              <input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={onAttach} disabled={busy} style={{ marginTop: 8 }} />
-              <p className="hint">JPEG/PNG/WebP/PDF, max 4 MB. Each file gets a unique digital fingerprint (SHA-256) that's covered by the seal.</p>
-            </div>
-          )}
-          {!id && <p className="hint">Save the draft first to add photo evidence.</p>}
+          <div>
+            <label>Evidence attachments</label>
+            {/* Existing uploaded files */}
+            {existing.data?.attachments.map((a) => (
+              <div key={a.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid var(--line)" }}>
+                <span style={{ fontSize: ".9rem" }}>{a.filename} <span className="hint">({Math.round(a.size / 1024)} KB)</span></span>
+                <Button type="button" variant="danger" size="sm" onClick={async () => { await entriesApi.removeAttachment(id!, a.id); qc.invalidateQueries({ queryKey: ["entry", id] }); }}>Remove</Button>
+              </div>
+            ))}
+            
+            {/* Pending files (for new entries) */}
+            {pendingFiles.map((file, i) => (
+              <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid var(--line)" }}>
+                <span style={{ fontSize: ".9rem" }}>{file.name} <span className="hint">({Math.round(file.size / 1024)} KB) - Pending</span></span>
+                <Button type="button" variant="danger" size="sm" onClick={() => setPendingFiles(pendingFiles.filter((_, idx) => idx !== i))}>Remove</Button>
+              </div>
+            ))}
+            
+            <input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={onAttach} disabled={busy || save.isPending} style={{ marginTop: 8 }} />
+            <p className="hint">JPEG/PNG/WebP/PDF, max 4 MB. Each file gets a unique digital fingerprint (SHA-256) that's covered by the seal.</p>
+          </div>
 
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <Button disabled={save.isPending}>{save.isPending ? "Saving…" : "Save draft"}</Button>
-            <Button type="button" variant={3} disabled={save.isPending}
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 8 }}>
+            <Button disabled={save.isPending || busy}>{save.isPending ? "Saving…" : "Save draft"}</Button>
+            <Button type="button" variant={3} disabled={save.isPending || busy}
               onClick={() => { setError(""); save.mutate(true); }}>
               {rejected ? "Save & resubmit" : "Save & submit for review"}
             </Button>
