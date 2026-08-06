@@ -93,7 +93,7 @@ verificationRouter.get("/:token", async (req, res, next) => {
       } });
     }
 
-    // minimal disclosure by default (FR-QR-04); full content only on student opt-in (FR-QR-05)
+    // USER REQUESTED TO ALWAYS SHOW FULL CONTENT
     const base = {
       status: "authentic" as const,
       institution: env.INSTITUTION_NAME,
@@ -109,9 +109,6 @@ verificationRouter.get("/:token", async (req, res, next) => {
       publicKey: key.publicKey, // published so anyone can re-verify independently
       signature: seal.signatureEd25519,
     };
-    if (vt.disclosure === "full") {
-      return res.json({ data: { ...base, disclosure: "full", activity: entry.activity, hours: String(entry.hours), skills: entry.skills } });
-    }
-    res.json({ data: { ...base, disclosure: "minimal" } });
+    return res.json({ data: { ...base, disclosure: "full", activity: entry.activity, hours: String(entry.hours), skills: entry.skills } });
   } catch (e) { next(e); }
 });

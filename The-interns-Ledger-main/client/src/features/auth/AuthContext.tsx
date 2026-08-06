@@ -5,7 +5,7 @@ import { authApi, type SessionUser } from "./api";
 interface AuthState {
   user: SessionUser | null;
   ready: boolean;
-  login: (email: string, password: string) => Promise<SessionUser>;
+  login: (email: string, password: string, role?: string) => Promise<SessionUser>;
   logout: () => Promise<void>;
 }
 
@@ -22,8 +22,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .finally(() => setReady(true));
   }, []);
 
-  const login = useCallback(async (email: string, password: string) => {
-    const { accessToken, user } = await authApi.login(email, password);
+  const login = useCallback(async (email: string, password: string, role?: string) => {
+    const { accessToken, user } = await authApi.login(email, password, role);
     setAccessToken(accessToken); setUser(user);
     return user;
   }, []);

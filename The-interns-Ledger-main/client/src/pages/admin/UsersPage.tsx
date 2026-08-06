@@ -78,13 +78,15 @@ export function UsersPage() {
       complete: (results) => {
         const parsed = results.data as any[];
         const formatted = parsed.map(row => ({
-          fullName: row["Full Name"] || row["Name"] || row["fullName"],
-          email: row["Email"] || row["email"],
-          departmentName: row["Department"] || row["departmentName"],
+          fullName: (row["Full Name"] || row["Name"] || row["fullName"] || "").trim(),
+          email: (row["Email"] || row["email"] || "").trim(),
+          departmentName: (row["Department"] || row["departmentName"] || "").trim(),
+          currentLevel: parseInt(row["Current Level"] || row["currentLevel"] || "0", 10) || undefined,
+          indexNumber: (row["Index Number"] || row["indexNumber"] || "").trim() || undefined,
         })).filter(r => r.fullName && r.email && r.departmentName);
         
         if (formatted.length === 0) {
-          setErr("We couldn't read your file. Please check that it has these exact column names: 'Full Name', 'Email', and 'Department'.");
+          setErr("We couldn't read your file. Please check that it has these exact column names: 'Full Name', 'Email', 'Department', 'Current Level', 'Index Number'.");
           return;
         }
         
@@ -133,7 +135,7 @@ export function UsersPage() {
         <div className="glass-card no-hover">
           <h2 style={{ marginTop: 0, marginBottom: 8 }}>Bulk import students</h2>
           <div style={{ display: "grid", gap: 16 }}>
-            <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.88rem" }}>Upload a CSV file with columns: <b>Full Name</b>, <b>Email</b>, <b>Department</b>.</p>
+            <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.88rem" }}>Upload a CSV file with columns: <b>Full Name</b>, <b>Email</b>, <b>Department</b>, <b>Current Level</b>, <b>Index Number</b>.</p>
             
             <input type="file" accept=".csv" ref={fileInputRef} onChange={handleFileUpload} style={{ display: "none" }} />
             

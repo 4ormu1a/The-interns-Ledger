@@ -35,7 +35,8 @@ export function LoginPage() {
     e.preventDefault();
     setError(""); setBusy(true);
     try {
-      const user = await login(email, password);
+      const dbRole = role === "industry" ? "industry_supervisor" : role === "faculty" ? "department_supervisor" : role;
+      const user = await login(email, password, dbRole);
       navigate(portalPath(user.role)); // routed by the account's real role
     } catch (err) {
       setError(err instanceof ApiClientError ? err.message : "Login failed. Try again.");

@@ -128,6 +128,8 @@ const bulkSchema = z.object({
     fullName: z.string().min(2),
     email: z.string().email(),
     departmentName: z.string(),
+    currentLevel: z.number().optional(),
+    indexNumber: z.string().optional(),
   })),
   dryRun: z.boolean().default(false),
 });
@@ -149,7 +151,7 @@ adminRouter.post("/users/bulk", async (req, res, next) => {
     const validUsers = [];
     
     for (const u of inputUsers) {
-      const deptId = deptMap.get(u.departmentName.toLowerCase());
+      const deptId = deptMap.get(u.departmentName.trim().toLowerCase());
       const isDuplicate = existingEmails.has(u.email.toLowerCase());
       
       let error = null;
@@ -164,6 +166,8 @@ adminRouter.post("/users/bulk", async (req, res, next) => {
           email: u.email,
           fullName: u.fullName,
           departmentId: deptId,
+          currentLevel: u.currentLevel,
+          indexNumber: u.indexNumber,
           status: "pending" as const,
         });
         existingEmails.add(u.email.toLowerCase()); // prevent duplicates within the same batch
@@ -316,6 +320,18 @@ adminRouter.post("/internships/bulk", async (req, res, next) => {
     const results = [];
     const validRows = [];
     
+    const parseDate = (d: string) => {
+      if (!d) return "2026-01-01";
+      const parts = d.split(/[\/\-]/);
+      if (parts.length === 3) {
+        if (parts[0].length === 4) return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+        if (parts[2].length === 4) return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+      }
+      const date = new Date(d);
+      if (!isNaN(date.getTime())) return date.toISOString().split('T')[0];
+      return "2026-01-01";
+    };
+
     for (const row of inputList) {
       const studentId = userMap.get(row.studentEmail.toLowerCase());
       let error = null;
@@ -328,8 +344,8 @@ adminRouter.post("/internships/bulk", async (req, res, next) => {
           studentId: studentId!,
           company: row.company,
           roleTitle: row.roleTitle,
-          startDate: row.startDate,
-          endDate: row.endDate,
+          startDate: parseDate(row.startDate),
+          endDate: parseDate(row.endDate),
           requiredHours: row.requiredHours,
           location: "TBD",
           requiredWeeks: 0

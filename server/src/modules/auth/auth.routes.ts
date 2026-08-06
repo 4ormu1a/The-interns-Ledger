@@ -31,10 +31,14 @@ authRouter.post("/verify-email", validate(s.verifyEmailSchema), async (req, res,
 authRouter.post("/resend-verification", validate(s.resendSchema), async (req, res, next) => {
   try { await svc.resendVerification(req.body.email); res.json({ data: { sent: true } }); } catch (e) { next(e); }
 });
+import { ApiError } from "../../middleware/error.js";
 
 authRouter.post("/login", validate(s.loginSchema), async (req, res, next) => {
   try {
     const { access, refresh, user } = await svc.login(req.body.email, req.body.password);
+    if (req.body.role && user.role !== req.body.role) {
+      throw new ApiError(401, "ROLE_MISMATCH", `You selected the ${req.body.role.replace("_", " ")} role, but your account is registered as a ${user.role.replace("_", " ")}.`);
+    }
     res.cookie(REFRESH_COOKIE, refresh, cookieOpts);
     res.json({ data: { accessToken: access, user } });
   } catch (e) { next(e); }
