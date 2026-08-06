@@ -731,6 +731,42 @@ adminRouter.delete("/departments/:id/supervisors/:supervisorId", async (req, res
   } catch (e) { next(e); }
 });
 
+// GET /admin/departments/:id/students — list all students enrolled in a department
+adminRouter.get("/departments/:id/students", async (req, res, next) => {
+  try {
+    const deptStudents = await db.query.users.findMany({
+      where: and(
+        eq(users.departmentId, req.params.id),
+        eq(users.role, "student"),
+        isNull(users.erasedAt)
+      ),
+      orderBy: (u, { asc }) => [asc(u.fullName)],
+    });
+
+    // Attach internship status for each student
+    const studentIds = deptStudents.map(s => s.id);
+    const internshipRows = studentIds.length > 0
+      ? await db.query.internships.findMany({
+          where: inArray(internships.studentId, studentIds),
+        })
+      : [];
+
+    const internshipByStudent = new Map(internshipRows.map(i => [i.studentId, i]));
+
+    const result = deptStudents.map(s => ({
+      id: s.id,
+      fullName: s.fullName,
+      email: s.email,
+      indexNumber: s.indexNumber,
+      currentLevel: s.currentLevel,
+      status: s.status,
+      internship: internshipByStudent.get(s.id) ?? null,
+    }));
+
+    res.json({ data: result });
+  } catch (e) { next(e); }
+});
+
 /* ─────────────────────────────────────────────────────────────
    ANALYTICS (FR-ADM-05 / FR-ADM-06)
 ──────────────────────────────────────────────────────────────── */

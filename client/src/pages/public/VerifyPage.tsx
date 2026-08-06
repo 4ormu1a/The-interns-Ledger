@@ -6,6 +6,7 @@ import { api } from "../../lib/api";
 
 interface VerifyResult {
   status: "authentic" | "not_authentic" | "revoked" | "erased" | "cannot_verify";
+  scope?: "entry" | "report"; entryCount?: number;
   message?: string; institution: string; studentName?: string; approverName?: string; company?: string;
   workDate?: string; version?: number; superseded?: boolean; sealedAt?: string; digest?: string; kid?: string;
   publicKey?: string; signature?: string; disclosure?: string; activity?: string; hours?: string; skills?: string[];
@@ -66,33 +67,100 @@ export function VerifyPage() {
             {badge(result).label}
           </span>
           {result.status === "authentic" ? (
-            <div style={{ marginTop: 18, display: "grid", gap: 14 }}>
-              <p>
-                <b>{result.institution}</b> confirms this internship log entry by <b>{result.studentName}</b>
-                {result.company && <> at <b>{result.company}</b></>} for <b>{result.workDate}</b> was approved and sealed by
-                supervisor <b>{result.approverName}</b> on {new Date(result.sealedAt!).toLocaleDateString()}.
-                {result.version! > 1 && <> This is version {result.version} (an approved correction).</>}
-                {result.superseded && <> Note: a newer approved version of this entry now exists.</>}
-              </p>
-              {result.disclosure === "full" && (
-                <div style={{ borderTop: "1px solid var(--line)", paddingTop: 12 }}>
-                  <h3 style={{ marginBottom: 6 }}>Disclosed detail (student opted in)</h3>
-                  <p style={{ whiteSpace: "pre-wrap" }}>{result.activity}</p>
-                  <p className="hint">{result.hours}h · {result.skills?.join(", ")}</p>
+            <div style={{ marginTop: 22, display: "grid", gap: 24 }}>
+              
+              {/* Context Summary Header */}
+              <div style={{ padding: 20, borderRadius: 12, background: "rgba(8, 203, 0, 0.04)", border: "1px solid rgba(8, 203, 0, 0.15)" }}>
+                <h3 style={{ margin: "0 0 12px 0", color: "var(--green-900)" }}>
+                  {result.scope === "report" ? "Verified Final Report" : "Verified Log Entry"}
+                </h3>
+                <p style={{ margin: 0, lineHeight: 1.5 }}>
+                  <b>{result.institution}</b> confirms that this {result.scope === "report" ? "comprehensive report" : "log entry"} by{" "}
+                  <b>{result.studentName}</b>
+                  {result.company && <> at <b>{result.company}</b></>} is authentic and securely sealed.
+                  {result.scope !== "report" && result.approverName && (
+                    <> It was approved by supervisor <b>{result.approverName}</b>.</>
+                  )}
+                </p>
+                {result.version! > 1 && <p style={{ margin: "8px 0 0 0", fontSize: ".85rem", color: "var(--amber)" }}>This is version {result.version} (an approved correction).</p>}
+                {result.superseded && <p style={{ margin: "8px 0 0 0", fontSize: ".85rem", color: "var(--amber)" }}>Note: a newer approved version of this entry now exists.</p>}
+              </div>
+
+              {/* Data Grid */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16 }}>
+                <div style={{ padding: 16, background: "var(--bg)", borderRadius: 10, border: "1px solid var(--line)" }}>
+                  <div className="hint" style={{ marginBottom: 4 }}>Student</div>
+                  <div style={{ fontWeight: 600 }}>{result.studentName}</div>
+                </div>
+                {result.company && (
+                  <div style={{ padding: 16, background: "var(--bg)", borderRadius: 10, border: "1px solid var(--line)" }}>
+                    <div className="hint" style={{ marginBottom: 4 }}>Company / Organization</div>
+                    <div style={{ fontWeight: 600 }}>{result.company}</div>
+                  </div>
+                )}
+                {result.scope === "report" ? (
+                  <div style={{ padding: 16, background: "var(--bg)", borderRadius: 10, border: "1px solid var(--line)" }}>
+                    <div className="hint" style={{ marginBottom: 4 }}>Total Entries Included</div>
+                    <div style={{ fontWeight: 600 }}>{result.entryCount} entries</div>
+                  </div>
+                ) : (
+                  <div style={{ padding: 16, background: "var(--bg)", borderRadius: 10, border: "1px solid var(--line)" }}>
+                    <div className="hint" style={{ marginBottom: 4 }}>Work Date</div>
+                    <div style={{ fontWeight: 600 }}>{result.workDate ? new Date(result.workDate).toLocaleDateString() : "N/A"}</div>
+                  </div>
+                )}
+                <div style={{ padding: 16, background: "var(--bg)", borderRadius: 10, border: "1px solid var(--line)" }}>
+                  <div className="hint" style={{ marginBottom: 4 }}>Sealed On</div>
+                  <div style={{ fontWeight: 600 }}>{new Date(result.sealedAt!).toLocaleDateString()}</div>
+                </div>
+              </div>
+
+              {/* Disclosed Details */}
+              {result.disclosure === "full" && result.scope !== "report" && (
+                <div style={{ padding: 20, borderRadius: 12, border: "1px solid var(--line)" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
+                    <h3 style={{ margin: 0, color: "var(--green-900)" }}>Activity Details</h3>
+                    <span className="hint">Student opted-in to full disclosure</span>
+                  </div>
+                  <p style={{ whiteSpace: "pre-wrap", lineHeight: 1.6, margin: "0 0 14px 0" }}>{result.activity}</p>
+                  <div style={{ display: "flex", gap: 16, borderTop: "1px solid var(--line)", paddingTop: 14 }}>
+                    <div>
+                      <div className="hint" style={{ fontSize: ".75rem", marginBottom: 2 }}>Hours Logged</div>
+                      <b style={{ color: "var(--green-800)" }}>{result.hours}h</b>
+                    </div>
+                    <div>
+                      <div className="hint" style={{ fontSize: ".75rem", marginBottom: 2 }}>Skills Used</div>
+                      <b style={{ color: "var(--green-800)" }}>{result.skills?.join(", ")}</b>
+                    </div>
+                  </div>
                 </div>
               )}
-              <div style={{ borderTop: "1px solid var(--line)", paddingTop: 12, display: "grid", gap: 8, fontSize: ".84rem" }}>
-                <div><span className="hint">Digital fingerprint (SHA-256)</span><br /><code style={{ wordBreak: "break-all" }}>{result.digest}</code></div>
-                <div><span className="hint">Digital Signature (Ed25519, key {result.kid})</span><br /><code style={{ wordBreak: "break-all" }}>{result.signature}</code></div>
-                <details>
-                  <summary style={{ cursor: "pointer", color: "var(--green-700)", fontWeight: 600 }}>Verify independently</summary>
-                  <p className="hint" style={{ margin: "8px 0" }}>
-                    Recompute the digital fingerprint (SHA-256) of the original data and check the Ed25519 signature against the institution's published security key:
-                  </p>
-                  <pre style={{ fontSize: ".75rem", overflow: "auto", background: "#f3f1de", padding: 10, borderRadius: 8 }}>{result.publicKey}</pre>
-                </details>
+              {result.disclosure !== "full" && result.scope !== "report" && (
+                 <p className="hint" style={{ textAlign: "center" }}>Disclosure is minimal by default; activity detail appears only if the student opted in.</p>
+              )}
+
+              {/* Cryptographic Proof */}
+              <div style={{ padding: 20, borderRadius: 12, background: "var(--bg)", border: "1px solid var(--line)" }}>
+                <h3 style={{ margin: "0 0 16px 0", fontSize: "1rem" }}>Cryptographic Proof</h3>
+                <div style={{ display: "grid", gap: 12, fontSize: ".84rem" }}>
+                  <div>
+                    <span className="hint">Digital fingerprint (SHA-256)</span><br />
+                    <code style={{ wordBreak: "break-all", color: "var(--green-800)" }}>{result.digest}</code>
+                  </div>
+                  <div>
+                    <span className="hint">Digital Signature (Ed25519, key {result.kid})</span><br />
+                    <code style={{ wordBreak: "break-all", color: "var(--green-800)" }}>{result.signature}</code>
+                  </div>
+                  <details style={{ marginTop: 8 }}>
+                    <summary style={{ cursor: "pointer", color: "var(--green-700)", fontWeight: 600, outline: "none" }}>Verify independently</summary>
+                    <p className="hint" style={{ margin: "8px 0" }}>
+                      Recompute the digital fingerprint (SHA-256) of the original data and check the Ed25519 signature against the institution's published security key:
+                    </p>
+                    <pre style={{ fontSize: ".75rem", overflow: "auto", background: "var(--white)", padding: 12, borderRadius: 8, border: "1px solid var(--line)" }}>{result.publicKey}</pre>
+                  </details>
+                </div>
               </div>
-              <p className="hint">Disclosure is minimal by default; activity detail appears only if the student opted in.</p>
+
             </div>
           ) : (
             <div style={{ marginTop: 16 }}>

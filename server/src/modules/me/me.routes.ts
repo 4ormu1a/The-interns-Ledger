@@ -4,7 +4,7 @@ import { z } from "zod";
 import { desc, eq } from "drizzle-orm";
 import { hash, verify } from "@node-rs/argon2";
 import { db } from "../../db/client.js";
-import { users, refreshTokens, notifications } from "../../db/schema/index.js";
+import { users, refreshTokens, notifications, departments } from "../../db/schema/index.js";
 import { requireAuth } from "../../middleware/auth.js";
 import { validate } from "../../middleware/validate.js";
 import { ApiError } from "../../middleware/error.js";
@@ -18,9 +18,17 @@ meRouter.get("/", async (req, res, next) => {
   try {
     const u = await db.query.users.findFirst({
       where: eq(users.id, req.user!.sub),
-      columns: { id: true, role: true, email: true, fullName: true, status: true, emailVerifiedAt: true, consentAt: true, createdAt: true },
+      columns: { id: true, role: true, email: true, fullName: true, status: true,
+        emailVerifiedAt: true, consentAt: true, createdAt: true,
+        indexNumber: true, currentLevel: true, departmentId: true },
     });
-    res.json({ data: u });
+    // Resolve department name if student has one
+    let departmentName: string | null = null;
+    if (u?.departmentId) {
+      const dept = await db.query.departments.findFirst({ where: eq(departments.id, u.departmentId) });
+      departmentName = dept?.name ?? null;
+    }
+    res.json({ data: { ...u, departmentName } });
   } catch (e) { next(e); }
 });
 

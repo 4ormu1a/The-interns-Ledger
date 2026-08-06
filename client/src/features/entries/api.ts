@@ -45,7 +45,7 @@ export const notificationsApi = {
 };
 
 export const meApi = {
-  get: () => api<{ id: string; email: string; fullName: string; role: string; consentAt: string; createdAt: string }>("/me"),
+  get: () => api<{ id: string; email: string; fullName: string; role: string; status: string; consentAt: string; createdAt: string; indexNumber: string | null; currentLevel: number | null; departmentId: string | null; departmentName: string | null }>("/me"),
   updateName: (fullName: string) => api<{ id: string; fullName: string }>("/me", { method: "PATCH", body: JSON.stringify({ fullName }) }),
   changePassword: (currentPassword: string, newPassword: string) => post<{ changed: boolean }>("/me/password", { currentPassword, newPassword }),
 };

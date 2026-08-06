@@ -38,6 +38,7 @@ export const createDepartment = (d: { name: string }) => post<any>("/admin/depar
 export const updateDepartment = (id: string, d: { name: string }) => api<any>(`/admin/departments/${id}`, { method: "PATCH", body: JSON.stringify(d), headers: { "Content-Type": "application/json" } });
 export const assignDepartmentSupervisor = (deptId: string, supervisorId: string) => post<any>(`/admin/departments/${deptId}/supervisors`, { supervisorId });
 export const removeDepartmentSupervisor = (deptId: string, supervisorId: string) => api<any>(`/admin/departments/${deptId}/supervisors/${supervisorId}`, { method: "DELETE" });
+export const getDepartmentStudents = (deptId: string) => api<any[]>(`/admin/departments/${deptId}/students`);
 
 export const eraseUser = (d: any) => post<any>("/admin/erasure", d);
 export const exportUser = (userId: string) => post<any>("/admin/export", { userId });
