@@ -8,7 +8,7 @@ export const authApi = {
     post<{ id: string; email: string; message: string }>("/auth/register", d),
   verifyEmail: (token: string) => post<{ verified: boolean }>("/auth/verify-email", { token }),
   resendVerification: (email: string) => post<{ sent: boolean }>("/auth/resend-verification", { email }),
-  login: (email, password, role) => post<any>("/auth/login", { email, password, role }),
+  login: (email: string, password: string, role: string) => post<any>("/auth/login", { email, password, role }),
   refresh: () => post<LoginResponse>("/auth/refresh"),
   logout: () => post<{ loggedOut: boolean }>("/auth/logout"),
   forgot: (email: string) => post<{ sent: boolean }>("/auth/forgot", { email }),
